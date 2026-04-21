@@ -13,7 +13,7 @@ export function PageHeader() {
                         Parent Result Dispatch Dashboard
                     </h1>
                     <p className="mt-4 max-w-2xl text-sm leading-6 text-(--hero-subtle) sm:text-base">
-                        Monitor Senate approvals, verify NDPR contact readiness, and trigger
+                        Monitor result approvals, verify NDPR contact readiness, and trigger
                         secure multi-channel notifications for approved student results.
                     </p>
                 </div>

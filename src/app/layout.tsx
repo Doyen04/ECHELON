@@ -1,39 +1,44 @@
 import type { Metadata } from "next";
 import { IBM_Plex_Sans, Space_Grotesk } from "next/font/google";
+
+import { AppSessionProvider } from "@/components/auth/session-provider";
+
 import "./globals.css";
 
 const bodyFont = IBM_Plex_Sans({
-  variable: "--font-body",
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
+    variable: "--font-body",
+    subsets: ["latin"],
+    weight: ["400", "500", "600", "700"],
 });
 
 const displayFont = Space_Grotesk({
-  variable: "--font-display",
-  subsets: ["latin"],
-  weight: ["500", "600", "700"],
+    variable: "--font-display",
+    subsets: ["latin"],
+    weight: ["500", "600", "700"],
 });
 
 export const metadata: Metadata = {
-  title: {
-    default: "Result Notification System",
-    template: "%s | Result Notification System",
-  },
-  description:
-    "Secure dashboard for senate-approved result delivery to parents via WhatsApp, email, and SMS.",
+    title: {
+        default: "Result Notification System",
+        template: "%s | Result Notification System",
+    },
+    description:
+        "Secure dashboard for super-admin-approved result delivery to parents via WhatsApp, email, and SMS.",
 };
 
 export default function RootLayout({
-  children,
+    children,
 }: Readonly<{
-  children: React.ReactNode;
+    children: React.ReactNode;
 }>) {
-  return (
-    <html
-      lang="en"
-      className={`${bodyFont.variable} ${displayFont.variable} h-full antialiased`}
-    >
-      <body className="min-h-full font-sans text-foreground">{children}</body>
-    </html>
-  );
+    return (
+        <html
+            lang="en"
+            className={`${bodyFont.variable} ${displayFont.variable} h-full antialiased`}
+        >
+            <body className="min-h-full font-sans text-foreground">
+                <AppSessionProvider>{children}</AppSessionProvider>
+            </body>
+        </html>
+    );
 }

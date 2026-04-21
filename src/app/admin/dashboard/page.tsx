@@ -14,7 +14,7 @@ import { getDashboardViewData } from "@/lib/dashboard-queries";
 export const metadata: Metadata = {
     title: "Admin Dashboard | Result Notification System",
     description:
-        "Operational dashboard for senate approvals, parent result dispatch, and delivery monitoring.",
+        "Operational dashboard for super-admin approvals, parent result dispatch, and delivery monitoring.",
 };
 
 export default async function AdminDashboardPage() {

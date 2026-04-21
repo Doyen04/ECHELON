@@ -27,7 +27,7 @@ export function DispatchQueuePanel({ queue }: { queue: DispatchQueueEntry[] }) {
     return (
         <SectionFrame
             title="Dispatch Queue"
-            description="QStash jobs processing senate-approved batches"
+            description="QStash jobs processing approved result batches"
             action={
                 <a
                     href="/admin/delivery"
