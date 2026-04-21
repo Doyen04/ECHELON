@@ -1,0 +1,221 @@
+generator client {
+    provider = "prisma-client-js"
+}
+
+datasource db {
+    provider = "postgresql"
+    url      = env("DATABASE_URL")
+}
+
+enum Semester {
+    FIRST
+    SECOND
+    THIRD
+}
+
+enum BatchStatus {
+    PENDING
+    IN_REVIEW
+    APPROVED
+    DISPATCHED
+}
+
+enum StudentResultStatus {
+    PENDING
+    APPROVED
+    WITHHELD
+}
+
+enum DispatchStatus {
+    QUEUED
+    PROCESSING
+    COMPLETE
+    PARTIAL_FAILURE
+}
+
+enum NotificationChannel {
+    WHATSAPP
+    EMAIL
+    SMS
+}
+
+enum NotificationStatus {
+    QUEUED
+    SENT
+    DELIVERED
+    FAILED
+}
+
+model Institution {
+    id            String        @id @default(cuid())
+    name          String
+    logoUrl       String?
+    createdAt     DateTime      @default(now())
+    users         User[]
+    students      Student[]
+    resultBatches ResultBatch[]
+    auditLogs     AuditLog[]
+}
+
+model User {
+    id              String                 @id @default(cuid())
+    institutionId   String
+    institution     Institution            @relation(fields: [institutionId], references: [id], onDelete: Cascade)
+    role            String                 @default("super_admin")
+    name            String
+    email           String                 @unique
+    passwordHash    String
+    createdAt       DateTime               @default(now())
+    updatedAt       DateTime               @updatedAt
+    uploadedBatches ResultBatch[]          @relation("UploadedBy")
+    approvedBatches ResultBatch[]          @relation("ApprovedBy")
+    reviewedResults StudentResult[]        @relation("ReviewedBy")
+    dispatches      NotificationDispatch[] @relation("TriggeredBy")
+    auditLogs       AuditLog[]             @relation("AuditActor")
+
+    @@index([institutionId])
+}
+
+model Student {
+    id               String            @id @default(cuid())
+    institutionId    String
+    institution      Institution       @relation(fields: [institutionId], references: [id], onDelete: Cascade)
+    matricNumber     String            @unique
+    fullName         String
+    department       String
+    faculty          String
+    level            Int
+    createdAt        DateTime          @default(now())
+    guardians        Guardian[]
+    studentResults   StudentResult[]
+    notificationLogs NotificationLog[]
+
+    @@index([institutionId, department])
+}
+
+model Guardian {
+    id               String              @id @default(cuid())
+    studentId        String
+    student          Student             @relation(fields: [studentId], references: [id], onDelete: Cascade)
+    name             String
+    relationship     String
+    email            String?
+    phone            String?
+    preferredChannel NotificationChannel @default(WHATSAPP)
+    ndprConsent      Boolean             @default(false)
+    consentDate      DateTime?
+    createdAt        DateTime            @default(now())
+    notificationLogs NotificationLog[]
+
+    @@index([studentId])
+}
+
+model ResultBatch {
+    id             String                 @id @default(cuid())
+    institutionId  String
+    institution    Institution            @relation(fields: [institutionId], references: [id], onDelete: Cascade)
+    session        String
+    semester       Semester
+    department     String
+    status         BatchStatus            @default(PENDING)
+    uploadedById   String
+    uploadedBy     User                   @relation("UploadedBy", fields: [uploadedById], references: [id], onDelete: Restrict)
+    uploadedAt     DateTime               @default(now())
+    approvedById   String?
+    approvedBy     User?                  @relation("ApprovedBy", fields: [approvedById], references: [id], onDelete: SetNull)
+    approvedAt     DateTime?
+    source         String                 @default("csv")
+    rawFileUrl     String?
+    studentResults StudentResult[]
+    dispatches     NotificationDispatch[]
+
+    @@index([institutionId, status])
+    @@index([session, semester, department])
+}
+
+model StudentResult {
+    id               String              @id @default(cuid())
+    batchId          String
+    batch            ResultBatch         @relation(fields: [batchId], references: [id], onDelete: Cascade)
+    studentId        String
+    student          Student             @relation(fields: [studentId], references: [id], onDelete: Cascade)
+    courses          Json
+    gpa              Float
+    cgpa             Float?
+    status           StudentResultStatus @default(PENDING)
+    withheldReason   String?
+    reviewedById     String?
+    reviewedBy       User?               @relation("ReviewedBy", fields: [reviewedById], references: [id], onDelete: SetNull)
+    reviewedAt       DateTime?
+    portalTokens     PortalToken[]
+    notificationLogs NotificationLog[]
+
+    @@unique([batchId, studentId])
+    @@index([batchId, status])
+}
+
+model PortalToken {
+    id              String        @id @default(cuid())
+    studentResultId String
+    studentResult   StudentResult @relation(fields: [studentResultId], references: [id], onDelete: Cascade)
+    token           String        @unique
+    expiresAt       DateTime
+    viewedAt        DateTime?
+    invalidated     Boolean       @default(false)
+    createdAt       DateTime      @default(now())
+
+    @@index([studentResultId])
+}
+
+model NotificationDispatch {
+    id               String            @id @default(cuid())
+    batchId          String
+    batch            ResultBatch       @relation(fields: [batchId], references: [id], onDelete: Cascade)
+    triggeredById    String
+    triggeredBy      User              @relation("TriggeredBy", fields: [triggeredById], references: [id], onDelete: Restrict)
+    triggeredAt      DateTime          @default(now())
+    totalCount       Int
+    sentCount        Int               @default(0)
+    failedCount      Int               @default(0)
+    status           DispatchStatus    @default(QUEUED)
+    notificationLogs NotificationLog[]
+
+    @@index([batchId])
+}
+
+model NotificationLog {
+    id                String               @id @default(cuid())
+    dispatchId        String
+    dispatch          NotificationDispatch @relation(fields: [dispatchId], references: [id], onDelete: Cascade)
+    studentResultId   String
+    studentResult     StudentResult        @relation(fields: [studentResultId], references: [id], onDelete: Cascade)
+    studentId         String
+    student           Student              @relation(fields: [studentId], references: [id], onDelete: Cascade)
+    guardianId        String?
+    guardian          Guardian?            @relation(fields: [guardianId], references: [id], onDelete: SetNull)
+    channel           NotificationChannel
+    status            NotificationStatus   @default(QUEUED)
+    providerMessageId String?
+    failureReason     String?
+    attemptedAt       DateTime             @default(now())
+    deliveredAt       DateTime?
+
+    @@index([dispatchId, status])
+    @@index([studentResultId])
+}
+
+model AuditLog {
+    id            String      @id @default(cuid())
+    institutionId String
+    institution   Institution @relation(fields: [institutionId], references: [id], onDelete: Cascade)
+    actorId       String
+    actor         User        @relation("AuditActor", fields: [actorId], references: [id], onDelete: Restrict)
+    action        String
+    entityType    String
+    entityId      String
+    metadata      Json?
+    ipAddress     String?
+    createdAt     DateTime    @default(now())
+
+    @@index([institutionId, createdAt])
+}

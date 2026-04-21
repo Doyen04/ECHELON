@@ -33,7 +33,7 @@ export default function RootLayout({
       lang="en"
       className={`${bodyFont.variable} ${displayFont.variable} h-full antialiased`}
     >
-      <body className="min-h-full font-sans text-[var(--text-primary)]">{children}</body>
+      <body className="min-h-full font-sans text-foreground">{children}</body>
     </html>
   );
 }
