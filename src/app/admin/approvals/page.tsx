@@ -21,7 +21,7 @@ export default function ApprovalsPage() {
                     <div className="grid gap-4">
                         <PendingCard
                             id="BCH-8A92"
-                            title="Computer Science Â· First Semester 2024/2025"
+                            title="Computer Science   First Semester 2024/2025"
                             uploader="Registrar Adeyemi"
                             time="2 days ago"
                             students={247}
@@ -29,7 +29,7 @@ export default function ApprovalsPage() {
                         />
                         <PendingCard
                             id="BCH-9M2P"
-                            title="Mathematics Â· First Semester 2024/2025"
+                            title="Mathematics   First Semester 2024/2025"
                             uploader="Registrar Adeyemi"
                             time="2 days ago"
                             students={86}
@@ -37,7 +37,7 @@ export default function ApprovalsPage() {
                         />
                         <PendingCard
                             id="BCH-2N5A"
-                            title="Biology Â· First Semester 2024/2025"
+                            title="Biology   First Semester 2024/2025"
                             uploader="M. Eze"
                             time="1 week ago"
                             students={210}
@@ -45,7 +45,7 @@ export default function ApprovalsPage() {
                         />
                         <PendingCard
                             id="BCH-5Y7K"
-                            title="Medicine Â· First Semester 2023/2024"
+                            title="Medicine   First Semester 2023/2024"
                             uploader="Registrar Adeyemi"
                             time="2 weeks ago"
                             students={310}
@@ -76,17 +76,17 @@ export default function ApprovalsPage() {
                                 <tbody className="divide-y divide-border-subtle">
                                     <tr>
                                         <td className="px-5 py-4 text-sm font-mono text-text-muted">BCH-7F1X</td>
-                                        <td className="px-5 py-4 text-sm text-foreground">Physics Â· 2024/2025</td>
+                                        <td className="px-5 py-4 text-sm text-foreground">Physics   2024/2025</td>
                                         <td className="px-5 py-4"><StatusBadge status="approved" /></td>
                                     </tr>
                                     <tr>
                                         <td className="px-5 py-4 text-sm font-mono text-text-muted">BCH-4L8K</td>
-                                        <td className="px-5 py-4 text-sm text-foreground">Chemistry Â· 2024/2025</td>
+                                        <td className="px-5 py-4 text-sm text-foreground">Chemistry   2024/2025</td>
                                         <td className="px-5 py-4"><StatusBadge status="approved" /></td>
                                     </tr>
                                     <tr>
                                         <td className="px-5 py-4 text-sm font-mono text-text-muted">BCH-1P3V</td>
-                                        <td className="px-5 py-4 text-sm text-foreground">Accounting Â· 2023/2024</td>
+                                        <td className="px-5 py-4 text-sm text-foreground">Accounting   2023/2024</td>
                                         <td className="px-5 py-4"><StatusBadge status="approved" /></td>
                                     </tr>
                                 </tbody>
@@ -109,7 +109,7 @@ function PendingCard({ id, title, uploader, time, students, source }: any) {
                 <div>
                     <h3 className="font-serif text-[1.1rem] text-foreground mb-1">{title}</h3>
                     <p className="text-sm text-text-muted">
-                        Uploaded by {uploader} Â· {time}
+                        Uploaded by {uploader}   {time}
                     </p>
                 </div>
 

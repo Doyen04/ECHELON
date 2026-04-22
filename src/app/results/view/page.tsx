@@ -39,13 +39,13 @@ export default function PublicResultViewPage() {
                     <h1 className="font-serif text-3xl sm:text-4xl text-foreground">John Ola Adeyemi</h1>
                     <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-3 text-sm text-text-muted font-medium">
                         <span className="font-mono text-text-muted">CSC/2021/001</span>
-                        <span className="hidden sm:inline">Â·</span>
+                        <span className="hidden sm:inline"> </span>
                         <span>Computer Science</span>
-                        <span className="hidden sm:inline">Â·</span>
+                        <span className="hidden sm:inline"> </span>
                         <span>Level 400</span>
                     </div>
                     <div className="text-sm font-medium text-foreground mt-1">
-                        2024/2025 Session Â· First Semester
+                        2024/2025 Session   First Semester
                     </div>
                 </div>
 
