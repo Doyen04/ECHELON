@@ -1,15 +1,17 @@
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient } from "../app/generated/prisma-client";
+import "dotenv/config";
+import { PrismaPg } from "@prisma/adapter-pg";
 
-declare global {
-  var prisma: PrismaClient | undefined;
+const connectionString =
+	process.env.PRISMA_DATABASE_URL ?? process.env.POSTGRES_URL ?? process.env.DATABASE_URL;
+
+if (!connectionString) {
+	throw new Error(
+		"Missing Prisma connection string. Set PRISMA_DATABASE_URL or POSTGRES_URL.",
+	);
 }
 
-export const prisma =
-  globalThis.prisma ??
-  new PrismaClient({
-    log: process.env.NODE_ENV === "development" ? ["warn", "error"] : ["error"],
-  });
+const adapter = new PrismaPg({ connectionString });
+const prisma = new PrismaClient({ adapter });
 
-if (process.env.NODE_ENV !== "production") {
-  globalThis.prisma = prisma;
-}
+export { prisma };
