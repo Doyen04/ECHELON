@@ -104,7 +104,7 @@ export default function ApprovalsPage() {
 
 function PendingCard({ id, title, uploader, time, students, source }: any) {
   return (
-    <div className="rounded-xl border-l-4 border-[var(--color-warning)] bg-surface-main p-6 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-6 dashboard-card">
+    <div className="rounded-xl border-l-4 border-status-warning bg-surface-main p-6 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-6 dashboard-card">
       <div className="space-y-3 flex-1">
         <div>
           <h3 className="font-serif text-[1.1rem] text-foreground mb-1">{title}</h3>
@@ -127,7 +127,7 @@ function PendingCard({ id, title, uploader, time, students, source }: any) {
       <div className="shrink-0 flex items-center self-start md:self-auto w-full md:w-auto">
         <Link 
           href={`/admin/batches/${id}`}
-          className="flex w-full md:w-auto items-center justify-center gap-2 rounded-md border border-[var(--color-accent)] bg-white px-5 py-2.5 text-sm font-medium text-brand shadow-sm hover:bg-brand/5 hover:border-brand-hover transition-colors group"
+          className="flex w-full md:w-auto items-center justify-center gap-2 rounded-md border border-brand bg-white px-5 py-2.5 text-sm font-medium text-brand shadow-sm hover:bg-brand/5 hover:border-brand-hover transition-colors group"
         >
           Begin Review <ArrowRight className="h-4 w-4 group-hover:translate-x-0.5 transition-transform" />
         </Link>

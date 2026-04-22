@@ -75,7 +75,7 @@ export default function BatchesPage() {
                         </div>
                         <div className="flex gap-2">
                             <button disabled className="px-3 py-1 border border-border-subtle rounded bg-surface-main text-sm disabled:opacity-50 text-foreground">Previous</button>
-                            <button className="px-3 py-1 border border-border-subtle rounded bg-white text-sm hover:bg-surface-subtle text-foreground">Next</button>
+                            <button className="px-3 py-1 border border-border-subtle rounded bg-surface-main text-sm hover:bg-surface-subtle text-foreground">Next</button>
                         </div>
                     </div>
                 </div>

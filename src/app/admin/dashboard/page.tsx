@@ -130,7 +130,7 @@ export default function DashboardPage() {
           <div className="rounded-xl border border-border-subtle bg-surface-main p-6">
             <h3 className="text-sm font-semibold uppercase tracking-widest text-text-muted mb-6">Pipeline Workflow</h3>
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 relative">
-              <div className="hidden sm:block absolute left-8 right-8 top-1/2 -translate-y-1/2 h-0.5 bg-[var(--color-border)] z-0"></div>
+              <div className="hidden sm:block absolute left-8 right-8 top-1/2 -translate-y-1/2 h-0.5 bg-border-subtle z-0"></div>
               
               <PipelineStep icon={UploadCloud} label="Upload" count={14} active={false} />
               <PipelineStep icon={Clock} label="Senate Review" count={4} active={true} />
@@ -175,7 +175,7 @@ function RecentBatchRow({ session, dept, students, status, idx }: { session: str
 function PipelineStep({ icon: Icon, label, count, active }: { icon: any, label: string, count: number, active: boolean }) {
   return (
     <div className={`relative z-10 flex flex-col items-center gap-2 bg-surface-main sm:px-4 ${active ? 'text-brand' : 'text-text-muted'}`}>
-      <div className={`flex items-center justify-center w-12 h-12 rounded-full border-2 ${active ? 'border-[var(--color-accent)] bg-brand/10 text-brand' : 'border-border-subtle bg-surface-main text-text-muted'}`}>
+      <div className={`flex items-center justify-center w-12 h-12 rounded-full border-2 ${active ? 'border-brand bg-brand/10 text-brand' : 'border-border-subtle bg-surface-main text-text-muted'}`}>
         <Icon className="w-5 h-5" />
       </div>
       <div className="text-center">

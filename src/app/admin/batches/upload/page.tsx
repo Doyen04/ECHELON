@@ -105,7 +105,7 @@ export default function BatchUploadPage() {
               {!file ? (
                 <div 
                   className={`relative flex flex-col items-center justify-center rounded-xl p-12 text-center transition-all duration-200
-                    ${isDragOver ? "border-solid border-2 border-[var(--color-accent)] bg-brand/5" : "border-dashed border-2 border-border-subtle bg-surface-subtle/30 hover:bg-surface-subtle/60"}
+                    ${isDragOver ? "border-solid border-2 border-brand/30 bg-brand/5" : "border-dashed border-2 border-border-subtle bg-surface-subtle/30 hover:bg-surface-subtle/60"}
                   `}
                   onDragOver={handleDragOver}
                   onDragLeave={handleDragLeave}
@@ -124,7 +124,7 @@ export default function BatchUploadPage() {
                   </div>
                 </div>
               ) : (
-                <div className="flex items-center justify-between rounded-lg border border-[var(--color-accent)]/30 bg-brand/5 p-4">
+                <div className="flex items-center justify-between rounded-lg border border-brand/30 bg-brand/5 p-4">
                   <div className="flex items-center gap-4">
                     <div className="rounded bg-brand/10 p-2 text-brand">
                       <FileType className="h-6 w-6" />
@@ -162,7 +162,7 @@ export default function BatchUploadPage() {
                   </div>
                   
                   {/* Duplicate warning */}
-                  <div className="rounded-lg border border-[var(--color-warning)]/40 bg-status-warning/10 p-4 flex gap-3 text-status-warning mb-6">
+                  <div className="rounded-lg border border-status-warning/40 bg-status-warning/10 p-4 flex gap-3 text-status-warning mb-6">
                     <AlertTriangle className="h-5 w-5 shrink-0 mt-0.5" />
                     <p className="text-sm">
                       <span className="font-semibold block mb-1">A batch for this session already exists.</span>
@@ -173,7 +173,7 @@ export default function BatchUploadPage() {
 
                 <div className="bg-surface-subtle/20 p-6">
                   <h4 className="text-xs font-semibold uppercase tracking-widest text-text-muted mb-4">Data Preview (first 5 rows)</h4>
-                  <div className="rounded-lg border border-border-subtle bg-white overflow-x-auto">
+                  <div className="rounded-lg border border-border-subtle bg-surface-main overflow-x-auto">
                     <table className="min-w-full divide-y divide-border-subtle">
                       <thead className="bg-surface-subtle/30">
                         <tr>
@@ -212,8 +212,8 @@ export default function BatchUploadPage() {
           </div>
 
           {/* Right format guide 35% */}
-          <div className="lg:w-fit lg:min-w-[340px]">
-            <div className="sticky top-24 rounded-xl border border-border-subtle bg-[#faf9f7] p-6 shadow-sm">
+          <div className="lg:w-fit lg:min-w-85">
+            <div className="sticky top-24 rounded-xl border border-border-subtle bg-surface-main p-6 shadow-sm">
               <h3 className="font-serif text-lg text-foreground mb-4">Format Guide</h3>
               <p className="text-sm text-text-muted mb-6">
                 Ensure your CSV matches the required structure to avoid parsing errors. The system uses column headers to map data.
@@ -222,7 +222,7 @@ export default function BatchUploadPage() {
               <div className="space-y-4 mb-8">
                 <div>
                   <div className="text-xs font-semibold uppercase tracking-widest text-foreground mb-2">Required Columns</div>
-                  <ul className="text-sm text-text-muted space-y-2 font-mono bg-white p-4 rounded border border-border-subtle">
+                  <ul className="text-sm text-text-muted space-y-2 font-mono bg-surface-main p-4 rounded border border-border-subtle">
                     <li>matric_number</li>
                     <li>student_name</li>
                     <li>department</li>
@@ -232,7 +232,7 @@ export default function BatchUploadPage() {
                 </div>
                 <div>
                   <div className="text-xs font-semibold uppercase tracking-widest text-foreground mb-2 mt-6">Optional Columns</div>
-                  <ul className="text-sm text-text-muted space-y-2 font-mono bg-white p-4 rounded border border-border-subtle">
+                  <ul className="text-sm text-text-muted space-y-2 font-mono bg-surface-main p-4 rounded border border-border-subtle">
                     <li>parent_phone</li>
                     <li>parent_email</li>
                     <li>score</li>
@@ -240,7 +240,7 @@ export default function BatchUploadPage() {
                 </div>
               </div>
 
-              <button className="flex w-full items-center justify-center gap-2 rounded border border-border-subtle bg-white px-4 py-2.5 text-sm font-medium text-foreground hover:bg-surface-subtle transition-colors">
+              <button className="flex w-full items-center justify-center gap-2 rounded border border-border-subtle bg-surface-main px-4 py-2.5 text-sm font-medium text-foreground hover:bg-surface-subtle transition-colors">
                 <Download className="h-4 w-4" />
                 Download Template
               </button>

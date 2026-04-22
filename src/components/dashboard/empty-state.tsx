@@ -9,7 +9,7 @@ type EmptyStateProps = {
 
 export function EmptyState({ title, description, ctaLabel, ctaHref }: EmptyStateProps) {
     return (
-        <div className="rounded-3xl border border-dashed border-(--color-border) bg-surface-subtle p-8 text-center">
+        <div className="rounded-3xl border border-dashed border-border-subtle bg-surface-subtle p-8 text-center">
             <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-white text-2xl text-brand shadow-sm">
                 â€¢
             </div>

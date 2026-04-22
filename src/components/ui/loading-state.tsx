@@ -10,7 +10,7 @@ type LoadingStateProps = {
 export function LoadingState({ title = "Loading...", rows = 5 }: LoadingStateProps) {
     return (
         <div className="dashboard-root min-h-[50vh] p-6 md:p-8">
-            <div className="mx-auto w-full max-w-[1200px] space-y-5">
+            <div className="mx-auto w-full max-w-300 space-y-5">
                 <div className="h-7 w-60 rounded-md skeleton" aria-hidden="true" />
                 <p className="text-sm text-text-muted">{title}</p>
 

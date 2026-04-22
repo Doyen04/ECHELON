@@ -105,7 +105,7 @@ export default function BatchUploadPage() {
               {!file ? (
                 <div 
                   className={`relative flex flex-col items-center justify-center rounded-xl p-12 text-center transition-all duration-200
-                    ${isDragOver ? "border-solid border-2 border-[var(--color-accent)] bg-brand/5" : "border-dashed border-2 border-border-subtle bg-surface-subtle/30 hover:bg-surface-subtle/60"}
+                    ${isDragOver ? "border-solid border-2 border-brand bg-brand/5" : "border-dashed border-2 border-border-subtle bg-surface-subtle/30 hover:bg-surface-subtle/60"}
                   `}
                   onDragOver={handleDragOver}
                   onDragLeave={handleDragLeave}
@@ -124,7 +124,7 @@ export default function BatchUploadPage() {
                   </div>
                 </div>
               ) : (
-                <div className="flex items-center justify-between rounded-lg border border-[var(--color-accent)]/30 bg-brand/5 p-4">
+                <div className="flex items-center justify-between rounded-lg border border-brand/30 bg-brand/5 p-4">
                   <div className="flex items-center gap-4">
                     <div className="rounded bg-brand/10 p-2 text-brand">
                       <FileType className="h-6 w-6" />
@@ -162,7 +162,7 @@ export default function BatchUploadPage() {
                   </div>
                   
                   {/* Duplicate warning */}
-                  <div className="rounded-lg border border-[var(--color-warning)]/40 bg-status-warning/10 p-4 flex gap-3 text-status-warning mb-6">
+                  <div className="rounded-lg border border-status-warning/40 bg-status-warning/10 p-4 flex gap-3 text-status-warning mb-6">
                     <AlertTriangle className="h-5 w-5 shrink-0 mt-0.5" />
                     <p className="text-sm">
                       <span className="font-semibold block mb-1">A batch for this session already exists.</span>
@@ -212,7 +212,7 @@ export default function BatchUploadPage() {
           </div>
 
           {/* Right format guide 35% */}
-          <div className="lg:w-fit lg:min-w-[340px]">
+          <div className="lg:w-fit lg:min-w-85">
             <div className="sticky top-24 rounded-xl border border-border-subtle bg-[#faf9f7] p-6 shadow-sm">
               <h3 className="font-serif text-lg text-foreground mb-4">Format Guide</h3>
               <p className="text-sm text-text-muted mb-6">

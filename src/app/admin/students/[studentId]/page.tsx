@@ -21,13 +21,13 @@ export default function StudentRecordPage() {
   };
 
   return (
-    <div className="flex flex-col h-full overflow-y-auto w-full bg-[var(--color-bg)] dashboard-root">
+    <div className="flex flex-col h-full overflow-y-auto w-full bg-background dashboard-root">
       <PageHeader 
         title={
           <div className="flex flex-col">
-            <span className="font-serif text-2xl text-[var(--color-text-primary)]">Adeyemi, John Ola</span>
-            <div className="flex items-center gap-2 mt-1 text-sm font-sans tracking-normal font-normal text-[var(--color-text-muted)]">
-              <span className="font-mono text-[var(--color-text-secondary)]">CSC/2021/001</span>
+            <span className="font-serif text-2xl text-foreground">Adeyemi, John Ola</span>
+            <div className="flex items-center gap-2 mt-1 text-sm font-sans tracking-normal font-normal text-text-muted">
+              <span className="font-mono text-text-muted">CSC/2021/001</span>
               <span>·</span>
               <span>Computer Science</span>
               <span>·</span>
@@ -36,46 +36,46 @@ export default function StudentRecordPage() {
           </div>
         }
         action={
-          <button className="inline-flex items-center gap-2 rounded-md border border-[var(--color-border)] bg-white px-4 py-2 text-sm font-medium text-[var(--color-text-primary)] shadow-sm hover:bg-[var(--color-surface-2)] transition-colors">
+          <button className="inline-flex items-center gap-2 rounded-md border border-border-subtle bg-surface-main px-4 py-2 text-sm font-medium text-foreground shadow-sm hover:bg-surface-subtle transition-colors">
             <UserCog className="h-4 w-4" />
             Edit Contacts
           </button>
         }
       />
 
-      <div className="p-6 md:p-8 space-y-6 max-w-[1600px] w-full mx-auto pb-24">
+      <div className="p-6 md:p-8 space-y-6 max-w-400 w-full mx-auto pb-24">
         <div className="flex flex-col lg:flex-row gap-8">
           
           {/* Result History (65%) */}
           <div className="flex-1 lg:max-w-[65%] space-y-6 dashboard-section">
-            <h2 className="text-sm font-semibold uppercase tracking-widest text-[var(--color-text-muted)] border-b border-[var(--color-border)] pb-2 flex items-center justify-between">
+            <h2 className="text-sm font-semibold uppercase tracking-widest text-text-muted border-b border-border-subtle pb-2 flex items-center justify-between">
               Result History
-              <span className="text-xs font-medium bg-[var(--color-surface-2)] py-0.5 px-2 rounded-full text-[var(--color-text-secondary)]">3 semesters</span>
+              <span className="text-xs font-medium bg-surface-subtle py-0.5 px-2 rounded-full text-text-muted">3 semesters</span>
             </h2>
 
             <div className="space-y-4">
               {mockHistory.map((hist, idx) => {
                 const isExpanded = expandedSessions.has(hist.id);
                 return (
-                  <div key={hist.id} className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-sm overflow-hidden" style={{animationDelay: `${idx * 100}ms`}}>
+                  <div key={hist.id} className="rounded-xl border border-border-subtle bg-surface-main shadow-sm overflow-hidden" style={{animationDelay: `${idx * 100}ms`}}>
                     <button 
                       onClick={() => toggleSession(hist.id)}
-                      className="w-full flex items-center justify-between p-5 hover:bg-[var(--color-surface-2)]/40 transition-colors text-left"
+                      className="w-full flex items-center justify-between p-5 hover:bg-surface-subtle/40 transition-colors text-left"
                     >
                       <div className="flex items-center gap-6">
                         <div className="flex items-center gap-2">
-                          <div className={`p-1 rounded text-[var(--color-text-muted)] ${isExpanded ? 'bg-[var(--color-surface-2)]' : ''}`}>
+                          <div className={`p-1 rounded text-text-muted ${isExpanded ? 'bg-surface-subtle' : ''}`}>
                             {isExpanded ? <ChevronDown className="h-5 w-5" /> : <ChevronRight className="h-5 w-5" />}
                           </div>
                           <div>
-                            <div className="font-medium text-[var(--color-text-primary)]">{hist.session}</div>
-                            <div className="text-sm text-[var(--color-text-muted)]">{hist.semester}</div>
+                            <div className="font-medium text-foreground">{hist.session}</div>
+                            <div className="text-sm text-text-muted">{hist.semester}</div>
                           </div>
                         </div>
-                        <div className="hidden sm:block w-px h-8 bg-[var(--color-border)]"></div>
+                        <div className="hidden sm:block w-px h-8 bg-border-subtle"></div>
                         <div className="hidden sm:block">
-                          <div className="text-sm text-[var(--color-text-muted)]">GPA</div>
-                          <div className="font-medium text-[var(--color-text-primary)]">{hist.gpa}</div>
+                          <div className="text-sm text-text-muted">GPA</div>
+                          <div className="font-medium text-foreground">{hist.gpa}</div>
                         </div>
                       </div>
                       <div className="flex items-center gap-4">
@@ -84,32 +84,32 @@ export default function StudentRecordPage() {
                     </button>
                     
                     {isExpanded && (
-                      <div className="border-t border-[var(--color-border)] page-transition-enter">
-                        <div className="bg-[var(--color-surface-2)]/30 px-6 py-4">
+                      <div className="border-t border-border-subtle page-transition-enter">
+                        <div className="bg-surface-subtle/30 px-6 py-4">
                            <div className="flex justify-between items-end mb-3">
-                             <h4 className="text-xs font-semibold uppercase tracking-widest text-[var(--color-text-muted)]">Course Breakdown</h4>
+                             <h4 className="text-xs font-semibold uppercase tracking-widest text-text-muted">Course Breakdown</h4>
                              {hist.status === 'approved' && (
-                               <Link href={`/results/view?token=mock_token_${hist.id}`} target="_blank" className="text-xs font-medium text-[var(--color-accent)] hover:underline">
+                               <Link href={`/results/view?token=mock_token_${hist.id}`} target="_blank" className="text-xs font-medium text-brand hover:underline">
                                  View Parent Portal Render →
                                </Link>
                              )}
                            </div>
-                           <table className="min-w-full divide-y divide-[var(--color-border)] bg-white border border-[var(--color-border)] rounded overflow-hidden">
-                             <thead className="bg-[var(--color-surface-2)]/50">
+                           <table className="min-w-full divide-y divide-border-subtle bg-surface-main border border-border-subtle rounded overflow-hidden">
+                             <thead className="bg-surface-subtle/50">
                                <tr>
-                                 <th className="px-4 py-2 text-left text-xs font-medium text-[var(--color-text-muted)] w-24">Code</th>
-                                 <th className="px-4 py-2 text-left text-xs font-medium text-[var(--color-text-muted)]">Title</th>
-                                 <th className="px-4 py-2 text-left text-xs font-medium text-[var(--color-text-muted)] w-16">Units</th>
-                                 <th className="px-4 py-2 text-left text-xs font-medium text-[var(--color-text-muted)] w-16">Grade</th>
+                                 <th className="px-4 py-2 text-left text-xs font-medium text-text-muted w-24">Code</th>
+                                 <th className="px-4 py-2 text-left text-xs font-medium text-text-muted">Title</th>
+                                 <th className="px-4 py-2 text-left text-xs font-medium text-text-muted w-16">Units</th>
+                                 <th className="px-4 py-2 text-left text-xs font-medium text-text-muted w-16">Grade</th>
                                </tr>
                              </thead>
-                             <tbody className="divide-y divide-[var(--color-border)]">
+                             <tbody className="divide-y divide-border-subtle">
                                {hist.courses.map(course => (
-                                 <tr key={course.code} className="hover:bg-[var(--color-surface-2)]/20">
-                                   <td className="px-4 py-2 text-sm font-mono text-[var(--color-text-secondary)]">{course.code}</td>
-                                   <td className="px-4 py-2 text-sm text-[var(--color-text-primary)]">{course.title}</td>
-                                   <td className="px-4 py-2 text-sm text-[var(--color-text-primary)]">{course.units}</td>
-                                   <td className="px-4 py-2 text-sm font-medium text-[var(--color-text-primary)]">{course.grade}</td>
+                                 <tr key={course.code} className="hover:bg-surface-subtle/20">
+                                   <td className="px-4 py-2 text-sm font-mono text-text-muted">{course.code}</td>
+                                   <td className="px-4 py-2 text-sm text-foreground">{course.title}</td>
+                                   <td className="px-4 py-2 text-sm text-foreground">{course.units}</td>
+                                   <td className="px-4 py-2 text-sm font-medium text-foreground">{course.grade}</td>
                                  </tr>
                                ))}
                              </tbody>
@@ -124,75 +124,75 @@ export default function StudentRecordPage() {
           </div>
 
           {/* Guardian Contacts (35%) */}
-          <div className="lg:w-fit lg:min-w-[360px] space-y-6 dashboard-section" style={{animationDelay: '150ms'}}>
-            <h2 className="text-sm font-semibold uppercase tracking-widest text-[var(--color-text-muted)] border-b border-[var(--color-border)] pb-2 flex items-center justify-between">
+          <div className="lg:w-fit lg:min-w-90 space-y-6 dashboard-section" style={{animationDelay: '150ms'}}>
+            <h2 className="text-sm font-semibold uppercase tracking-widest text-text-muted border-b border-border-subtle pb-2 flex items-center justify-between">
               Guardian Contacts
-              <span className="text-xs font-medium bg-[var(--color-surface-2)] py-0.5 px-2 rounded-full text-[var(--color-text-secondary)]">2 assigned</span>
+              <span className="text-xs font-medium bg-surface-subtle py-0.5 px-2 rounded-full text-text-muted">2 assigned</span>
             </h2>
 
             <div className="space-y-4">
-              <div className="rounded-xl border border-[var(--color-border)] bg-white p-5 shadow-sm">
+              <div className="rounded-xl border border-border-subtle bg-surface-main p-5 shadow-sm">
                 <div className="flex justify-between items-start mb-4">
                   <div>
-                    <h3 className="font-serif text-lg text-[var(--color-text-primary)]">Mrs. Folake Adeyemi</h3>
-                    <p className="text-sm text-[var(--color-text-muted)]">Mother · Primary Contact</p>
+                    <h3 className="font-serif text-lg text-foreground">Mrs. Folake Adeyemi</h3>
+                    <p className="text-sm text-text-muted">Mother · Primary Contact</p>
                   </div>
                 </div>
 
                 <div className="space-y-3 mb-5">
                   <div className="flex items-center gap-3 text-sm">
-                    <Phone className="h-4 w-4 text-[var(--color-text-muted)]" />
-                    <span className="text-[var(--color-text-primary)] font-mono">+234 801 234 5678</span>
+                    <Phone className="h-4 w-4 text-text-muted" />
+                    <span className="text-foreground font-mono">+234 801 234 5678</span>
                     <span className="bg-green-100 text-green-800 text-[10px] px-1.5 py-0.5 rounded uppercase font-semibold ml-auto flex items-center gap-1">
                       <div className="w-1.5 h-1.5 rounded-full bg-green-500"></div> WhatsApp
                     </span>
                   </div>
                   <div className="flex items-center gap-3 text-sm">
-                    <Mail className="h-4 w-4 text-[var(--color-text-muted)]" />
-                    <span className="text-[var(--color-text-primary)] font-mono">folake@gmail.com</span>
+                      <Mail className="h-4 w-4 text-text-muted" />
+                      <span className="text-foreground font-mono">folake@gmail.com</span>
                   </div>
                 </div>
                 
-                <div className="pt-3 border-t border-[var(--color-border)]">
+                <div className="pt-3 border-t border-border-subtle">
                   <div className="flex items-center gap-2 text-sm">
                     NDPR Consent:
-                    <div className="flex items-center gap-1 text-[var(--color-success)] font-medium bg-[var(--color-success)]/10 px-2 py-0.5 rounded">
+                    <div className="flex items-center gap-1 text-status-success font-medium bg-status-success/10 px-2 py-0.5 rounded">
                       <CheckCircle2 className="h-4 w-4" /> Valid (12 Aug 2021)
                     </div>
                   </div>
                 </div>
               </div>
 
-              <div className="rounded-xl border border-[var(--color-border)] bg-white p-5 shadow-sm">
+              <div className="rounded-xl border border-border-subtle bg-surface-main p-5 shadow-sm">
                 <div className="flex justify-between items-start mb-4">
                   <div>
-                    <h3 className="font-serif text-lg text-[var(--color-text-primary)]">Mr. Tunde Adeyemi</h3>
-                    <p className="text-sm text-[var(--color-text-muted)]">Father · Secondary Contact</p>
+                    <h3 className="font-serif text-lg text-foreground">Mr. Tunde Adeyemi</h3>
+                    <p className="text-sm text-text-muted">Father · Secondary Contact</p>
                   </div>
                 </div>
 
                 <div className="space-y-3 mb-5">
                   <div className="flex items-center gap-3 text-sm">
-                    <Phone className="h-4 w-4 text-[var(--color-text-muted)]" />
-                    <span className="text-[var(--color-text-primary)] font-mono">+234 802 345 6789</span>
+                    <Phone className="h-4 w-4 text-text-muted" />
+                    <span className="text-foreground font-mono">+234 802 345 6789</span>
                   </div>
-                   <div className="flex items-center gap-3 text-sm text-[var(--color-warning)]">
-                    <Mail className="h-4 w-4" />
+                   <div className="flex items-center gap-3 text-sm text-status-warning">
+                     <Mail className="h-4 w-4" />
                     <span className="italic">No email provided</span>
                   </div>
                 </div>
                 
-                <div className="pt-3 border-t border-[var(--color-border)]">
+                <div className="pt-3 border-t border-border-subtle">
                   <div className="flex items-center gap-2 text-sm">
                     NDPR Consent:
-                    <div className="flex items-center gap-1 text-[var(--color-danger)] font-medium bg-[var(--color-danger)]/10 px-2 py-0.5 rounded">
+                    <div className="flex items-center gap-1 text-status-danger font-medium bg-status-danger/10 px-2 py-0.5 rounded">
                       <XCircle className="h-4 w-4" /> Missing
                     </div>
                   </div>
                 </div>
               </div>
 
-              <button className="w-full flex items-center justify-center gap-2 rounded border border-[var(--color-border)] border-dashed bg-[var(--color-surface-2)]/30 px-4 py-3 text-sm font-medium text-[var(--color-text-muted)] hover:bg-[var(--color-surface-2)] hover:text-[var(--color-text-primary)] transition-colors">
+              <button className="w-full flex items-center justify-center gap-2 rounded border border-border-subtle border-dashed bg-surface-subtle/30 px-4 py-3 text-sm font-medium text-text-muted hover:bg-surface-subtle hover:text-foreground transition-colors">
                 <Plus className="h-4 w-4" />
                 Add Guardian
               </button>
