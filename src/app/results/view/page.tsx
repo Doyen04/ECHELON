@@ -21,7 +21,7 @@ export default function PublicResultViewPage() {
     <div className="min-h-screen bg-background font-sans text-foreground">
       {/* Header */}
       <header className="bg-brand px-4 py-6 border-b-4 border-brand-hover">
-        <div className="max-w-[680px] mx-auto flex items-center justify-center gap-3 page-transition-enter">
+        <div className="max-w-170 mx-auto flex items-center justify-center gap-3 page-transition-enter">
           <div className="flex h-10 w-10 items-center justify-center rounded bg-white/10 shrink-0">
             <Building2 className="h-6 w-6 text-white" />
           </div>
@@ -32,7 +32,7 @@ export default function PublicResultViewPage() {
       </header>
 
       {/* Main Content */}
-      <main className="max-w-[680px] mx-auto p-4 sm:p-6 md:p-8 space-y-6 pb-20">
+      <main className="max-w-170 mx-auto p-4 sm:p-6 md:p-8 space-y-6 pb-20">
         
         {/* Identity Block */}
         <div className="text-center space-y-2 py-4 page-transition-enter" style={{animationDelay: '50ms'}}>
@@ -133,13 +133,11 @@ function ErrorState({ type }: { type: 'expired' | 'not_found' }) {
   return (
     <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4">
         <div className="max-w-md w-full rounded-2xl border border-border-subtle bg-surface-main p-8 text-center shadow-xl page-transition-enter">
-          <div className="mx-auto w-16 h-16 rounded-full bg-status-danger-soft flex items-center justify-center mb-6">
+          <div className="mx-auto w-16 h-16 rounded-full bg-status-danger/10 flex items-center justify-center mb-6">
             {type === 'expired' ? <AlertCircle className="h-8 w-8 text-status-danger" /> : <XCircle className="h-8 w-8 text-status-danger" />}
           </div>
           
-          <h1 className="font-serif text-2xl text-foreground mb-2">
-            {type === 'expired' ? "This result link has expired" : "Invalid result link"}
-          </h1>
+          <h1 className="font-serif text-2xl text-foreground mb-2">{type === 'expired' ? 'Link Expired' : 'Not Found'}</h1>
           
           <p className="text-text-muted text-sm mb-8">
             {type === 'expired' 
