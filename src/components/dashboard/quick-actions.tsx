@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 import { SectionFrame } from "./section-frame";
 
 type ActionItem = {
@@ -49,12 +51,12 @@ export function QuickActions() {
                     >
                         <h3 className="text-sm font-semibold text-foreground">{item.title}</h3>
                         <p className="mt-2 text-sm text-(--text-secondary)">{item.detail}</p>
-                        <a
+                        <Link
                             href={item.href}
                             className="mt-4 inline-flex rounded-lg border border-(--border-strong) px-3 py-2 text-xs font-semibold text-foreground transition hover:bg-(--surface-muted)"
                         >
                             {item.cta}
-                        </a>
+                        </Link>
                     </article>
                 ))}
 

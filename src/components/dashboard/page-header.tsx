@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 export function PageHeader() {
     return (
         <header className="dashboard-header relative overflow-hidden rounded-3xl border border-(--border-strong) bg-[linear-gradient(135deg,var(--hero-deep),var(--hero-mid)_52%,var(--hero-accent))] px-6 py-7 text-(--hero-text) shadow-[0_25px_60px_-30px_rgba(2,23,23,0.75)] md:px-8 md:py-9">
@@ -19,18 +21,18 @@ export function PageHeader() {
                 </div>
 
                 <div className="grid gap-3 sm:grid-cols-2">
-                    <a
+                    <Link
                         className="rounded-xl border border-white/25 bg-white/10 px-4 py-3 text-sm font-medium text-white backdrop-blur transition hover:bg-white/20"
                         href="/admin/batches/upload"
                     >
                         Upload New Batch
-                    </a>
-                    <a
+                    </Link>
+                    <Link
                         className="rounded-xl border border-amber-200/45 bg-amber-200/15 px-4 py-3 text-sm font-medium text-amber-100 transition hover:bg-amber-200/25"
                         href="/admin/batches"
                     >
                         Send Approved Results
-                    </a>
+                    </Link>
                     <div className="rounded-xl border border-white/20 bg-black/20 px-4 py-3 text-xs text-(--hero-subtle) sm:col-span-2">
                         Last SIS sync: 4 mins ago • Next cron pull: 6:00 AM
                     </div>

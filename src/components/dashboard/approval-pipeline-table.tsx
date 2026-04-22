@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 import type { ApprovalBatch } from "@/lib/dashboard-data";
 
 import { SectionFrame } from "./section-frame";
@@ -18,12 +20,12 @@ export function ApprovalPipelineTable({ batches }: { batches: ApprovalBatch[] })
             title="Result Approval Pipeline"
             description="Pending batches by department with contact readiness indicators"
             action={
-                <a
+                <Link
                     href="/admin/approvals"
                     className="rounded-lg border border-(--border-subtle) px-3 py-2 text-xs font-medium text-(--text-secondary) transition hover:border-(--border-strong) hover:text-foreground"
                 >
                     Open Approvals Queue
-                </a>
+                </Link>
             }
         >
             <div className="overflow-x-auto">

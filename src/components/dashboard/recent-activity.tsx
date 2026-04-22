@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 import type { ActivityLog } from "@/lib/dashboard-data";
 
 import { SectionFrame } from "./section-frame";
@@ -8,12 +10,12 @@ export function RecentActivity({ events }: { events: ActivityLog[] }) {
             title="Recent Activity"
             description="Immutable actions across approval, dispatch, and compliance"
             action={
-                <a
+                <Link
                     href="/admin/audit"
                     className="rounded-lg border border-(--border-subtle) px-3 py-2 text-xs font-medium text-(--text-secondary) transition hover:border-(--border-strong) hover:text-foreground"
                 >
                     View Audit Log
-                </a>
+                </Link>
             }
         >
             <ol className="space-y-3">

@@ -22,10 +22,10 @@ export default async function AdminLayout({ children }: AdminLayoutProps) {
     const session = await requireSuperAdminSession();
 
     return (
-        <div className="min-h-screen bg-background text-foreground">
-            <div className="mx-auto grid min-h-screen w-full max-w-400 grid-cols-1 lg:grid-cols-[260px_1fr]">
-                <aside className="border-b border-(--border-subtle) bg-(--surface-strong) lg:border-b-0 lg:border-r">
-                    <div className="flex h-full flex-col p-5">
+        <div className="h-screen bg-background text-foreground">
+            <div className="mx-auto grid h-full w-full max-w-400 grid-cols-1 overflow-hidden lg:grid-cols-[260px_1fr]">
+                <aside className="border-b border-(--border-subtle) bg-(--surface-strong) lg:sticky lg:top-0 lg:h-screen lg:border-b-0 lg:border-r lg:overflow-y-auto">
+                    <div className="flex h-full min-h-0 flex-col p-5">
                         <div>
                             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-(--text-muted)">
                                 Result System
@@ -64,7 +64,7 @@ export default async function AdminLayout({ children }: AdminLayoutProps) {
                     </div>
                 </aside>
 
-                <div className="min-w-0">
+                <div className="min-w-0 overflow-y-auto">
                     <header className="sticky top-0 z-10 border-b border-(--border-subtle) bg-background px-4 py-3 sm:px-6 lg:px-8">
                         <div className="flex flex-wrap items-center justify-between gap-3">
                             <div>
@@ -79,7 +79,7 @@ export default async function AdminLayout({ children }: AdminLayoutProps) {
                         </div>
                     </header>
 
-                    <div>{children}</div>
+                    <div className="min-h-[calc(100vh-76px)]">{children}</div>
                 </div>
             </div>
         </div>

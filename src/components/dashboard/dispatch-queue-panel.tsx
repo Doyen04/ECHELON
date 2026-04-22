@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 import type { DispatchQueueEntry, DispatchStatus } from "@/lib/dashboard-data";
 
 import { SectionFrame } from "./section-frame";
@@ -29,12 +31,12 @@ export function DispatchQueuePanel({ queue }: { queue: DispatchQueueEntry[] }) {
             title="Dispatch Queue"
             description="QStash jobs processing approved result batches"
             action={
-                <a
+                <Link
                     href="/admin/delivery"
                     className="rounded-lg border border-(--border-subtle) px-3 py-2 text-xs font-medium text-(--text-secondary) transition hover:border-(--border-strong) hover:text-foreground"
                 >
                     Open Delivery Logs
-                </a>
+                </Link>
             }
         >
             <div className="space-y-4">
