@@ -71,22 +71,25 @@ function initials(name?: string | null, email?: string | null) {
 export function AdminSidebar({ email, name, role }: AdminSidebarProps) {
     const pathname = usePathname();
     const userInitials = initials(name, email);
-    const { isCollapsed, toggleSidebar } = useSidebar();
+    const { isCollapsed, toggleSidebar, isMobileOpen, closeMobileMenu } = useSidebar();
 
     const roleLabel = role === "super_admin" ? "Super Admin" : role;
 
     return (
         <aside
-            className={`fixed inset-y-0 left-0 z-30 hidden overflow-hidden border-r border-white/10 bg-brand text-white transition-[width] duration-300 ease-out md:flex ${isCollapsed ? "w-16" : "w-60"
-                }`}
+            className={`fixed inset-y-0 left-0 z-50 overflow-hidden border-r border-white/10 bg-brand text-white transition-all duration-300 ease-out 
+                ${isMobileOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"}
+                ${isCollapsed ? "md:w-16" : "md:w-60"}
+                w-60
+            `}
         >
             <div className="flex h-full w-full flex-col px-3 py-4">
-                <div className={`flex h-16 items-center gap-3 px-2 ${isCollapsed ? "justify-center" : "justify-start"}`}>
-                    <div className="flex h-11 w-11 items-center justify-center rounded-2xl border border-white/20 bg-white/12 text-sm font-semibold text-white">
+                <div className={`flex gap-3 px-2 transition-all duration-300 ${isCollapsed ? "flex-col items-center py-2" : "h-16 items-center justify-start"}`}>
+                    <div className={`flex shrink-0 items-center justify-center rounded-2xl border border-white/20 bg-white/12 font-semibold text-white transition-all duration-300 ${isCollapsed ? "h-10 w-10 text-xs" : "h-11 w-11 text-sm child:text-lg"}`}>
                         RN
                     </div>
                     <div
-                        className={`min-w-0 transition-all duration-200 ${isCollapsed ? "w-0 opacity-0 pointer-events-none" : "w-auto opacity-100"
+                        className={`min-w-0 transition-all duration-200 ${isCollapsed ? "h-0 w-0 opacity-0 pointer-events-none overflow-hidden" : "w-auto opacity-100"
                             }`}
                     >
                         <p className="text-[10px] uppercase tracking-[0.28em] text-white/45">Institution</p>
@@ -95,12 +98,20 @@ export function AdminSidebar({ email, name, role }: AdminSidebarProps) {
                     <button
                         type="button"
                         onClick={toggleSidebar}
-                        className={`ml-auto inline-flex h-8 w-8 items-center justify-center rounded-lg text-white/75 transition hover:bg-white/10 hover:text-white ${isCollapsed ? "ml-0" : ""
+                        className={`inline-flex items-center justify-center rounded-lg text-white/75 transition hover:bg-white/10 hover:text-white ${isCollapsed ? "h-8 w-8 mt-2" : "ml-auto h-8 w-8"
                             }`}
                         aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
                         title={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
                     >
                         <Menu className="h-4 w-4" />
+                    </button>
+                    
+                    {/* Close Mobile Menu Button */}
+                    <button 
+                        onClick={closeMobileMenu}
+                        className="absolute top-4 right-4 md:hidden text-white/50 hover:text-white"
+                    >
+                        <ChevronRight className="h-5 w-5 rotate-180" />
                     </button>
                 </div>
 
@@ -124,6 +135,7 @@ export function AdminSidebar({ email, name, role }: AdminSidebarProps) {
                                             <Link
                                                 key={item.href}
                                                 href={item.href}
+                                                onClick={closeMobileMenu}
                                                 className={`flex h-10 items-center rounded-xl border border-transparent px-3 text-sm transition ${isCollapsed ? "justify-center" : "gap-3"
                                                     } ${active
                                                         ? "border-white/15 bg-white/15 text-white"

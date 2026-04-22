@@ -5,6 +5,9 @@ import React, { createContext, useContext, useState, useEffect } from "react";
 type SidebarContextType = {
   isCollapsed: boolean;
   toggleSidebar: () => void;
+  isMobileOpen: boolean;
+  toggleMobileMenu: () => void;
+  closeMobileMenu: () => void;
 };
 
 const SidebarContext = createContext<SidebarContextType | undefined>(undefined);
@@ -12,6 +15,7 @@ const SidebarContext = createContext<SidebarContextType | undefined>(undefined);
 export function SidebarProvider({ children }: { children: React.ReactNode }) {
   // Default to expanded for large screens, collapsed for medium
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isMobileOpen, setIsMobileOpen] = useState(false);
 
   // Sync with localStorage if available
   useEffect(() => {
@@ -24,6 +28,16 @@ export function SidebarProvider({ children }: { children: React.ReactNode }) {
         setIsCollapsed(true);
       }
     }
+
+    // Handle screen resize to close mobile menu if it transitions to desktop
+    const handleResize = () => {
+      if (window.innerWidth >= 768) {
+        setIsMobileOpen(false);
+      }
+    };
+
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
   }, []);
 
   const toggleSidebar = () => {
@@ -34,8 +48,19 @@ export function SidebarProvider({ children }: { children: React.ReactNode }) {
     });
   };
 
+  const toggleMobileMenu = () => setIsMobileOpen(prev => !prev);
+  const closeMobileMenu = () => setIsMobileOpen(false);
+
   return (
-    <SidebarContext.Provider value={{ isCollapsed, toggleSidebar }}>
+    <SidebarContext.Provider
+      value={{
+        isCollapsed,
+        toggleSidebar,
+        isMobileOpen,
+        toggleMobileMenu,
+        closeMobileMenu
+      }}
+    >
       {children}
     </SidebarContext.Provider>
   );
