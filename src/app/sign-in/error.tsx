@@ -16,18 +16,3 @@ export default function SignInError({ reset }: SignInErrorProps) {
         />
     );
 }
-"use client";
-
-import { ErrorState } from "@/components/ui/state-panels";
-
-export default function SignInError({ reset }: { error: Error & { digest?: string }; reset: () => void }) {
-    return (
-        <ErrorState
-            title="Sign-in page failed to load"
-            description="The login screen could not finish rendering. Retry to continue or go back to the home page."
-            onRetry={reset}
-            ctaLabel="Home"
-            ctaHref="/"
-        />
-    );
-}
