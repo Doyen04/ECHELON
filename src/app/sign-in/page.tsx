@@ -76,7 +76,8 @@ export default function SignInPage() {
                 <input 
                   required
                   type="email"
-                  placeholder="admin@university.edu.ng"
+                  placeholder="registrar@echelon.edu.ng"
+                  autoComplete="email"
                   className="w-full h-11 border border-border-subtle rounded bg-white px-4 text-foreground focus:outline-none focus:ring-1 focus:border-brand focus:ring-brand transition-all shadow-sm"
                 />
               </div>
@@ -86,7 +87,8 @@ export default function SignInPage() {
                 <input 
                   required
                   type="password"
-                  placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢"
+                  placeholder="Enter your password"
+                  autoComplete="current-password"
                   className="w-full h-11 border border-border-subtle rounded bg-white px-4 text-foreground focus:outline-none focus:ring-1 focus:border-brand focus:ring-brand transition-all shadow-sm"
                 />
               </div>
