@@ -85,6 +85,17 @@ export function AdminSidebar({ email, name, role }: AdminSidebarProps) {
             `}
         >
             <div className="flex h-full w-full flex-col px-3 py-4">
+                {/* Absolute Toggle Button for Desktop */}
+                <button
+                    type="button"
+                    onClick={toggleSidebar}
+                    className="absolute -right-3 top-8 hidden h-6 w-6 items-center justify-center rounded-full border border-white/20 bg-brand text-white shadow-md hover:bg-white/10 hover:text-white transition-all duration-300 md:flex z-50 ring-2 ring-background"
+                    aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+                    title={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+                >
+                    <ChevronRight className={`h-3 w-3 transition-transform duration-300 ${isCollapsed ? "" : "rotate-180"}`} />
+                </button>
+
                 <div className={`flex gap-3 px-2 transition-all duration-300 group ${isCollapsed ? "flex-col items-center py-2" : "h-16 items-center justify-start"}`}>
                     {/* Stylized Logo for Echelon */}
                     <div className={`flex shrink-0 items-center justify-center rounded-2xl border border-white/25 bg-white/15 text-white shadow-xl transition-all duration-300 ${isCollapsed ? "h-10 w-10" : "h-11 w-11"}`}>
@@ -98,17 +109,6 @@ export function AdminSidebar({ email, name, role }: AdminSidebarProps) {
                         <h1 className="truncate font-serif text-xl tracking-tight text-white">Echelon Registry</h1>
                     </div>
                     
-                    <button
-                        type="button"
-                        onClick={toggleSidebar}
-                        className={`inline-flex items-center justify-center rounded-lg text-white/75 transition hover:bg-white/10 hover:text-white ${isCollapsed ? "h-8 w-8 mt-2" : "ml-auto h-8 w-8"
-                            }`}
-                        aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
-                        title={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
-                    >
-                        <Menu className="h-4 w-4" />
-                    </button>
-                    
                     {/* Close Mobile Menu Button */}
                     <button 
                         onClick={closeMobileMenu}
@@ -118,7 +118,7 @@ export function AdminSidebar({ email, name, role }: AdminSidebarProps) {
                     </button>
                 </div>
 
-                <div className="mt-3 border-t border-white/10 pt-3 flex-1 overflow-y-auto no-scrollbar">
+                <div className="mt-3 border-t border-white/10 pt-3 flex-1 overflow-y-auto overflow-x-hidden [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                     {(() => {
                         const allHrefs = navItems.flatMap(g => g.items.map(i => i.href));
                         return navItems.map((group) => (
