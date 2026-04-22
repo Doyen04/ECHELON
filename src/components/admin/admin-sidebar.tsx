@@ -77,9 +77,8 @@ export function AdminSidebar({ email, name, role }: AdminSidebarProps) {
 
     return (
         <aside
-            className={`fixed inset-y-0 left-0 z-30 hidden overflow-hidden border-r border-white/10 bg-brand text-white transition-[width] duration-300 ease-out md:flex ${
-                isCollapsed ? "w-16" : "w-60"
-            }`}
+            className={`fixed inset-y-0 left-0 z-30 hidden overflow-hidden border-r border-white/10 bg-brand text-white transition-[width] duration-300 ease-out md:flex ${isCollapsed ? "w-16" : "w-60"
+                }`}
         >
             <div className="flex h-full w-full flex-col px-3 py-4">
                 <div className={`flex h-16 items-center gap-3 px-2 ${isCollapsed ? "justify-center" : "justify-start"}`}>
@@ -87,9 +86,8 @@ export function AdminSidebar({ email, name, role }: AdminSidebarProps) {
                         RN
                     </div>
                     <div
-                        className={`min-w-0 transition-all duration-200 ${
-                            isCollapsed ? "w-0 opacity-0 pointer-events-none" : "w-auto opacity-100"
-                        }`}
+                        className={`min-w-0 transition-all duration-200 ${isCollapsed ? "w-0 opacity-0 pointer-events-none" : "w-auto opacity-100"
+                            }`}
                     >
                         <p className="text-[10px] uppercase tracking-[0.28em] text-white/45">Institution</p>
                         <h1 className="mt-0.5 truncate font-serif text-xl text-white">Echelon Registry</h1>
@@ -97,9 +95,8 @@ export function AdminSidebar({ email, name, role }: AdminSidebarProps) {
                     <button
                         type="button"
                         onClick={toggleSidebar}
-                        className={`ml-auto inline-flex h-8 w-8 items-center justify-center rounded-lg text-white/75 transition hover:bg-white/10 hover:text-white ${
-                            isCollapsed ? "ml-0" : ""
-                        }`}
+                        className={`ml-auto inline-flex h-8 w-8 items-center justify-center rounded-lg text-white/75 transition hover:bg-white/10 hover:text-white ${isCollapsed ? "ml-0" : ""
+                            }`}
                         aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
                         title={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
                     >
@@ -111,9 +108,8 @@ export function AdminSidebar({ email, name, role }: AdminSidebarProps) {
                     {navItems.map((group) => (
                         <div key={group.section} className="mb-3">
                             <p
-                                className={`px-2 text-[10px] uppercase tracking-[0.28em] text-white/40 transition-all duration-200 ${
-                                    isCollapsed ? "h-0 opacity-0 pointer-events-none" : "h-auto opacity-100"
-                                }`}
+                                className={`px-2 text-[10px] uppercase tracking-[0.28em] text-white/40 transition-all duration-200 ${isCollapsed ? "h-0 opacity-0 pointer-events-none" : "h-auto opacity-100"
+                                    }`}
                             >
                                 {group.section}
                             </p>
@@ -128,25 +124,22 @@ export function AdminSidebar({ email, name, role }: AdminSidebarProps) {
                                             <Link
                                                 key={item.href}
                                                 href={item.href}
-                                                className={`flex h-10 items-center rounded-xl border border-transparent px-3 text-sm transition ${
-                                                    isCollapsed ? "justify-center" : "gap-3"
-                                                } ${active
+                                                className={`flex h-10 items-center rounded-xl border border-transparent px-3 text-sm transition ${isCollapsed ? "justify-center" : "gap-3"
+                                                    } ${active
                                                         ? "border-white/15 bg-white/15 text-white"
                                                         : "text-white/70 hover:bg-white/10 hover:text-white"
                                                     }`}
                                             >
                                                 <Icon className="h-4 w-4 shrink-0" />
                                                 <span
-                                                    className={`min-w-0 truncate transition-all duration-200 ${
-                                                        isCollapsed ? "w-0 opacity-0 pointer-events-none" : "w-auto opacity-100"
-                                                    }`}
+                                                    className={`min-w-0 truncate transition-all duration-200 ${isCollapsed ? "w-0 opacity-0 pointer-events-none" : "w-auto opacity-100"
+                                                        }`}
                                                 >
                                                     {item.label}
                                                 </span>
                                                 <ChevronRight
-                                                    className={`ml-auto h-3.5 w-3.5 shrink-0 transition-opacity duration-200 ${
-                                                        isCollapsed ? "opacity-0" : "opacity-40"
-                                                    }`}
+                                                    className={`ml-auto h-3.5 w-3.5 shrink-0 transition-opacity duration-200 ${isCollapsed ? "opacity-0" : "opacity-40"
+                                                        }`}
                                                 />
                                             </Link>
                                         );
@@ -158,28 +151,42 @@ export function AdminSidebar({ email, name, role }: AdminSidebarProps) {
 
                 <div className="mt-auto px-1 pb-1">
                     <div className="rounded-3xl border border-white/10 bg-white/8 p-3 text-white/90 shadow-[0_12px_30px_-20px_rgba(0,0,0,0.45)]">
-                        <div className={`flex items-center gap-3 ${isCollapsed ? "justify-center" : "justify-between"}`}>
+                        <div
+                            className={`relative flex ${isCollapsed ? "flex-col items-center justify-center gap-2" : "items-center gap-3 justify-start"
+                                }`}
+                        >
                             <div className="flex min-w-0 items-center gap-3">
                                 <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/15 text-[11px] font-semibold text-white z-10 relative">
                                     {userInitials}
                                 </div>
                                 <div
-                                    className={`min-w-0 transition-all duration-200 ${
-                                        isCollapsed ? "w-0 opacity-0 pointer-events-none" : "w-auto opacity-100"
-                                    }`}
+                                    className={`min-w-0 pr-10 transition-all duration-200 ${isCollapsed ? "w-0 opacity-0 pointer-events-none" : "w-full opacity-100"
+                                        }`}
                                 >
-                                    <p className="truncate text-sm font-medium text-white pr-2">{name ?? email ?? "User"}</p>
-                                    <span className="mt-1 inline-flex rounded-full bg-[#B8860B] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-white">
+                                    <p className="truncate text-sm font-medium text-white">{name ?? email ?? "User"}</p>
+                                    <span className="mt-1 inline-flex whitespace-nowrap rounded-full bg-[#B8860B] px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.12em] text-white">
                                         {roleLabel}
                                     </span>
                                 </div>
                             </div>
-                            
-                            <div className={`shrink-0 transition-opacity duration-200 ${isCollapsed ? "hidden" : "opacity-100"}`}>
+
+                            <div
+                                className={`absolute right-0 top-1/2 -translate-y-1/2 shrink-0 pr-1 transition-opacity duration-200 ${isCollapsed ? "hidden" : "opacity-100"
+                                    }`}
+                            >
                                 <SignOutButton className="flex items-center justify-center h-8 w-8 rounded-full hover:bg-white/10 transition cursor-pointer text-white/70 hover:text-white" title="Log out">
                                     <LogOut className="h-4 w-4" />
                                 </SignOutButton>
                             </div>
+
+                            {isCollapsed ? (
+                                <SignOutButton
+                                    className="inline-flex h-8 w-8 items-center justify-center rounded-full text-white/70 transition hover:bg-white/10 hover:text-white"
+                                    title="Log out"
+                                >
+                                    <LogOut className="h-4 w-4" />
+                                </SignOutButton>
+                            ) : null}
                         </div>
                     </div>
                 </div>
