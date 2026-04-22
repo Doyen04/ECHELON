@@ -119,32 +119,39 @@ export function AdminSidebar({ email, name, role }: AdminSidebarProps) {
                 </div>
 
                 <div className="mt-3 border-t border-white/10 pt-3 flex-1 overflow-y-auto no-scrollbar">
-                    {navItems.map((group) => (
-                        <div key={group.section} className="mb-4">
-                            <p
-                                className={`px-2 mb-2 text-[10px] font-semibold uppercase tracking-[0.22em] text-white/35 transition-all duration-200 ${isCollapsed ? "opacity-0 h-0 pointer-events-none overflow-hidden" : "opacity-100 h-auto"
-                                    }`}
-                            >
-                                {group.section}
-                            </p>
-                            <div className="space-y-0.5">
-                                {group.items
-                                    .filter((item) => !item.roles || item.roles.includes(role))
-                                    .map((item) => {
-                                        const Icon = item.icon;
-                                        const active = pathname === item.href || pathname?.startsWith(`${item.href}/`);
+                    {(() => {
+                        const allHrefs = navItems.flatMap(g => g.items.map(i => i.href));
+                        return navItems.map((group) => (
+                            <div key={group.section} className="mb-4">
+                                <p
+                                    className={`px-2 mb-2 text-[10px] font-semibold uppercase tracking-[0.22em] text-white/35 transition-all duration-200 ${isCollapsed ? "opacity-0 h-0 pointer-events-none overflow-hidden" : "opacity-100 h-auto"
+                                        }`}
+                                >
+                                    {group.section}
+                                </p>
+                                <div className="space-y-0.5">
+                                    {group.items
+                                        .filter((item) => !item.roles || item.roles.includes(role))
+                                        .map((item) => {
+                                            const Icon = item.icon;
+                                            
+                                            // 1. Exact match always wins
+                                            // 2. Partial match (startsWith) only applies if no other item has an exact match
+                                            const isExactMatch = pathname === item.href;
+                                            const isPartialMatch = pathname?.startsWith(`${item.href}/`) && !allHrefs.includes(pathname || "");
+                                            const active = isExactMatch || isPartialMatch;
 
-                                        return (
-                                            <Link
-                                                key={item.href}
-                                                href={item.href}
-                                                onClick={closeMobileMenu}
-                                                className={`flex h-11 items-center rounded-xl border border-transparent px-3 text-sm transition-all duration-200 relative group/link ${isCollapsed ? "justify-center" : "gap-3"
-                                                    } ${active
-                                                        ? "border-white/10 bg-white/12 text-white shadow-sm"
-                                                        : "text-white/60 hover:bg-white/5 hover:text-white"
-                                                    }`}
-                                            >
+                                            return (
+                                                <Link
+                                                    key={item.href}
+                                                    href={item.href}
+                                                    onClick={closeMobileMenu}
+                                                    className={`flex h-11 items-center rounded-xl border border-transparent px-3 text-sm transition-all duration-200 relative group/link ${isCollapsed ? "justify-center" : "gap-3"
+                                                        } ${active
+                                                            ? "border-white/10 bg-white/12 text-white shadow-sm"
+                                                            : "text-white/60 hover:bg-white/5 hover:text-white"
+                                                        }`}
+                                                >
                                                 <Icon className={`h-5 w-5 shrink-0 transition-transform group-hover/link:scale-110 ${active ? "text-white" : "text-white/70"}`} />
                                                 <span
                                                     className={`min-w-0 truncate font-medium transition-all duration-300 ${isCollapsed ? "w-0 opacity-0 pointer-events-none" : "w-auto opacity-100"
@@ -158,9 +165,10 @@ export function AdminSidebar({ email, name, role }: AdminSidebarProps) {
                                             </Link>
                                         );
                                     })}
+                                </div>
                             </div>
-                        </div>
-                    ))}
+                        ));
+                    })()}
                 </div>
 
                 <div className="mt-auto pt-4 px-1 pb-1">
