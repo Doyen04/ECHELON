@@ -1,122 +1,139 @@
-import type { Metadata } from "next";
+import React from "react";
 import Link from "next/link";
+import { Upload, Search, ChevronRight, Filter, Download } from "lucide-react";
+import { PageHeader } from "@/components/ui/page-header";
+import { StatusBadge } from "@/components/ui/badges";
 
-import { prisma } from "@/lib/db";
+export default function BatchesPage() {
+  return (
+    <div className="flex flex-col h-full overflow-y-auto w-full bg-[var(--color-bg)]">
+      <PageHeader 
+        title="Result Batches" 
+        action={
+          <Link 
+            href="/admin/batches/upload" 
+            className="inline-flex items-center gap-2 rounded-md bg-[var(--color-accent)] px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-[var(--color-accent-hover)] transition-colors page-transition-enter"
+          >
+            <Upload className="h-4 w-4" />
+            Upload Batch
+          </Link>
+        }
+      />
 
-export const metadata: Metadata = {
-    title: "Batches",
-    description: "Manage result batches and dispatch readiness.",
-};
+      <div className="p-6 md:p-8 space-y-6 max-w-[1600px] w-full mx-auto">
+        {/* Filter Bar */}
+        <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 dashboard-section">
+          <div className="flex flex-wrap items-center gap-3">
+            <FilterSelect placeholder="Session: All" options={["2024/2025", "2023/2024"]} />
+            <FilterSelect placeholder="Semester: All" options={["First", "Second"]} />
+            <FilterSelect placeholder="Status: All" options={["Pending", "In Review", "Approved", "Dispatched"]} />
+            <FilterSelect placeholder="Department: All" options={["Computer Science", "Physics", "Chemistry"]} />
+            
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--color-text-muted)]" />
+              <input 
+                type="text" 
+                placeholder="Search batches..." 
+                className="h-10 pl-9 pr-4 rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] text-sm focus:outline-none focus:border-[var(--color-accent)] focus:ring-1 focus:ring-[var(--color-accent)] min-w-[240px]"
+              />
+            </div>
+          </div>
+          
+          <div className="text-sm text-[var(--color-text-muted)] xl:text-right whitespace-nowrap">
+            Showing <span className="font-medium text-[var(--color-text-primary)]">24</span> batches
+          </div>
+        </div>
 
-export default async function BatchesPage() {
-    const db = prisma as any;
-
-    const batches = await db.resultBatch.findMany({
-        orderBy: { uploadedAt: "desc" },
-        take: 50,
-        include: {
-            uploadedBy: { select: { name: true } },
-            approvedBy: { select: { name: true } },
-            _count: {
-                select: {
-                    studentResults: true,
-                    dispatches: true,
-                },
-            },
-        },
-    });
-
-    return (
-        <main className="dashboard-root min-h-screen bg-background px-4 py-8 sm:px-6 lg:px-8">
-            <div className="dashboard-grid-overlay" aria-hidden="true" />
-
-            <section className="mx-auto w-full max-w-6xl rounded-3xl border border-(--border-subtle) bg-(--surface-strong) p-6 shadow-[0_25px_60px_-38px_rgba(2,23,23,0.75)] sm:p-8">
-                <div className="flex flex-wrap items-start justify-between gap-3">
-                    <div>
-                        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-(--text-muted)">
-                            Result Operations
-                        </p>
-                        <h1 className="mt-2 text-3xl font-semibold tracking-tight text-foreground">
-                            Batch Management
-                        </h1>
-                        <p className="mt-3 text-sm text-(--text-secondary)">
-                            Review all uploaded batches, monitor approval state, and open dispatch workflow for approved batches.
-                        </p>
-                    </div>
-                    <Link
-                        href="/admin/batches/upload"
-                        className="rounded-xl border border-(--border-strong) px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-(--surface-muted)"
-                    >
-                        Create New Batch
-                    </Link>
-                </div>
-
-                <div className="mt-6 overflow-x-auto">
-                    <table className="min-w-full border-separate border-spacing-y-2 text-left text-sm">
-                        <thead>
-                            <tr className="text-xs uppercase tracking-[0.14em] text-(--text-muted)">
-                                <th className="px-3 py-1">Batch</th>
-                                <th className="px-3 py-1">Status</th>
-                                <th className="px-3 py-1">Results</th>
-                                <th className="px-3 py-1">Dispatches</th>
-                                <th className="px-3 py-1">Owner</th>
-                                <th className="px-3 py-1">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {batches.map((batch: any) => (
-                                <tr key={batch.id} className="rounded-xl bg-(--surface-soft)">
-                                    <td className="rounded-l-xl px-3 py-3 align-top">
-                                        <p className="font-semibold text-foreground">{batch.department}</p>
-                                        <p className="mt-1 text-xs text-(--text-muted)">
-                                            {batch.session} • {String(batch.semester).toLowerCase()} • {batch.id}
-                                        </p>
-                                    </td>
-                                    <td className="px-3 py-3 align-top text-xs font-semibold uppercase tracking-[0.08em] text-(--text-secondary)">
-                                        {String(batch.status).replace("_", " ")}
-                                    </td>
-                                    <td className="px-3 py-3 align-top text-(--text-secondary)">
-                                        {batch._count.studentResults}
-                                    </td>
-                                    <td className="px-3 py-3 align-top text-(--text-secondary)">
-                                        {batch._count.dispatches}
-                                    </td>
-                                    <td className="px-3 py-3 align-top text-(--text-secondary)">
-                                        <p>{batch.uploadedBy?.name ?? "Unknown"}</p>
-                                        <p className="text-xs text-(--text-muted)">
-                                            {batch.approvedBy ? `Approved by ${batch.approvedBy.name}` : "Not approved"}
-                                        </p>
-                                    </td>
-                                    <td className="rounded-r-xl px-3 py-3 align-top">
-                                        <div className="flex flex-wrap gap-2">
-                                            <Link
-                                                href={`/admin/batches/${batch.id}`}
-                                                className="rounded-lg border border-(--border-subtle) px-2.5 py-1.5 text-xs font-semibold text-(--text-secondary) transition hover:border-(--border-strong) hover:text-foreground"
-                                            >
-                                                Open
-                                            </Link>
-                                            <Link
-                                                href={`/admin/approvals/${batch.id}`}
-                                                className="rounded-lg border border-(--border-subtle) px-2.5 py-1.5 text-xs font-semibold text-(--text-secondary) transition hover:border-(--border-strong) hover:text-foreground"
-                                            >
-                                                Review
-                                            </Link>
-                                            {batch.status === "APPROVED" ? (
-                                                <Link
-                                                    href={`/admin/batches/${batch.id}/dispatch`}
-                                                    className="rounded-lg bg-(--accent-strong) px-2.5 py-1.5 text-xs font-semibold text-white"
-                                                >
-                                                    Dispatch
-                                                </Link>
-                                            ) : null}
-                                        </div>
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
-            </section>
-        </main>
-    );
+        {/* Batches Table List */}
+        <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-sm overflow-x-auto dashboard-section">
+          <table className="min-w-full divide-y divide-[var(--color-border)]">
+            <thead className="bg-[var(--color-surface-2)]/40">
+              <tr>
+                <th className="px-4 py-3 text-left w-12"><input type="checkbox" className="rounded border-[var(--color-border)] accent-[var(--color-accent)]" /></th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wider">Batch ID</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wider">Session</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wider">Semester</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wider">Department</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wider">Students</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wider">Source</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wider">Status</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wider">Uploaded</th>
+                <th className="px-4 py-3 text-right"></th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-[var(--color-border)] bg-[var(--color-surface)]">
+              {mockBatches.map((batch, i) => (
+                <BatchRow key={batch.id} batch={batch} idx={i} />
+              ))}
+            </tbody>
+          </table>
+          
+          {/* Pagination */}
+          <div className="flex items-center justify-between px-6 py-4 border-t border-[var(--color-border)] bg-[var(--color-surface-2)]/20">
+            <div className="text-sm text-[var(--color-text-muted)]">
+              Showing 1 to 10 of 24 entries
+            </div>
+            <div className="flex gap-2">
+              <button disabled className="px-3 py-1 border border-[var(--color-border)] rounded bg-[var(--color-surface)] text-sm disabled:opacity-50 text-[var(--color-text-primary)]">Previous</button>
+              <button className="px-3 py-1 border border-[var(--color-border)] rounded bg-white text-sm hover:bg-[var(--color-surface-2)] text-[var(--color-text-primary)]">Next</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 }
+
+function FilterSelect({ placeholder, options }: { placeholder: string, options: string[] }) {
+  return (
+    <select defaultValue="" className="h-10 rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] px-3 text-sm text-[var(--color-text-primary)] focus:outline-none focus:border-[var(--color-accent)] focus:ring-1 focus:ring-[var(--color-accent)] hover:bg-[var(--color-surface-2)]/50 cursor-pointer">
+      <option value="" disabled hidden>{placeholder}</option>
+      {options.map(opt => <option key={opt}>{opt}</option>)}
+    </select>
+  );
+}
+
+function BatchRow({ batch, idx }: { batch: any, idx: number }) {
+  return (
+    <tr className="hover:bg-[var(--color-surface-2)]/50 transition-colors group table-row-enter">
+      <td className="px-4 py-4 whitespace-nowrap"><input type="checkbox" className="rounded border-[var(--color-border)] accent-[var(--color-accent)]" /></td>
+      <td className="px-4 py-4 whitespace-nowrap text-sm font-mono text-[var(--color-text-secondary)]">{batch.id}</td>
+      <td className="px-4 py-4 whitespace-nowrap text-sm text-[var(--color-text-primary)]">{batch.session}</td>
+      <td className="px-4 py-4 whitespace-nowrap text-sm text-[var(--color-text-primary)]">{batch.semester}</td>
+      <td className="px-4 py-4 whitespace-nowrap text-sm font-medium text-[var(--color-text-primary)]">{batch.dept}</td>
+      <td className="px-4 py-4 whitespace-nowrap text-sm text-[var(--color-text-primary)]">{batch.students}</td>
+      <td className="px-4 py-4 whitespace-nowrap">
+        <span className="inline-flex items-center rounded border border-[var(--color-border)] bg-[var(--color-surface-2)] px-2 py-0.5 text-[10px] font-medium tracking-wide uppercase text-[var(--color-text-muted)]">
+          {batch.source}
+        </span>
+      </td>
+      <td className="px-4 py-4 whitespace-nowrap">
+        <StatusBadge status={batch.status} />
+      </td>
+      <td className="px-4 py-4 whitespace-nowrap">
+        <div className="flex flex-col">
+          <span className="text-sm text-[var(--color-text-primary)]">{batch.uploadedBy}</span>
+          <span className="text-xs text-[var(--color-text-muted)]">{batch.uploadedAt}</span>
+        </div>
+      </td>
+      <td className="px-4 py-4 whitespace-nowrap text-right">
+        <Link 
+          href={`/admin/batches/${batch.id}`} 
+          className="inline-flex items-center gap-1 text-sm font-medium text-[var(--color-accent)] hover:text-[var(--color-accent-hover)] hover:underline opacity-0 group-hover:opacity-100 transition-opacity"
+        >
+          View <ChevronRight className="h-4 w-4" />
+        </Link>
+      </td>
+    </tr>
+  );
+}
+
+const mockBatches = [
+  { id: "BCH-8A92", session: "2024/2025", semester: "First", dept: "Computer Science", students: 247, source: "CSV", status: "pending", uploadedBy: "J. Adeyemi", uploadedAt: "2 hours ago" },
+  { id: "BCH-7F1X", session: "2024/2025", semester: "First", dept: "Physics", students: 112, source: "API", status: "approved", uploadedBy: "A. Okoye", uploadedAt: "1 day ago" },
+  { id: "BCH-9M2P", session: "2024/2025", semester: "First", dept: "Mathematics", students: 86, source: "CSV", status: "in_review", uploadedBy: "J. Adeyemi", uploadedAt: "2 days ago" },
+  { id: "BCH-4L8K", session: "2024/2025", semester: "First", dept: "Chemistry", students: 184, source: "API", status: "dispatched", uploadedBy: "System", uploadedAt: "1 week ago" },
+  { id: "BCH-2N5A", session: "2024/2025", semester: "First", dept: "Biology", students: 210, source: "CSV", status: "pending", uploadedBy: "M. Eze", uploadedAt: "1 week ago" },
+  { id: "BCH-1P3V", session: "2023/2024", semester: "Second", dept: "Accounting", students: 340, source: "CSV", status: "dispatched", uploadedBy: "J. Adeyemi", uploadedAt: "4 months ago" },
+  { id: "BCH-6K9M", session: "2023/2024", semester: "Second", dept: "Economics", students: 412, source: "API", status: "dispatched", uploadedBy: "System", uploadedAt: "4 months ago" },
+];

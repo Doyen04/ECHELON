@@ -1,129 +1,111 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
-import { signIn } from "next-auth/react";
+import React, { useState } from "react";
+import { Building2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 
-const highlights = [
-    "Approve and release result batches from one control room",
-    "Track delivery outcomes across WhatsApp, Email, and SMS",
-    "Maintain audit visibility with secure tokenized result links",
-];
-
 export default function SignInPage() {
-    const router = useRouter();
-    const [email, setEmail] = useState("");
-    const [password, setPassword] = useState("");
-    const [pending, setPending] = useState(false);
-    const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
+  const [loading, setLoading] = useState(false);
 
-    async function onSubmit(event: FormEvent<HTMLFormElement>) {
-        event.preventDefault();
-        setPending(true);
-        setError(null);
+  const handleSignIn = (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    // Mock login delay
+    setTimeout(() => {
+      router.push("/admin/dashboard");
+    }, 1000);
+  };
 
-        const response = await signIn("credentials", {
-            email,
-            password,
-            redirect: false,
-            callbackUrl: "/admin/dashboard",
-        });
+  return (
+    <div className="flex min-h-screen w-full font-sans page-transition-enter">
+      
+      {/* Left Branding Panel (40%) */}
+      <div className="hidden lg:flex w-[40%] bg-[var(--color-accent)] relative flex-col justify-between p-12 overflow-hidden">
+        {/* Geometric pattern overlay */}
+        <div className="absolute inset-0 opacity-10" style={{
+          backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
+        }}></div>
 
-        setPending(false);
+        <div className="relative z-10 flex items-center gap-3">
+          <div className="flex h-12 w-12 items-center justify-center rounded bg-white/10 shrink-0">
+            <Building2 className="h-7 w-7 text-white" />
+          </div>
+          <span className="font-serif text-2xl tracking-wide text-white">
+            ECHELON
+          </span>
+        </div>
 
-        if (!response || response.error) {
-            setError("Invalid super-admin credentials.");
-            return;
-        }
+        <div className="relative z-10">
+          <h1 className="font-serif text-4xl leading-tight text-white mb-4">
+            Result Notification System
+          </h1>
+          <p className="text-lg text-white/80 max-w-md">
+            Senate-approved results, delivered to every parent securely and seamlessly.
+          </p>
+        </div>
+      </div>
 
-        router.push(response.url ?? "/admin/dashboard");
-        router.refresh();
-    }
+      {/* Right Form Panel (60%) */}
+      <div className="flex w-full lg:w-[60%] bg-[#faf9f7] items-center justify-center p-8 sm:p-12">
+        <div className="w-full max-w-md space-y-8">
+          
+          <div className="space-y-3">
+            {/* Mobile logo only shown when left panel is hidden */}
+            <div className="lg:hidden flex items-center gap-3 mb-8">
+              <div className="flex h-10 w-10 items-center justify-center rounded bg-[var(--color-accent)] shrink-0">
+                <Building2 className="h-6 w-6 text-white" />
+              </div>
+              <span className="font-serif text-xl tracking-wide text-[var(--color-text-primary)]">
+                ECHELON
+              </span>
+            </div>
 
-    return (
-        <main className="min-h-screen bg-background text-foreground">
-            <section className="grid min-h-screen grid-cols-1 lg:grid-cols-[0.9fr_1.1fr]">
-                <aside className="relative flex items-center overflow-hidden bg-[var(--color-accent)] px-8 py-12 text-white sm:px-12 lg:px-16">
-                    <div className="absolute inset-0 opacity-20" style={{ backgroundImage: "radial-gradient(circle at 15% 20%, rgba(255,255,255,0.16) 0, transparent 24%), radial-gradient(circle at 90% 0%, rgba(255,255,255,0.12) 0, transparent 28%), linear-gradient(135deg, rgba(255,255,255,0.08), transparent)" }} />
-                    <div className="relative z-10 max-w-xl">
-                        <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-white/20 bg-white/10 text-xl font-semibold">
-                            RN
-                        </div>
-                        <p className="mt-8 text-[10px] font-semibold uppercase tracking-[0.28em] text-white/55">
-                            Result Notification System
-                        </p>
-                        <h1 className="mt-4 text-4xl font-semibold tracking-tight text-white sm:text-5xl">
-                            Senate-approved results, delivered to every parent.
-                        </h1>
-                        <p className="mt-5 max-w-md text-sm leading-7 text-white/70 sm:text-base">
-                            Centralized super-admin workspace for approvals, dispatch orchestration,
-                            delivery tracking, and compliance visibility.
-                        </p>
+            <h2 className="font-serif text-3xl sm:text-[32px] text-[var(--color-text-primary)]">
+              Sign in to your account
+            </h2>
+            <p className="text-sm text-[var(--color-text-muted)]">
+              Enter your official credentials to access the admin dashboard.
+            </p>
+          </div>
 
-                        <ul className="mt-10 space-y-4">
-                            {highlights.map((item) => (
-                                <li key={item} className="flex items-start gap-3 text-sm text-white/70">
-                                    <span className="mt-1 h-2.5 w-2.5 rounded-full bg-amber-300" />
-                                    <span>{item}</span>
-                                </li>
-                            ))}
-                        </ul>
-                    </div>
-                </aside>
+          <form onSubmit={handleSignIn} className="space-y-6">
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-[var(--color-text-primary)]">Email address</label>
+                <input 
+                  required
+                  type="email"
+                  placeholder="admin@university.edu.ng"
+                  className="w-full h-11 border border-[var(--color-border)] rounded bg-white px-4 text-[var(--color-text-primary)] focus:outline-none focus:ring-1 focus:border-[var(--color-accent)] focus:ring-[var(--color-accent)] transition-all shadow-sm"
+                />
+              </div>
 
-                <div className="flex items-center px-8 py-12 sm:px-12 lg:px-16">
-                    <div className="w-full max-w-xl">
-                        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-(--text-secondary)">
-                            Secure Access
-                        </p>
-                        <h2 className="mt-4 font-serif text-[28px] leading-tight text-foreground sm:text-[34px]">
-                            Sign in to your account
-                        </h2>
-                        <p className="mt-3 text-sm text-(--text-secondary)">
-                            Direct access for super-admin operations. Use your institution credentials to continue.
-                        </p>
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-[var(--color-text-primary)]">Password</label>
+                <input 
+                  required
+                  type="password"
+                  placeholder="••••••••"
+                  className="w-full h-11 border border-[var(--color-border)] rounded bg-white px-4 text-[var(--color-text-primary)] focus:outline-none focus:ring-1 focus:border-[var(--color-accent)] focus:ring-[var(--color-accent)] transition-all shadow-sm"
+                />
+              </div>
+            </div>
 
-                        <form className="mt-8 space-y-4" onSubmit={onSubmit}>
-                            <label className="block">
-                                <span className="mb-1 block text-sm font-medium text-(--text-secondary)">Email</span>
-                                <input
-                                    type="email"
-                                    required
-                                    value={email}
-                                    onChange={(event) => setEmail(event.target.value)}
-                                    className="w-full rounded-xl border border-(--border-subtle) bg-white px-3 py-3 text-sm text-foreground outline-none transition focus:border-(--border-strong)"
-                                />
-                            </label>
+            <button 
+              type="submit"
+              disabled={loading}
+              className="relative w-full flex items-center justify-center h-12 rounded bg-[var(--color-accent)] px-4 text-sm font-medium text-white shadow hover:bg-[var(--color-accent-hover)] transition-all disabled:opacity-70"
+            >
+              {loading ? (
+                <div className="h-5 w-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+              ) : "Sign In"}
+            </button>
+          </form>
 
-                            <label className="block">
-                                <span className="mb-1 block text-sm font-medium text-(--text-secondary)">Password</span>
-                                <input
-                                    type="password"
-                                    required
-                                    minLength={8}
-                                    value={password}
-                                    onChange={(event) => setPassword(event.target.value)}
-                                    className="w-full rounded-xl border border-(--border-subtle) bg-white px-3 py-3 text-sm text-foreground outline-none transition focus:border-(--border-strong)"
-                                />
-                            </label>
+        </div>
+      </div>
 
-                            {error ? (
-                                <p className="rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
-                                    {error}
-                                </p>
-                            ) : null}
-
-                            <button
-                                type="submit"
-                                disabled={pending}
-                                className="w-full rounded-xl bg-(--accent-strong) px-4 py-3 text-sm font-semibold text-white transition hover:bg-(--accent-hover) disabled:cursor-not-allowed disabled:opacity-70"
-                            >
-                                {pending ? "Signing in..." : "Sign In"}
-                            </button>
-                        </form>
-                    </div>
-                </div>
-            </section>
-        </main>
-    );
+    </div>
+  );
 }

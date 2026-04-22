@@ -1,82 +1,137 @@
-import type { Metadata } from "next";
+import React from "react";
 import Link from "next/link";
+import { PageHeader } from "@/components/ui/page-header";
+import { StatusBadge } from "@/components/ui/badges";
+import { ArrowRight, ChevronDown, CheckSquare, Clock } from "lucide-react";
 
-import { prisma } from "@/lib/db";
+export default function ApprovalsPage() {
+  return (
+    <div className="flex flex-col h-full overflow-y-auto w-full bg-[var(--color-bg)] dashboard-root">
+      <PageHeader 
+        title="Approvals" 
+        breadcrumbs="4 batches pending review"
+      />
 
-export const metadata: Metadata = {
-    title: "Approvals",
-    description: "Super-admin review and withhold actions.",
-};
+      <div className="p-6 md:p-8 space-y-8 max-w-5xl w-full mx-auto">
+        <div className="space-y-4">
+          <h2 className="text-sm font-semibold uppercase tracking-widest text-[var(--color-text-muted)] border-b border-[var(--color-border)] pb-2 flex items-center gap-2">
+            <Clock className="h-4 w-4" /> Action Required (4)
+          </h2>
+          
+          <div className="grid gap-4">
+            <PendingCard 
+              id="BCH-8A92"
+              title="Computer Science · First Semester 2024/2025" 
+              uploader="Registrar Adeyemi" 
+              time="2 days ago" 
+              students={247} 
+              source="CSV"
+            />
+            <PendingCard 
+              id="BCH-9M2P"
+              title="Mathematics · First Semester 2024/2025" 
+              uploader="Registrar Adeyemi" 
+              time="2 days ago" 
+              students={86} 
+              source="CSV"
+            />
+            <PendingCard 
+              id="BCH-2N5A"
+              title="Biology · First Semester 2024/2025" 
+              uploader="M. Eze" 
+              time="1 week ago" 
+              students={210} 
+              source="CSV"
+            />
+            <PendingCard 
+              id="BCH-5Y7K"
+              title="Medicine · First Semester 2023/2024" 
+              uploader="Registrar Adeyemi" 
+              time="2 weeks ago" 
+              students={310} 
+              source="API"
+            />
+          </div>
+        </div>
 
-export default async function ApprovalsPage() {
-    const db = prisma as any;
+        <div className="pt-8 dashboard-section" style={{animationDelay: '150ms'}}>
+          <details className="group rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-sm overflow-hidden">
+            <summary className="flex cursor-pointer items-center justify-between p-5 list-none [&::-webkit-details-marker]:hidden bg-[var(--color-surface-2)]/30 hover:bg-[var(--color-surface-2)]/60 transition-colors">
+              <div className="flex items-center gap-2">
+                <CheckSquare className="h-5 w-5 text-[var(--color-success)]" />
+                <h3 className="font-medium text-[var(--color-text-primary)]">Reviewed Batches <span className="text-[var(--color-text-muted)]">(12)</span></h3>
+              </div>
+              <ChevronDown className="h-5 w-5 text-[var(--color-text-muted)] transition-transform group-open:rotate-180" />
+            </summary>
+            
+            <div className="border-t border-[var(--color-border)] bg-white overflow-x-auto">
+              <table className="min-w-full divide-y divide-[var(--color-border)]">
+                <thead className="bg-[var(--color-surface-2)]/20">
+                  <tr>
+                    <th className="px-5 py-3 text-left text-xs font-medium text-[var(--color-text-muted)] uppercase tracking-wider">Batch ID</th>
+                    <th className="px-5 py-3 text-left text-xs font-medium text-[var(--color-text-muted)] uppercase tracking-wider">Session/Dept</th>
+                    <th className="px-5 py-3 text-left text-xs font-medium text-[var(--color-text-muted)] uppercase tracking-wider">Status</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[var(--color-border)]">
+                  <tr>
+                    <td className="px-5 py-4 text-sm font-mono text-[var(--color-text-secondary)]">BCH-7F1X</td>
+                    <td className="px-5 py-4 text-sm text-[var(--color-text-primary)]">Physics · 2024/2025</td>
+                    <td className="px-5 py-4"><StatusBadge status="approved" /></td>
+                  </tr>
+                  <tr>
+                    <td className="px-5 py-4 text-sm font-mono text-[var(--color-text-secondary)]">BCH-4L8K</td>
+                    <td className="px-5 py-4 text-sm text-[var(--color-text-primary)]">Chemistry · 2024/2025</td>
+                    <td className="px-5 py-4"><StatusBadge status="approved" /></td>
+                  </tr>
+                  <tr>
+                    <td className="px-5 py-4 text-sm font-mono text-[var(--color-text-secondary)]">BCH-1P3V</td>
+                    <td className="px-5 py-4 text-sm text-[var(--color-text-primary)]">Accounting · 2023/2024</td>
+                    <td className="px-5 py-4"><StatusBadge status="approved" /></td>
+                  </tr>
+                </tbody>
+              </table>
+              <div className="px-5 py-3 text-sm text-[var(--color-accent)] hover:underline cursor-pointer border-t border-[var(--color-border)] bg-[var(--color-surface-2)]/10 text-center font-medium">
+                View all reviewed batches
+              </div>
+            </div>
+          </details>
+        </div>
+      </div>
+    </div>
+  );
+}
 
-    const batches = await db.resultBatch.findMany({
-        where: { status: { in: ["PENDING", "IN_REVIEW"] } },
-        orderBy: { uploadedAt: "desc" },
-        take: 20,
-        include: {
-            studentResults: {
-                select: {
-                    id: true,
-                    status: true,
-                    student: { select: { fullName: true, matricNumber: true } },
-                },
-            },
-        },
-    });
-
-    return (
-        <main className="dashboard-root min-h-screen bg-background px-4 py-8 sm:px-6 lg:px-8">
-            <div className="dashboard-grid-overlay" aria-hidden="true" />
-            <section className="mx-auto w-full max-w-7xl rounded-3xl border border-(--border-subtle) bg-(--surface-strong) p-6 shadow-[0_25px_60px_-38px_rgba(2,23,23,0.75)] sm:p-8">
-                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-(--text-muted)">
-                    Senate Review
-                </p>
-                <h1 className="mt-2 text-3xl font-semibold tracking-tight text-foreground">
-                    Approval Queue
-                </h1>
-                <p className="mt-3 text-sm text-(--text-secondary)">
-                    Open a batch to review student results and apply approve or withhold actions.
-                </p>
-
-                <div className="mt-6 space-y-4">
-                    {batches.map((batch: any) => (
-                        <article key={batch.id} className="rounded-2xl border border-(--border-subtle) bg-(--surface-soft) p-4">
-                            <div className="flex flex-wrap items-start justify-between gap-3">
-                                <div>
-                                    <h2 className="text-base font-semibold text-foreground">{batch.department}</h2>
-                                    <p className="mt-1 text-sm text-(--text-secondary)">
-                                        {batch.session} • {String(batch.semester).toLowerCase()} • {batch.studentResults.length} result(s)
-                                    </p>
-                                </div>
-                                <Link
-                                    href={`/admin/approvals/${batch.id}`}
-                                    className="rounded-lg bg-(--accent-strong) px-3 py-2 text-xs font-semibold text-white"
-                                >
-                                    Review Batch
-                                </Link>
-                            </div>
-                            <div className="mt-4 grid gap-2 text-sm text-(--text-secondary) sm:grid-cols-2 lg:grid-cols-3">
-                                {batch.studentResults.slice(0, 6).map((result: any) => (
-                                    <div key={result.id} className="rounded-xl border border-(--border-subtle) bg-(--surface-strong) p-3">
-                                        <p className="font-medium text-foreground">{result.student.fullName}</p>
-                                        <p className="text-xs text-(--text-muted)">{result.student.matricNumber}</p>
-                                        <p className="mt-2 text-xs uppercase tracking-[0.08em] text-(--text-muted)">
-                                            {String(result.status).toLowerCase()}
-                                        </p>
-                                    </div>
-                                ))}
-                            </div>
-                        </article>
-                    ))}
-                    {batches.length === 0 ? (
-                        <div className="rounded-2xl border border-dashed border-(--border-subtle) p-8 text-sm text-(--text-secondary)">
-                            No batches are currently pending review.
-                        </div>
-                    ) : null}
-                </div>
-            </section>
-        </main>
-    );
+function PendingCard({ id, title, uploader, time, students, source }: any) {
+  return (
+    <div className="rounded-xl border-l-4 border-[var(--color-warning)] bg-[var(--color-surface)] p-6 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-6 dashboard-card">
+      <div className="space-y-3 flex-1">
+        <div>
+          <h3 className="font-serif text-[1.1rem] text-[var(--color-text-primary)] mb-1">{title}</h3>
+          <p className="text-sm text-[var(--color-text-muted)]">
+            Uploaded by {uploader} · {time}
+          </p>
+        </div>
+        
+        <div className="flex items-center gap-3">
+          <span className="inline-flex items-center rounded-full bg-[var(--color-surface-2)] px-2.5 py-0.5 text-xs font-medium text-[var(--color-text-secondary)]">
+            {students} students
+          </span>
+          <span className="inline-flex items-center rounded-full bg-[var(--color-surface-2)] px-2.5 py-0.5 text-xs font-medium text-[var(--color-text-secondary)] uppercase">
+            {source} source
+          </span>
+          <StatusBadge status="pending" />
+        </div>
+      </div>
+      
+      <div className="shrink-0 flex items-center self-start md:self-auto w-full md:w-auto">
+        <Link 
+          href={`/admin/batches/${id}`}
+          className="flex w-full md:w-auto items-center justify-center gap-2 rounded-md border border-[var(--color-accent)] bg-white px-5 py-2.5 text-sm font-medium text-[var(--color-accent)] shadow-sm hover:bg-[var(--color-accent)]/5 hover:border-[var(--color-accent-hover)] transition-colors group"
+        >
+          Begin Review <ArrowRight className="h-4 w-4 group-hover:translate-x-0.5 transition-transform" />
+        </Link>
+      </div>
+    </div>
+  )
 }

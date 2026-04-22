@@ -1,76 +1,244 @@
-import type { Metadata } from "next";
-import { notFound } from "next/navigation";
+"use client";
 
-import { prisma } from "@/lib/db";
+import React, { useState } from "react";
+import Link from "next/link";
+import { useParams } from "next/navigation";
+import { UserCog, ChevronDown, ChevronRight, CheckCircle2, Phone, Mail, XCircle, Plus } from "lucide-react";
+import { PageHeader } from "@/components/ui/page-header";
+import { StatusBadge } from "@/components/ui/badges";
 
-type StudentDetailPageProps = {
-    params: Promise<{ studentId: string }>;
-};
+export default function StudentRecordPage() {
+  const params = useParams();
+  const studentId = params.studentId as string;
+  
+  const [expandedSessions, setExpandedSessions] = useState<Set<string>>(new Set(["2024-1"]));
 
-export const metadata: Metadata = {
-    title: "Student Profile",
-    description: "Student profile and guardian contacts.",
-};
+  const toggleSession = (id: string) => {
+    const newDocs = new Set(expandedSessions);
+    if (newDocs.has(id)) newDocs.delete(id);
+    else newDocs.add(id);
+    setExpandedSessions(newDocs);
+  };
 
-export default async function StudentDetailPage({ params }: StudentDetailPageProps) {
-    const { studentId } = await params;
-    const db = prisma as any;
+  return (
+    <div className="flex flex-col h-full overflow-y-auto w-full bg-[var(--color-bg)] dashboard-root">
+      <PageHeader 
+        title={
+          <div className="flex flex-col">
+            <span className="font-serif text-2xl text-[var(--color-text-primary)]">Adeyemi, John Ola</span>
+            <div className="flex items-center gap-2 mt-1 text-sm font-sans tracking-normal font-normal text-[var(--color-text-muted)]">
+              <span className="font-mono text-[var(--color-text-secondary)]">CSC/2021/001</span>
+              <span>·</span>
+              <span>Computer Science</span>
+              <span>·</span>
+              <span>Level 400</span>
+            </div>
+          </div>
+        }
+        action={
+          <button className="inline-flex items-center gap-2 rounded-md border border-[var(--color-border)] bg-white px-4 py-2 text-sm font-medium text-[var(--color-text-primary)] shadow-sm hover:bg-[var(--color-surface-2)] transition-colors">
+            <UserCog className="h-4 w-4" />
+            Edit Contacts
+          </button>
+        }
+      />
 
-    const student = await db.student.findUnique({
-        where: { id: studentId },
-        include: {
-            guardians: true,
-            studentResults: {
-                include: {
-                    batch: true,
-                },
-                orderBy: { createdAt: "desc" },
-            },
-        },
-    });
+      <div className="p-6 md:p-8 space-y-6 max-w-[1600px] w-full mx-auto pb-24">
+        <div className="flex flex-col lg:flex-row gap-8">
+          
+          {/* Result History (65%) */}
+          <div className="flex-1 lg:max-w-[65%] space-y-6 dashboard-section">
+            <h2 className="text-sm font-semibold uppercase tracking-widest text-[var(--color-text-muted)] border-b border-[var(--color-border)] pb-2 flex items-center justify-between">
+              Result History
+              <span className="text-xs font-medium bg-[var(--color-surface-2)] py-0.5 px-2 rounded-full text-[var(--color-text-secondary)]">3 semesters</span>
+            </h2>
 
-    if (!student) {
-        notFound();
-    }
-
-    return (
-        <main className="dashboard-root min-h-screen bg-background px-4 py-8 sm:px-6 lg:px-8">
-            <div className="dashboard-grid-overlay" aria-hidden="true" />
-            <section className="mx-auto w-full max-w-5xl rounded-3xl border border-(--border-subtle) bg-(--surface-strong) p-6 shadow-[0_25px_60px_-38px_rgba(2,23,23,0.75)] sm:p-8">
-                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-(--text-muted)">Student Profile</p>
-                <h1 className="mt-2 text-3xl font-semibold tracking-tight text-foreground">{student.fullName}</h1>
-                <p className="mt-3 text-sm text-(--text-secondary)">
-                    {student.matricNumber} • {student.department} • {student.faculty} • Level {student.level}
-                </p>
-
-                <div className="mt-6 grid gap-4 lg:grid-cols-2">
-                    <div className="rounded-2xl border border-(--border-subtle) bg-(--surface-soft) p-4">
-                        <h2 className="text-sm font-semibold text-foreground">Guardian Contacts</h2>
-                        <div className="mt-3 space-y-3 text-sm text-(--text-secondary)">
-                            {student.guardians.map((guardian: any) => (
-                                <article key={guardian.id} className="rounded-xl border border-(--border-subtle) bg-(--surface-strong) p-3">
-                                    <p className="font-medium text-foreground">{guardian.name}</p>
-                                    <p>{guardian.relationship}</p>
-                                    <p className="mt-1 text-xs text-(--text-muted)">{guardian.email ?? "No email"} • {guardian.phone ?? "No phone"}</p>
-                                </article>
-                            ))}
+            <div className="space-y-4">
+              {mockHistory.map((hist, idx) => {
+                const isExpanded = expandedSessions.has(hist.id);
+                return (
+                  <div key={hist.id} className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-sm overflow-hidden" style={{animationDelay: `${idx * 100}ms`}}>
+                    <button 
+                      onClick={() => toggleSession(hist.id)}
+                      className="w-full flex items-center justify-between p-5 hover:bg-[var(--color-surface-2)]/40 transition-colors text-left"
+                    >
+                      <div className="flex items-center gap-6">
+                        <div className="flex items-center gap-2">
+                          <div className={`p-1 rounded text-[var(--color-text-muted)] ${isExpanded ? 'bg-[var(--color-surface-2)]' : ''}`}>
+                            {isExpanded ? <ChevronDown className="h-5 w-5" /> : <ChevronRight className="h-5 w-5" />}
+                          </div>
+                          <div>
+                            <div className="font-medium text-[var(--color-text-primary)]">{hist.session}</div>
+                            <div className="text-sm text-[var(--color-text-muted)]">{hist.semester}</div>
+                          </div>
                         </div>
-                    </div>
-
-                    <div className="rounded-2xl border border-(--border-subtle) bg-(--surface-soft) p-4">
-                        <h2 className="text-sm font-semibold text-foreground">Result History</h2>
-                        <div className="mt-3 space-y-3 text-sm text-(--text-secondary)">
-                            {student.studentResults.map((result: any) => (
-                                <article key={result.id} className="rounded-xl border border-(--border-subtle) bg-(--surface-strong) p-3">
-                                    <p className="font-medium text-foreground">{result.batch.department}</p>
-                                    <p className="text-xs text-(--text-muted)">{result.batch.session} • {String(result.batch.semester).toLowerCase()}</p>
-                                    <p className="mt-1 text-xs uppercase tracking-[0.08em] text-(--text-muted)">{String(result.status).toLowerCase()}</p>
-                                </article>
-                            ))}
+                        <div className="hidden sm:block w-px h-8 bg-[var(--color-border)]"></div>
+                        <div className="hidden sm:block">
+                          <div className="text-sm text-[var(--color-text-muted)]">GPA</div>
+                          <div className="font-medium text-[var(--color-text-primary)]">{hist.gpa}</div>
                         </div>
-                    </div>
+                      </div>
+                      <div className="flex items-center gap-4">
+                         <StatusBadge status={hist.status as any} />
+                      </div>
+                    </button>
+                    
+                    {isExpanded && (
+                      <div className="border-t border-[var(--color-border)] page-transition-enter">
+                        <div className="bg-[var(--color-surface-2)]/30 px-6 py-4">
+                           <div className="flex justify-between items-end mb-3">
+                             <h4 className="text-xs font-semibold uppercase tracking-widest text-[var(--color-text-muted)]">Course Breakdown</h4>
+                             {hist.status === 'approved' && (
+                               <Link href={`/results/view?token=mock_token_${hist.id}`} target="_blank" className="text-xs font-medium text-[var(--color-accent)] hover:underline">
+                                 View Parent Portal Render →
+                               </Link>
+                             )}
+                           </div>
+                           <table className="min-w-full divide-y divide-[var(--color-border)] bg-white border border-[var(--color-border)] rounded overflow-hidden">
+                             <thead className="bg-[var(--color-surface-2)]/50">
+                               <tr>
+                                 <th className="px-4 py-2 text-left text-xs font-medium text-[var(--color-text-muted)] w-24">Code</th>
+                                 <th className="px-4 py-2 text-left text-xs font-medium text-[var(--color-text-muted)]">Title</th>
+                                 <th className="px-4 py-2 text-left text-xs font-medium text-[var(--color-text-muted)] w-16">Units</th>
+                                 <th className="px-4 py-2 text-left text-xs font-medium text-[var(--color-text-muted)] w-16">Grade</th>
+                               </tr>
+                             </thead>
+                             <tbody className="divide-y divide-[var(--color-border)]">
+                               {hist.courses.map(course => (
+                                 <tr key={course.code} className="hover:bg-[var(--color-surface-2)]/20">
+                                   <td className="px-4 py-2 text-sm font-mono text-[var(--color-text-secondary)]">{course.code}</td>
+                                   <td className="px-4 py-2 text-sm text-[var(--color-text-primary)]">{course.title}</td>
+                                   <td className="px-4 py-2 text-sm text-[var(--color-text-primary)]">{course.units}</td>
+                                   <td className="px-4 py-2 text-sm font-medium text-[var(--color-text-primary)]">{course.grade}</td>
+                                 </tr>
+                               ))}
+                             </tbody>
+                           </table>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+
+          {/* Guardian Contacts (35%) */}
+          <div className="lg:w-fit lg:min-w-[360px] space-y-6 dashboard-section" style={{animationDelay: '150ms'}}>
+            <h2 className="text-sm font-semibold uppercase tracking-widest text-[var(--color-text-muted)] border-b border-[var(--color-border)] pb-2 flex items-center justify-between">
+              Guardian Contacts
+              <span className="text-xs font-medium bg-[var(--color-surface-2)] py-0.5 px-2 rounded-full text-[var(--color-text-secondary)]">2 assigned</span>
+            </h2>
+
+            <div className="space-y-4">
+              <div className="rounded-xl border border-[var(--color-border)] bg-white p-5 shadow-sm">
+                <div className="flex justify-between items-start mb-4">
+                  <div>
+                    <h3 className="font-serif text-lg text-[var(--color-text-primary)]">Mrs. Folake Adeyemi</h3>
+                    <p className="text-sm text-[var(--color-text-muted)]">Mother · Primary Contact</p>
+                  </div>
                 </div>
-            </section>
-        </main>
-    );
+
+                <div className="space-y-3 mb-5">
+                  <div className="flex items-center gap-3 text-sm">
+                    <Phone className="h-4 w-4 text-[var(--color-text-muted)]" />
+                    <span className="text-[var(--color-text-primary)] font-mono">+234 801 234 5678</span>
+                    <span className="bg-green-100 text-green-800 text-[10px] px-1.5 py-0.5 rounded uppercase font-semibold ml-auto flex items-center gap-1">
+                      <div className="w-1.5 h-1.5 rounded-full bg-green-500"></div> WhatsApp
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-3 text-sm">
+                    <Mail className="h-4 w-4 text-[var(--color-text-muted)]" />
+                    <span className="text-[var(--color-text-primary)] font-mono">folake@gmail.com</span>
+                  </div>
+                </div>
+                
+                <div className="pt-3 border-t border-[var(--color-border)]">
+                  <div className="flex items-center gap-2 text-sm">
+                    NDPR Consent:
+                    <div className="flex items-center gap-1 text-[var(--color-success)] font-medium bg-[var(--color-success)]/10 px-2 py-0.5 rounded">
+                      <CheckCircle2 className="h-4 w-4" /> Valid (12 Aug 2021)
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="rounded-xl border border-[var(--color-border)] bg-white p-5 shadow-sm">
+                <div className="flex justify-between items-start mb-4">
+                  <div>
+                    <h3 className="font-serif text-lg text-[var(--color-text-primary)]">Mr. Tunde Adeyemi</h3>
+                    <p className="text-sm text-[var(--color-text-muted)]">Father · Secondary Contact</p>
+                  </div>
+                </div>
+
+                <div className="space-y-3 mb-5">
+                  <div className="flex items-center gap-3 text-sm">
+                    <Phone className="h-4 w-4 text-[var(--color-text-muted)]" />
+                    <span className="text-[var(--color-text-primary)] font-mono">+234 802 345 6789</span>
+                  </div>
+                   <div className="flex items-center gap-3 text-sm text-[var(--color-warning)]">
+                    <Mail className="h-4 w-4" />
+                    <span className="italic">No email provided</span>
+                  </div>
+                </div>
+                
+                <div className="pt-3 border-t border-[var(--color-border)]">
+                  <div className="flex items-center gap-2 text-sm">
+                    NDPR Consent:
+                    <div className="flex items-center gap-1 text-[var(--color-danger)] font-medium bg-[var(--color-danger)]/10 px-2 py-0.5 rounded">
+                      <XCircle className="h-4 w-4" /> Missing
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <button className="w-full flex items-center justify-center gap-2 rounded border border-[var(--color-border)] border-dashed bg-[var(--color-surface-2)]/30 px-4 py-3 text-sm font-medium text-[var(--color-text-muted)] hover:bg-[var(--color-surface-2)] hover:text-[var(--color-text-primary)] transition-colors">
+                <Plus className="h-4 w-4" />
+                Add Guardian
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 }
+
+const mockHistory = [
+  {
+    id: "2024-1",
+    session: "2024/2025",
+    semester: "First Semester",
+    gpa: "4.21",
+    status: "approved",
+    courses: [
+      { code: "CSC401", title: "Artificial Intelligence", units: 3, grade: "A" },
+      { code: "CSC403", title: "Software Engineering", units: 3, grade: "B" },
+      { code: "CSC405", title: "Compiler Construction", units: 3, grade: "A" }
+    ]
+  },
+  {
+    id: "2023-2",
+    session: "2023/2024",
+    semester: "Second Semester",
+    gpa: "3.85",
+    status: "dispatched",
+    courses: [
+      { code: "CSC302", title: "Object Oriented Programming", units: 3, grade: "B" },
+      { code: "CSC304", title: "Data Management", units: 3, grade: "B" },
+      { code: "CSC306", title: "Theory of Computing", units: 3, grade: "C" }
+    ]
+  },
+  {
+    id: "2023-1",
+    session: "2023/2024",
+    semester: "First Semester",
+    gpa: "4.05",
+    status: "dispatched",
+    courses: [
+      { code: "CSC301", title: "Automata Theory", units: 3, grade: "A" },
+      { code: "CSC303", title: "Data Structures", units: 3, grade: "B" },
+      { code: "CSC305", title: "Database Systems", units: 3, grade: "A" }
+    ]
+  }
+];
