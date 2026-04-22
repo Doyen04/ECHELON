@@ -14,6 +14,7 @@ import {
     Upload,
     Users,
     ClipboardList,
+    Layers,
 } from "lucide-react";
 
 import { SignOutButton } from "@/components/auth/sign-out-button";
@@ -84,17 +85,20 @@ export function AdminSidebar({ email, name, role }: AdminSidebarProps) {
             `}
         >
             <div className="flex h-full w-full flex-col px-3 py-4">
-                <div className={`flex gap-3 px-2 transition-all duration-300 ${isCollapsed ? "flex-col items-center py-2" : "h-16 items-center justify-start"}`}>
-                    <div className={`flex shrink-0 items-center justify-center rounded-2xl border border-white/20 bg-white/12 font-semibold text-white transition-all duration-300 ${isCollapsed ? "h-10 w-10 text-xs" : "h-11 w-11 text-sm child:text-lg"}`}>
-                        RN
+                <div className={`flex gap-3 px-2 transition-all duration-300 group ${isCollapsed ? "flex-col items-center py-2" : "h-16 items-center justify-start"}`}>
+                    {/* Stylized Logo for Echelon */}
+                    <div className={`flex shrink-0 items-center justify-center rounded-2xl border border-white/25 bg-white/15 text-white shadow-xl transition-all duration-300 ${isCollapsed ? "h-10 w-10" : "h-11 w-11"}`}>
+                        <Layers className={`${isCollapsed ? "h-5 w-5" : "h-6 w-6"} text-white`} strokeWidth={2.5} />
                     </div>
+                    
                     <div
                         className={`min-w-0 transition-all duration-200 ${isCollapsed ? "h-0 w-0 opacity-0 pointer-events-none overflow-hidden" : "w-auto opacity-100"
                             }`}
                     >
-                        <p className="text-[10px] uppercase tracking-[0.28em] text-white/45">Institution</p>
-                        <h1 className="mt-0.5 truncate font-serif text-xl text-white">Echelon Registry</h1>
+                        <p className="text-[10px] uppercase tracking-[0.28em] text-white/45 font-medium">Institution</p>
+                        <h1 className="mt-0.5 truncate font-serif text-xl tracking-tight text-white">Echelon Registry</h1>
                     </div>
+                    
                     <button
                         type="button"
                         onClick={toggleSidebar}
@@ -115,16 +119,16 @@ export function AdminSidebar({ email, name, role }: AdminSidebarProps) {
                     </button>
                 </div>
 
-                <div className="mt-3 border-t border-white/10 pt-3">
+                <div className="mt-3 border-t border-white/10 pt-3 flex-1 overflow-y-auto no-scrollbar">
                     {navItems.map((group) => (
-                        <div key={group.section} className="mb-3">
+                        <div key={group.section} className="mb-4">
                             <p
-                                className={`px-2 text-[10px] uppercase tracking-[0.28em] text-white/40 transition-all duration-200 ${isCollapsed ? "h-0 opacity-0 pointer-events-none" : "h-auto opacity-100"
+                                className={`px-2 mb-2 text-[10px] font-semibold uppercase tracking-[0.22em] text-white/35 transition-all duration-200 ${isCollapsed ? "opacity-0 h-0 pointer-events-none overflow-hidden" : "opacity-100 h-auto"
                                     }`}
                             >
                                 {group.section}
                             </p>
-                            <div className="mt-2 space-y-1">
+                            <div className="space-y-0.5">
                                 {group.items
                                     .filter((item) => !item.roles || item.roles.includes(role))
                                     .map((item) => {
@@ -136,23 +140,22 @@ export function AdminSidebar({ email, name, role }: AdminSidebarProps) {
                                                 key={item.href}
                                                 href={item.href}
                                                 onClick={closeMobileMenu}
-                                                className={`flex h-10 items-center rounded-xl border border-transparent px-3 text-sm transition ${isCollapsed ? "justify-center" : "gap-3"
+                                                className={`flex h-11 items-center rounded-xl border border-transparent px-3 text-sm transition-all duration-200 relative group/link ${isCollapsed ? "justify-center" : "gap-3"
                                                     } ${active
-                                                        ? "border-white/15 bg-white/15 text-white"
-                                                        : "text-white/70 hover:bg-white/10 hover:text-white"
+                                                        ? "border-white/10 bg-white/12 text-white shadow-sm"
+                                                        : "text-white/60 hover:bg-white/5 hover:text-white"
                                                     }`}
                                             >
-                                                <Icon className="h-4 w-4 shrink-0" />
+                                                <Icon className={`h-5 w-5 shrink-0 transition-transform group-hover/link:scale-110 ${active ? "text-white" : "text-white/70"}`} />
                                                 <span
-                                                    className={`min-w-0 truncate transition-all duration-200 ${isCollapsed ? "w-0 opacity-0 pointer-events-none" : "w-auto opacity-100"
+                                                    className={`min-w-0 truncate font-medium transition-all duration-300 ${isCollapsed ? "w-0 opacity-0 pointer-events-none" : "w-auto opacity-100"
                                                         }`}
                                                 >
                                                     {item.label}
                                                 </span>
-                                                <ChevronRight
-                                                    className={`ml-auto h-3.5 w-3.5 shrink-0 transition-opacity duration-200 ${isCollapsed ? "opacity-0" : "opacity-40"
-                                                        }`}
-                                                />
+                                                {!isCollapsed && active && (
+                                                    <div className="ml-auto h-1.5 w-1.5 rounded-full bg-white shadow-[0_0_8px_rgba(255,255,255,0.8)]" />
+                                                )}
                                             </Link>
                                         );
                                     })}
@@ -161,44 +164,41 @@ export function AdminSidebar({ email, name, role }: AdminSidebarProps) {
                     ))}
                 </div>
 
-                <div className="mt-auto px-1 pb-1">
-                    <div className="rounded-3xl border border-white/10 bg-white/8 p-3 text-white/90 shadow-[0_12px_30px_-20px_rgba(0,0,0,0.45)]">
+                <div className="mt-auto pt-4 px-1 pb-1">
+                    <div className={`rounded-[2rem] border border-white/15 bg-white/10 p-2.5 text-white/90 shadow-[0_8px_32px_-12px_rgba(0,0,0,0.5)] backdrop-blur-md transition-all duration-300 ${isCollapsed ? "items-center" : ""}`}>
                         <div
-                            className={`relative flex ${isCollapsed ? "flex-col items-center justify-center gap-2" : "items-center gap-3 justify-start"
+                            className={`flex ${isCollapsed ? "flex-col items-center gap-3 pt-1" : "items-center gap-3.5"
                                 }`}
                         >
-                            <div className="flex min-w-0 items-center gap-3">
-                                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/15 text-[11px] font-semibold text-white z-10 relative">
+                            <div className="relative flex shrink-0 items-center justify-center">
+                                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-white/20 bg-white/20 text-[12px] font-bold text-white shadow-inner">
                                     {userInitials}
                                 </div>
-                                <div
-                                    className={`min-w-0 pr-10 transition-all duration-200 ${isCollapsed ? "w-0 opacity-0 pointer-events-none" : "w-full opacity-100"
-                                        }`}
-                                >
-                                    <p className="truncate text-sm font-medium text-white">{name ?? email ?? "User"}</p>
-                                    <span className="mt-1 inline-flex whitespace-nowrap rounded-full bg-[#B8860B] px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.12em] text-white">
+                                <div className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-brand bg-emerald-500 shadow-sm" />
+                            </div>
+
+                            <div
+                                className={`min-w-0 flex-1 transition-all duration-300 ${isCollapsed ? "h-0 w-0 opacity-0 pointer-events-none overflow-hidden" : "opacity-100"
+                                    }`}
+                            >
+                                <p className="truncate text-sm font-semibold tracking-tight text-white leading-tight">{name ?? "User"}</p>
+                                <div className="flex items-center gap-1.5 mt-1">
+                                    <span className="inline-flex rounded-full bg-amber-500/90 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-white shadow-sm">
                                         {roleLabel}
                                     </span>
                                 </div>
                             </div>
 
-                            <div
-                                className={`absolute right-0 top-1/2 -translate-y-1/2 shrink-0 pr-1 transition-opacity duration-200 ${isCollapsed ? "hidden" : "opacity-100"
-                                    }`}
-                            >
-                                <SignOutButton className="flex items-center justify-center h-8 w-8 rounded-full hover:bg-white/10 transition cursor-pointer text-white/70 hover:text-white" title="Log out">
-                                    <LogOut className="h-4 w-4" />
-                                </SignOutButton>
-                            </div>
-
-                            {isCollapsed ? (
-                                <SignOutButton
-                                    className="inline-flex h-8 w-8 items-center justify-center rounded-full text-white/70 transition hover:bg-white/10 hover:text-white"
+                            <div className={`${isCollapsed ? "w-full flex justify-center border-t border-white/10 pt-2 pb-1" : ""}`}>
+                                <SignOutButton 
+                                    className={`flex items-center justify-center rounded-full transition-all duration-200 hover:bg-white/15 hover:scale-105 active:scale-95 text-white/70 hover:text-white ${
+                                        isCollapsed ? "h-9 w-9 bg-white/5" : "h-9 w-9"
+                                    }`} 
                                     title="Log out"
                                 >
-                                    <LogOut className="h-4 w-4" />
+                                    <LogOut className="h-4.5 w-4.5" />
                                 </SignOutButton>
-                            ) : null}
+                            </div>
                         </div>
                     </div>
                 </div>

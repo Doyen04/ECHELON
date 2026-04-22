@@ -9,6 +9,16 @@ export default function BatchUploadPage() {
     const [file, setFile] = useState<File | null>(null);
     const [isDragOver, setIsDragOver] = useState(false);
     const [showPreview, setShowPreview] = useState(false);
+    const [sessionValue, setSessionValue] = useState("2024/2025");
+    const [semesterValue, setSemesterValue] = useState("FIRST");
+    const [departmentValue, setDepartmentValue] = useState("Computer Science");
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [submitError, setSubmitError] = useState<string | null>(null);
+    const [submitSuccess, setSubmitSuccess] = useState<{
+        batchId: string;
+        dispatchId?: string;
+        students: number;
+    } | null>(null);
 
     const handleDragOver = (e: React.DragEvent) => {
         e.preventDefault();
@@ -25,6 +35,8 @@ export default function BatchUploadPage() {
         setIsDragOver(false);
         if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
             setFile(e.dataTransfer.files[0]);
+            setSubmitError(null);
+            setSubmitSuccess(null);
             // Simulate parsing delay
             setTimeout(() => setShowPreview(true), 1200);
         }
@@ -33,9 +45,51 @@ export default function BatchUploadPage() {
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files.length > 0) {
             setFile(e.target.files[0]);
+            setSubmitError(null);
+            setSubmitSuccess(null);
             setTimeout(() => setShowPreview(true), 1200);
         }
-    }
+    };
+
+    const handleConfirmUpload = async () => {
+        if (!file || isSubmitting) {
+            return;
+        }
+
+        setIsSubmitting(true);
+        setSubmitError(null);
+        setSubmitSuccess(null);
+
+        try {
+            const payload = new FormData();
+            payload.append("file", file);
+            payload.append("session", sessionValue);
+            payload.append("semester", semesterValue);
+            payload.append("department", departmentValue);
+            payload.append("autoDispatch", "true");
+
+            const response = await fetch("/api/batches/upload", {
+                method: "POST",
+                body: payload,
+            });
+
+            const responseBody = await response.json().catch(() => null);
+            if (!response.ok) {
+                setSubmitError(responseBody?.error ?? "Upload failed. Please try again.");
+                return;
+            }
+
+            setSubmitSuccess({
+                batchId: responseBody.batchId,
+                dispatchId: responseBody.dispatch?.dispatchId,
+                students: Number(responseBody.students ?? 0),
+            });
+        } catch {
+            setSubmitError("Network error while uploading batch.");
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
 
     return (
         <div className="flex flex-col h-full overflow-y-auto w-full bg-background">
@@ -62,21 +116,34 @@ export default function BatchUploadPage() {
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                                 <div className="space-y-2">
                                     <label className="block text-sm font-medium text-foreground">Session</label>
-                                    <select className="w-full h-10 rounded-md border border-border-subtle bg-transparent px-3 text-sm focus:border-brand focus:ring-1 focus:ring-brand outline-none">
+                                    <select
+                                        value={sessionValue}
+                                        onChange={(event) => setSessionValue(event.target.value)}
+                                        className="w-full h-10 rounded-md border border-border-subtle bg-transparent px-3 text-sm focus:border-brand focus:ring-1 focus:ring-brand outline-none"
+                                    >
                                         <option>2024/2025</option>
                                         <option>2023/2024</option>
                                     </select>
                                 </div>
                                 <div className="space-y-2">
                                     <label className="block text-sm font-medium text-foreground">Semester</label>
-                                    <select className="w-full h-10 rounded-md border border-border-subtle bg-transparent px-3 text-sm focus:border-brand focus:ring-1 focus:ring-brand outline-none">
-                                        <option>First Semester</option>
-                                        <option>Second Semester</option>
+                                    <select
+                                        value={semesterValue}
+                                        onChange={(event) => setSemesterValue(event.target.value)}
+                                        className="w-full h-10 rounded-md border border-border-subtle bg-transparent px-3 text-sm focus:border-brand focus:ring-1 focus:ring-brand outline-none"
+                                    >
+                                        <option value="FIRST">First Semester</option>
+                                        <option value="SECOND">Second Semester</option>
+                                        <option value="THIRD">Third Semester</option>
                                     </select>
                                 </div>
                                 <div className="space-y-2 md:col-span-2">
                                     <label className="block text-sm font-medium text-foreground">Department</label>
-                                    <select className="w-full h-10 rounded-md border border-border-subtle bg-transparent px-3 text-sm focus:border-brand focus:ring-1 focus:ring-brand outline-none">
+                                    <select
+                                        value={departmentValue}
+                                        onChange={(event) => setDepartmentValue(event.target.value)}
+                                        className="w-full h-10 rounded-md border border-border-subtle bg-transparent px-3 text-sm focus:border-brand focus:ring-1 focus:ring-brand outline-none"
+                                    >
                                         <option>Computer Science</option>
                                         <option>Physics</option>
                                         <option>Mathematics</option>
@@ -119,7 +186,7 @@ export default function BatchUploadPage() {
                                     <p className="text-sm text-text-muted mb-2">or click anywhere to browse from your computer</p>
                                     <div className="text-xs text-text-muted flex items-center gap-2 mt-4 opacity-70">
                                         <span>Accepted: .csv</span>
-                                        <span>â€¢</span>
+                                        <span>-</span>
                                         <span>Max: 5MB</span>
                                     </div>
                                 </div>
@@ -131,11 +198,16 @@ export default function BatchUploadPage() {
                                         </div>
                                         <div>
                                             <p className="text-sm font-medium text-foreground font-mono">{file.name}</p>
-                                            <p className="text-xs text-text-muted mt-0.5">{(file.size / 1024).toFixed(1)} KB â€¢ Uploading & parsing...</p>
+                                            <p className="text-xs text-text-muted mt-0.5">{(file.size / 1024).toFixed(1)} KB - Uploading and parsing...</p>
                                         </div>
                                     </div>
                                     <button
-                                        onClick={() => { setFile(null); setShowPreview(false); }}
+                                        onClick={() => {
+                                            setFile(null);
+                                            setShowPreview(false);
+                                            setSubmitError(null);
+                                            setSubmitSuccess(null);
+                                        }}
                                         className="p-2 text-text-muted hover:text-red-500 transition-colors"
                                     >
                                         <X className="h-5 w-5" />
@@ -197,16 +269,30 @@ export default function BatchUploadPage() {
                             </div>
                         )}
 
+                        {submitError ? (
+                            <div className="rounded-lg border border-status-danger/40 bg-status-danger/10 p-4 text-sm text-status-danger">
+                                {submitError}
+                            </div>
+                        ) : null}
+
+                        {submitSuccess ? (
+                            <div className="rounded-lg border border-status-success/40 bg-status-success/10 p-4 text-sm text-status-success">
+                                Upload complete for {submitSuccess.students} students. Batch ID: {submitSuccess.batchId}
+                                {submitSuccess.dispatchId ? ` | Dispatch ID: ${submitSuccess.dispatchId}` : ""}
+                            </div>
+                        ) : null}
+
                         {/* Actions */}
                         <div className="flex items-center justify-end gap-4 pt-4 pb-12">
                             <Link href="/admin/batches" className="px-5 py-2.5 text-sm font-medium text-text-muted hover:text-foreground transition-colors">
                                 Cancel
                             </Link>
                             <button
-                                disabled={!showPreview}
+                                onClick={handleConfirmUpload}
+                                disabled={!showPreview || !file || isSubmitting}
                                 className="inline-flex items-center gap-2 rounded-md bg-brand px-5 py-2.5 text-sm font-medium text-white shadow-sm hover:bg-brand-hover transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                             >
-                                Confirm Upload <ArrowRight className="h-4 w-4" />
+                                {isSubmitting ? "Uploading..." : "Confirm Upload"} <ArrowRight className="h-4 w-4" />
                             </button>
                         </div>
                     </div>
