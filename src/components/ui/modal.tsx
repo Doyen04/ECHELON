@@ -34,17 +34,17 @@ export function Modal({ isOpen, onClose, title, children, icon }: ModalProps) {
       />
       
       {/* Modal panel */}
-      <div className="relative z-10 w-full max-w-md overflow-hidden rounded-xl bg-[var(--color-surface)] shadow-2xl modal-enter">
-        <div className="flex items-center justify-between border-b border-[var(--color-border)] px-6 py-4">
+      <div className="relative z-10 w-full max-w-md overflow-hidden rounded-xl bg-surface-main shadow-2xl modal-enter">
+        <div className="flex items-center justify-between border-b border-border-subtle px-6 py-4">
           <div className="flex items-center gap-3">
-            {icon && <div className="text-[var(--color-accent)]">{icon}</div>}
-            <h2 className="font-serif text-xl text-[var(--color-text-primary)]">
+            {icon && <div className="text-brand">{icon}</div>}
+            <h2 className="font-serif text-xl text-foreground">
               {title}
             </h2>
           </div>
           <button 
             onClick={onClose}
-            className="rounded p-1 text-[var(--color-text-muted)] hover:bg-[var(--color-surface-2)] hover:text-[var(--color-text-primary)] transition-colors"
+            className="rounded p-1 text-text-muted hover:bg-surface-subtle hover:text-foreground transition-colors"
           >
             <X className="h-5 w-5" />
           </button>
@@ -100,23 +100,23 @@ export function ConfirmModal({
       isOpen={isOpen}
       onClose={onClose}
       title={title}
-      icon={isDestructive ? <AlertTriangle className="h-6 w-6 text-[var(--color-danger)]" /> : undefined}
+      icon={isDestructive ? <AlertTriangle className="h-6 w-6 text-status-danger" /> : undefined}
     >
       <div className="space-y-6">
-        <div className="text-sm text-[var(--color-text-muted)]">
+        <div className="text-sm text-text-muted">
           {description}
         </div>
 
         {requiredWord && (
           <div className="space-y-2">
-            <label className="block text-sm font-medium text-[var(--color-text-primary)]">
+            <label className="block text-sm font-medium text-foreground">
               Type "{requiredWord}" to confirm:
             </label>
             <input
               type="text"
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
-              className="w-full rounded border border-[var(--color-border)] bg-[var(--color-surface-2)] px-3 py-2 text-sm text-[var(--color-text-primary)] outline-none focus:border-[var(--color-accent)] focus:ring-1 focus:ring-[var(--color-accent)]"
+              className="w-full rounded border border-border-subtle bg-surface-subtle px-3 py-2 text-sm text-foreground outline-none focus:border-brand focus:ring-1 focus:ring-brand"
               placeholder={requiredWord}
             />
           </div>
@@ -125,7 +125,7 @@ export function ConfirmModal({
         <div className="flex items-center justify-end gap-3 pt-2">
           <button
             onClick={onClose}
-            className="rounded px-4 py-2 text-sm font-medium text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-surface-2)] transition-colors"
+            className="rounded px-4 py-2 text-sm font-medium text-text-muted hover:text-foreground hover:bg-surface-subtle transition-colors"
           >
             Cancel
           </button>
@@ -134,8 +134,8 @@ export function ConfirmModal({
             disabled={!isValid}
             className={`rounded px-4 py-2 text-sm font-medium text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
               isDestructive 
-                ? "bg-[var(--color-danger)] hover:bg-red-800" 
-                : "bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)]"
+                ? "bg-status-danger hover:bg-red-800" 
+                : "bg-brand hover:bg-brand-hover"
             }`}
           >
             {confirmText}

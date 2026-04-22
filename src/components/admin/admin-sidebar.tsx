@@ -74,7 +74,7 @@ export function AdminSidebar({ email, name, role }: AdminSidebarProps) {
     const roleLabel = role === "super_admin" ? "Super Admin" : role;
 
     return (
-        <aside className="group/sidebar fixed inset-y-0 left-0 z-30 hidden w-16 overflow-hidden border-r border-white/10 bg-[var(--color-accent)] text-white transition-[width] duration-250 ease-out md:flex md:w-16 md:hover:w-60 xl:w-60">
+        <aside className="group/sidebar fixed inset-y-0 left-0 z-30 hidden w-16 overflow-hidden border-r border-white/10 bg-brand text-white transition-[width] duration-250 ease-out md:flex md:w-16 md:hover:w-60 xl:w-60">
             <div className="flex h-full w-60 flex-col px-3 py-4 md:items-center md:group-hover/sidebar:items-stretch xl:items-stretch">
                 <div className="flex h-16 items-center gap-3 px-2 md:justify-center xl:justify-start">
                     <div className="flex h-11 w-11 items-center justify-center rounded-2xl border border-white/20 bg-white/12 text-sm font-semibold text-white">

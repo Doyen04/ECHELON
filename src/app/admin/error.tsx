@@ -16,9 +16,7 @@ export default function AdminError({ reset }: AdminErrorProps) {
         />
     );
 }
-"use client";
 
-import { ErrorState } from "@/components/ui/state-panels";
 
 export default function AdminError({ reset }: { error: Error & { digest?: string }; reset: () => void }) {
     return (

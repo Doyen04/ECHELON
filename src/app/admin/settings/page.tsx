@@ -14,14 +14,14 @@ export default function SettingsPage() {
   const [hasChanges, setHasChanges] = useState(false);
 
   return (
-    <div className="flex flex-col h-full overflow-y-auto w-full bg-[var(--color-bg)] dashboard-root">
+    <div className="flex flex-col h-full overflow-y-auto w-full bg-background dashboard-root">
       <PageHeader 
         title="Settings" 
         action={
           <button 
             disabled={!hasChanges}
             onClick={() => setHasChanges(false)}
-            className="inline-flex items-center gap-2 rounded-md bg-[var(--color-accent)] px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-[var(--color-accent-hover)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="inline-flex items-center gap-2 rounded-md bg-brand px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-brand-hover transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <Save className="h-4 w-4" />
             Save Changes
@@ -33,7 +33,7 @@ export default function SettingsPage() {
         <div className="flex flex-col lg:flex-row gap-8 items-start dashboard-section">
           
           {/* Vertical Tabs */}
-          <div className="w-full lg:w-64 shrink-0 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-sm hidden lg:block overflow-hidden">
+          <div className="w-full lg:w-64 shrink-0 rounded-xl border border-border-subtle bg-surface-main shadow-sm hidden lg:block overflow-hidden">
             <nav className="flex flex-col">
               <SidebarTab id="institution" label="Institution" active={activeTab === "institution"} onClick={() => setActiveTab("institution")} />
               <SidebarTab id="templates" label="Notification Templates" active={activeTab === "templates"} onClick={() => setActiveTab("templates")} />
@@ -43,7 +43,7 @@ export default function SettingsPage() {
           </div>
 
           {/* Mobile Tabs */}
-          <div className="w-full lg:hidden flex overflow-x-auto border-b border-[var(--color-border)] no-scrollbar">
+          <div className="w-full lg:hidden flex overflow-x-auto border-b border-border-subtle no-scrollbar">
             <MobileTab id="institution" label="Institution" active={activeTab === "institution"} onClick={() => setActiveTab("institution")} />
             <MobileTab id="templates" label="Templates" active={activeTab === "templates"} onClick={() => setActiveTab("templates")} />
             <MobileTab id="users" label="Users" active={activeTab === "users"} onClick={() => setActiveTab("users")} />
@@ -68,42 +68,42 @@ export default function SettingsPage() {
 
 function InstitutionTab({ onChange }: { onChange: () => void }) {
   return (
-    <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-sm page-transition-enter">
-      <div className="p-6 border-b border-[var(--color-border)]">
-        <h2 className="text-lg font-serif text-[var(--color-text-primary)]">Institution Identity</h2>
-        <p className="text-sm text-[var(--color-text-muted)] mt-1">Configure your branding and academic format settings.</p>
+    <div className="rounded-xl border border-border-subtle bg-surface-main shadow-sm page-transition-enter">
+      <div className="p-6 border-b border-border-subtle">
+        <h2 className="text-lg font-serif text-foreground">Institution Identity</h2>
+        <p className="text-sm text-text-muted mt-1">Configure your branding and academic format settings.</p>
       </div>
       <div className="p-6 space-y-8">
         <div className="space-y-4">
-          <label className="block text-sm font-medium text-[var(--color-text-primary)]">Institution Logo</label>
+          <label className="block text-sm font-medium text-foreground">Institution Logo</label>
           <div className="flex items-center gap-6">
-            <div className="w-24 h-24 rounded border border-[var(--color-border)] bg-[var(--color-surface-2)] flex items-center justify-center p-2">
-              <div className="text-xs text-[var(--color-text-muted)] text-center">No logo set</div>
+            <div className="w-24 h-24 rounded border border-border-subtle bg-surface-subtle flex items-center justify-center p-2">
+              <div className="text-xs text-text-muted text-center">No logo set</div>
             </div>
-            <div className="flex-1 border-2 border-dashed border-[var(--color-border)] rounded-xl bg-[var(--color-surface-2)]/30 p-6 flex flex-col items-center justify-center hover:bg-[var(--color-surface-2)]/60 transition-colors cursor-pointer" onClick={onChange}>
-              <UploadCloud className="h-6 w-6 text-[var(--color-text-muted)] mb-2" />
-              <div className="text-sm font-medium text-[var(--color-text-primary)]">Upload new logo</div>
-              <div className="text-xs text-[var(--color-text-muted)] mt-1">PNG, JPG up to 2MB. Square recommended.</div>
+            <div className="flex-1 border-2 border-dashed border-border-subtle rounded-xl bg-surface-subtle/30 p-6 flex flex-col items-center justify-center hover:bg-surface-subtle/60 transition-colors cursor-pointer" onClick={onChange}>
+              <UploadCloud className="h-6 w-6 text-text-muted mb-2" />
+              <div className="text-sm font-medium text-foreground">Upload new logo</div>
+              <div className="text-xs text-text-muted mt-1">PNG, JPG up to 2MB. Square recommended.</div>
             </div>
           </div>
         </div>
 
         <div className="grid gap-6 md:grid-cols-2">
           <div className="space-y-2">
-            <label className="block text-sm font-medium text-[var(--color-text-primary)]">Institution Name</label>
-            <input type="text" defaultValue="University of Technology" className="w-full h-10 rounded-md border border-[var(--color-border)] bg-transparent px-3 text-sm focus:border-[var(--color-accent)] focus:ring-1 focus:ring-[var(--color-accent)] outline-none" onChange={onChange} />
+            <label className="block text-sm font-medium text-foreground">Institution Name</label>
+            <input type="text" defaultValue="University of Technology" className="w-full h-10 rounded-md border border-border-subtle bg-transparent px-3 text-sm focus:border-brand focus:ring-1 focus:ring-brand outline-none" onChange={onChange} />
           </div>
           <div className="space-y-2">
-            <label className="block text-sm font-medium text-[var(--color-text-primary)]">GPA Scale</label>
-            <select className="w-full h-10 rounded-md border border-[var(--color-border)] bg-transparent px-3 text-sm focus:border-[var(--color-accent)] focus:ring-1 focus:ring-[var(--color-accent)] outline-none" onChange={onChange}>
+            <label className="block text-sm font-medium text-foreground">GPA Scale</label>
+            <select className="w-full h-10 rounded-md border border-border-subtle bg-transparent px-3 text-sm focus:border-brand focus:ring-1 focus:ring-brand outline-none" onChange={onChange}>
               <option value="5.0">5.0 Scale</option>
               <option value="4.0">4.0 Scale</option>
             </select>
           </div>
           <div className="space-y-2 md:col-span-2">
-            <label className="block text-sm font-medium text-[var(--color-text-primary)]">Default Contact Email</label>
-            <input type="email" defaultValue="registry@university.edu.ng" className="w-full h-10 rounded-md border border-[var(--color-border)] bg-transparent px-3 text-sm focus:border-[var(--color-accent)] focus:ring-1 focus:ring-[var(--color-accent)] outline-none" onChange={onChange} />
-            <p className="text-xs text-[var(--color-text-muted)]">This will be shown in the footer of the parent portal for queries.</p>
+            <label className="block text-sm font-medium text-foreground">Default Contact Email</label>
+            <input type="email" defaultValue="registry@university.edu.ng" className="w-full h-10 rounded-md border border-border-subtle bg-transparent px-3 text-sm focus:border-brand focus:ring-1 focus:ring-brand outline-none" onChange={onChange} />
+            <p className="text-xs text-text-muted">This will be shown in the footer of the parent portal for queries.</p>
           </div>
         </div>
       </div>
@@ -121,31 +121,31 @@ function TemplatesTab({ onChange }: { onChange: () => void }) {
   };
 
   return (
-    <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-sm overflow-hidden page-transition-enter">
-      <div className="p-6 border-b border-[var(--color-border)]">
-        <h2 className="text-lg font-serif text-[var(--color-text-primary)]">Notification Templates</h2>
-        <p className="text-sm text-[var(--color-text-muted)] mt-1">Customize the messages sent to parents. Use brackets for dynamic data.</p>
+    <div className="rounded-xl border border-border-subtle bg-surface-main shadow-sm overflow-hidden page-transition-enter">
+      <div className="p-6 border-b border-border-subtle">
+        <h2 className="text-lg font-serif text-foreground">Notification Templates</h2>
+        <p className="text-sm text-text-muted mt-1">Customize the messages sent to parents. Use brackets for dynamic data.</p>
       </div>
 
-      <div className="flex border-b border-[var(--color-border)] bg-[var(--color-surface-2)]/30">
-        <button onClick={() => setSubTab("whatsapp")} className={`flex-1 flex justify-center items-center gap-2 py-3 text-sm font-medium border-b-2 transition-colors ${subTab === 'whatsapp' ? 'border-[var(--color-accent)] text-[var(--color-text-primary)] bg-white' : 'border-transparent text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]'}`}>
+      <div className="flex border-b border-border-subtle bg-surface-subtle/30">
+        <button onClick={() => setSubTab("whatsapp")} className={`flex-1 flex justify-center items-center gap-2 py-3 text-sm font-medium border-b-2 transition-colors ${subTab === 'whatsapp' ? 'border-[var(--color-accent)] text-foreground bg-white' : 'border-transparent text-text-muted hover:text-foreground'}`}>
           <MessageCircle className="h-4 w-4" /> WhatsApp
         </button>
-        <button onClick={() => setSubTab("email")} className={`flex-1 flex justify-center items-center gap-2 py-3 text-sm font-medium border-b-2 transition-colors ${subTab === 'email' ? 'border-[var(--color-accent)] text-[var(--color-text-primary)] bg-white' : 'border-transparent text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]'}`}>
+        <button onClick={() => setSubTab("email")} className={`flex-1 flex justify-center items-center gap-2 py-3 text-sm font-medium border-b-2 transition-colors ${subTab === 'email' ? 'border-[var(--color-accent)] text-foreground bg-white' : 'border-transparent text-text-muted hover:text-foreground'}`}>
           <Mail className="h-4 w-4" /> Email
         </button>
-        <button onClick={() => setSubTab("sms")} className={`flex-1 flex justify-center items-center gap-2 py-3 text-sm font-medium border-b-2 transition-colors ${subTab === 'sms' ? 'border-[var(--color-accent)] text-[var(--color-text-primary)] bg-white' : 'border-transparent text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]'}`}>
+        <button onClick={() => setSubTab("sms")} className={`flex-1 flex justify-center items-center gap-2 py-3 text-sm font-medium border-b-2 transition-colors ${subTab === 'sms' ? 'border-[var(--color-accent)] text-foreground bg-white' : 'border-transparent text-text-muted hover:text-foreground'}`}>
           <Phone className="h-4 w-4" /> SMS
         </button>
       </div>
 
       <div className="p-6 space-y-6">
         {subTab === "whatsapp" && (
-          <div className="rounded-lg border border-[var(--color-warning)]/40 bg-[var(--color-warning)]/10 p-4 flex gap-3 text-[var(--color-warning)]">
+          <div className="rounded-lg border border-[var(--color-warning)]/40 bg-status-warning/10 p-4 flex gap-3 text-status-warning">
             <AlertTriangle className="h-5 w-5 shrink-0 mt-0.5" />
             <p className="text-sm">
               <span className="font-semibold block mb-1">Meta Approval Required</span>
-              WhatsApp templates must be submitted to Meta for approval before use. Changes here do not auto-update your Meta template — manual re-submission in your provider dashboard is required to avoid delivery failures.
+              WhatsApp templates must be submitted to Meta for approval before use. Changes here do not auto-update your Meta template â€” manual re-submission in your provider dashboard is required to avoid delivery failures.
             </p>
           </div>
         )}
@@ -153,21 +153,21 @@ function TemplatesTab({ onChange }: { onChange: () => void }) {
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <label className="block text-sm font-medium text-[var(--color-text-primary)]">Message Body</label>
-              <button className="text-xs text-[var(--color-accent)] hover:underline" onClick={() => { onChange(); }}>Reset to default</button>
+              <label className="block text-sm font-medium text-foreground">Message Body</label>
+              <button className="text-xs text-brand hover:underline" onClick={() => { onChange(); }}>Reset to default</button>
             </div>
             
             <textarea 
               value={template}
               onChange={handleTemplateChange}
-              className="w-full h-48 rounded-md border border-[var(--color-border)] bg-[var(--color-surface-2)]/30 p-3 text-sm font-mono focus:border-[var(--color-accent)] focus:ring-1 focus:ring-[var(--color-accent)] outline-none resize-none leading-relaxed"
+              className="w-full h-48 rounded-md border border-border-subtle bg-surface-subtle/30 p-3 text-sm font-mono focus:border-brand focus:ring-1 focus:ring-brand outline-none resize-none leading-relaxed"
             />
             
             <div className="space-y-2">
-              <div className="text-xs font-semibold uppercase tracking-widest text-[var(--color-text-muted)]">Available Variables</div>
+              <div className="text-xs font-semibold uppercase tracking-widest text-text-muted">Available Variables</div>
               <div className="flex flex-wrap gap-2">
                 {["{{guardian_name}}", "{{student_name}}", "{{matric_number}}", "{{session}}", "{{semester}}", "{{gpa}}", "{{cgpa}}", "{{result_link}}"].map(v => (
-                  <button key={v} className="bg-[var(--color-surface-2)] border border-[var(--color-border)] hover:border-[var(--color-accent)] text-[var(--color-text-secondary)] text-xs font-mono px-2 py-1 rounded transition-colors" onClick={() => { setTemplate(prev => prev + " " + v); onChange(); }}>
+                  <button key={v} className="bg-surface-subtle border border-border-subtle hover:border-[var(--color-accent)] text-text-muted text-xs font-mono px-2 py-1 rounded transition-colors" onClick={() => { setTemplate(prev => prev + " " + v); onChange(); }}>
                     {v}
                   </button>
                 ))}
@@ -176,8 +176,8 @@ function TemplatesTab({ onChange }: { onChange: () => void }) {
           </div>
 
           <div className="space-y-4">
-            <label className="block text-sm font-medium text-[var(--color-text-primary)]">Preview</label>
-            <div className={`rounded-xl border border-[var(--color-border)] p-4 text-sm leading-relaxed ${subTab === 'whatsapp' ? 'bg-[#E1FMCK] bg-[#e1f5c4]/30' : 'bg-[var(--color-surface-2)]/20'}`}>
+            <label className="block text-sm font-medium text-foreground">Preview</label>
+            <div className={`rounded-xl border border-border-subtle p-4 text-sm leading-relaxed ${subTab === 'whatsapp' ? 'bg-[#E1FMCK] bg-[#e1f5c4]/30' : 'bg-surface-subtle/20'}`}>
               Hello <span className="font-medium text-blue-600">Mrs. Folake</span>, the <span className="font-medium text-blue-600">First Semester</span> results for <span className="font-medium text-blue-600">John Adeyemi</span> (<span className="font-medium text-blue-600">CSC/2021/001</span>) have been officially released.<br/><br/>
               GPA: <span className="font-medium text-blue-600">4.21</span><br/><br/>
               View full details here: <span className="text-blue-500 underline break-all">https://results.university.edu.ng/view?token=abc123xyz</span>
@@ -191,53 +191,53 @@ function TemplatesTab({ onChange }: { onChange: () => void }) {
 
 function UsersTab() {
   return (
-    <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-sm overflow-hidden page-transition-enter">
-      <div className="p-6 border-b border-[var(--color-border)] flex items-center justify-between">
+    <div className="rounded-xl border border-border-subtle bg-surface-main shadow-sm overflow-hidden page-transition-enter">
+      <div className="p-6 border-b border-border-subtle flex items-center justify-between">
         <div>
-          <h2 className="text-lg font-serif text-[var(--color-text-primary)]">System Users</h2>
-          <p className="text-sm text-[var(--color-text-muted)] mt-1">Manage who has access to the admin dashboard.</p>
+          <h2 className="text-lg font-serif text-foreground">System Users</h2>
+          <p className="text-sm text-text-muted mt-1">Manage who has access to the admin dashboard.</p>
         </div>
-        <button className="inline-flex items-center gap-2 rounded-md bg-[var(--color-accent)] px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-[var(--color-accent-hover)] transition-colors">
+        <button className="inline-flex items-center gap-2 rounded-md bg-brand px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-brand-hover transition-colors">
           <Plus className="h-4 w-4" /> Add User
         </button>
       </div>
       
-      <table className="min-w-full divide-y divide-[var(--color-border)]">
-        <thead className="bg-[var(--color-surface-2)]/40">
+      <table className="min-w-full divide-y divide-border-subtle">
+        <thead className="bg-surface-subtle/40">
           <tr>
-            <th className="px-6 py-3 text-left text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wider">Name & Email</th>
-            <th className="px-6 py-3 text-left text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wider">Role</th>
-            <th className="px-6 py-3 text-left text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wider">Status</th>
+            <th className="px-6 py-3 text-left text-xs font-semibold text-text-muted uppercase tracking-wider">Name & Email</th>
+            <th className="px-6 py-3 text-left text-xs font-semibold text-text-muted uppercase tracking-wider">Role</th>
+            <th className="px-6 py-3 text-left text-xs font-semibold text-text-muted uppercase tracking-wider">Status</th>
             <th className="px-6 py-3 text-right"></th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-[var(--color-border)] bg-[var(--color-surface)]">
+        <tbody className="divide-y divide-border-subtle bg-surface-main">
           <tr>
             <td className="px-6 py-4 whitespace-nowrap">
-              <div className="font-medium text-[var(--color-text-primary)]">System Admin</div>
-              <div className="text-sm text-[var(--color-text-muted)]">admin@university.edu.ng</div>
+              <div className="font-medium text-foreground">System Admin</div>
+              <div className="text-sm text-text-muted">admin@university.edu.ng</div>
             </td>
             <td className="px-6 py-4 whitespace-nowrap"><span className="inline-flex rounded-full bg-[#B8860B] px-2 py-0.5 text-xs font-medium text-white">Super Admin</span></td>
-            <td className="px-6 py-4 whitespace-nowrap"><span className="inline-flex items-center gap-1.5 text-sm text-[var(--color-text-primary)]"><div className="w-2 h-2 rounded-full bg-[var(--color-success)]"></div> Active</span></td>
-            <td className="px-6 py-4 whitespace-nowrap text-right"><button className="text-sm text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]">Edit</button></td>
+            <td className="px-6 py-4 whitespace-nowrap"><span className="inline-flex items-center gap-1.5 text-sm text-foreground"><div className="w-2 h-2 rounded-full bg-status-success"></div> Active</span></td>
+            <td className="px-6 py-4 whitespace-nowrap text-right"><button className="text-sm text-text-muted hover:text-foreground">Edit</button></td>
           </tr>
           <tr>
             <td className="px-6 py-4 whitespace-nowrap">
-              <div className="font-medium text-[var(--color-text-primary)]">Prof. A. Okoye</div>
-              <div className="text-sm text-[var(--color-text-muted)]">senate@university.edu.ng</div>
+              <div className="font-medium text-foreground">Prof. A. Okoye</div>
+              <div className="text-sm text-text-muted">senate@university.edu.ng</div>
             </td>
             <td className="px-6 py-4 whitespace-nowrap"><span className="inline-flex rounded-full bg-teal-600 px-2 py-0.5 text-xs font-medium text-white">Senate Officer</span></td>
-            <td className="px-6 py-4 whitespace-nowrap"><span className="inline-flex items-center gap-1.5 text-sm text-[var(--color-text-primary)]"><div className="w-2 h-2 rounded-full bg-[var(--color-success)]"></div> Active</span></td>
-            <td className="px-6 py-4 whitespace-nowrap text-right"><button className="text-sm text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]">Edit</button></td>
+            <td className="px-6 py-4 whitespace-nowrap"><span className="inline-flex items-center gap-1.5 text-sm text-foreground"><div className="w-2 h-2 rounded-full bg-status-success"></div> Active</span></td>
+            <td className="px-6 py-4 whitespace-nowrap text-right"><button className="text-sm text-text-muted hover:text-foreground">Edit</button></td>
           </tr>
           <tr>
             <td className="px-6 py-4 whitespace-nowrap">
-              <div className="font-medium text-[var(--color-text-primary)]">Registrar Adeyemi</div>
-              <div className="text-sm text-[var(--color-text-muted)]">registry@university.edu.ng</div>
+              <div className="font-medium text-foreground">Registrar Adeyemi</div>
+              <div className="text-sm text-text-muted">registry@university.edu.ng</div>
             </td>
             <td className="px-6 py-4 whitespace-nowrap"><span className="inline-flex rounded-full bg-slate-600 px-2 py-0.5 text-xs font-medium text-white">Registrar</span></td>
-            <td className="px-6 py-4 whitespace-nowrap"><span className="inline-flex items-center gap-1.5 text-sm text-[var(--color-text-primary)]"><div className="w-2 h-2 rounded-full bg-[var(--color-success)]"></div> Active</span></td>
-            <td className="px-6 py-4 whitespace-nowrap text-right"><button className="text-sm text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]">Edit</button></td>
+            <td className="px-6 py-4 whitespace-nowrap"><span className="inline-flex items-center gap-1.5 text-sm text-foreground"><div className="w-2 h-2 rounded-full bg-status-success"></div> Active</span></td>
+            <td className="px-6 py-4 whitespace-nowrap text-right"><button className="text-sm text-text-muted hover:text-foreground">Edit</button></td>
           </tr>
         </tbody>
       </table>
@@ -247,27 +247,27 @@ function UsersTab() {
 
 function DangerTab() {
   return (
-    <div className="rounded-xl border border-[var(--color-danger)]/50 bg-[var(--color-surface)] shadow-sm overflow-hidden page-transition-enter">
-      <div className="p-6 border-b border-[var(--color-danger)]/20 bg-[var(--color-danger)]/5">
-        <h2 className="text-lg font-serif text-[var(--color-danger)] flex items-center gap-2"><ShieldAlert className="h-5 w-5" /> Danger Zone</h2>
-        <p className="text-sm text-[var(--color-danger)]/80 mt-1">Destructive actions and system-wide resets.</p>
+    <div className="rounded-xl border border-status-danger/50 bg-surface-main shadow-sm overflow-hidden page-transition-enter">
+      <div className="p-6 border-b border-status-danger/20 bg-status-danger/5">
+        <h2 className="text-lg font-serif text-status-danger flex items-center gap-2"><ShieldAlert className="h-5 w-5" /> Danger Zone</h2>
+        <p className="text-sm text-status-danger/80 mt-1">Destructive actions and system-wide resets.</p>
       </div>
 
       <div className="p-6 space-y-6">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 py-4 border-b border-[var(--color-border)]">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 py-4 border-b border-border-subtle">
           <div>
-            <div className="font-medium text-[var(--color-text-primary)]">Export completely</div>
-            <div className="text-sm text-[var(--color-text-muted)] mt-1">Download a unified CSV of all uploaded results, approvals, and logs across the system.</div>
+            <div className="font-medium text-foreground">Export completely</div>
+            <div className="text-sm text-text-muted mt-1">Download a unified CSV of all uploaded results, approvals, and logs across the system.</div>
           </div>
-          <button className="shrink-0 rounded px-4 py-2 border border-[var(--color-border)] text-sm font-medium hover:bg-[var(--color-surface-2)]">Export All Data</button>
+          <button className="shrink-0 rounded px-4 py-2 border border-border-subtle text-sm font-medium hover:bg-surface-subtle">Export All Data</button>
         </div>
         
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 py-4">
           <div>
-            <div className="font-medium text-[var(--color-danger)]">Reset notification logs</div>
-            <div className="text-sm text-[var(--color-text-muted)] mt-1">Permanently delete all delivery logs. Student results and contacts are not affected.</div>
+            <div className="font-medium text-status-danger">Reset notification logs</div>
+            <div className="text-sm text-text-muted mt-1">Permanently delete all delivery logs. Student results and contacts are not affected.</div>
           </div>
-          <button className="shrink-0 rounded px-4 py-2 bg-[var(--color-danger)] text-white text-sm font-medium hover:bg-red-800 transition-colors flex items-center gap-2">
+          <button className="shrink-0 rounded px-4 py-2 bg-status-danger text-white text-sm font-medium hover:bg-red-800 transition-colors flex items-center gap-2">
             <Trash2 className="h-4 w-4" /> Reset Logs
           </button>
         </div>
@@ -283,8 +283,8 @@ function SidebarTab({ id, label, active, onClick, isDanger }: any) {
       onClick={onClick}
       className={`flex items-center px-4 py-3 text-sm font-medium text-left border-l-4 transition-colors ${
         active 
-          ? isDanger ? "border-[var(--color-danger)] bg-[var(--color-danger)]/5 text-[var(--color-danger)]" : "border-[var(--color-accent)] bg-[var(--color-surface-2)]/50 text-[var(--color-accent)]" 
-          : "border-transparent text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-2)]/30 hover:text-[var(--color-text-primary)]"
+          ? isDanger ? "border-status-danger bg-status-danger/5 text-status-danger" : "border-[var(--color-accent)] bg-surface-subtle/50 text-brand" 
+          : "border-transparent text-text-muted hover:bg-surface-subtle/30 hover:text-foreground"
       }`}
     >
       {label}
@@ -298,8 +298,8 @@ function MobileTab({ id, label, active, onClick, isDanger }: any) {
       onClick={onClick}
       className={`px-4 py-3 text-sm font-medium whitespace-nowrap border-b-2 transition-colors ${
         active 
-          ? isDanger ? "border-[var(--color-danger)] text-[var(--color-danger)]" : "border-[var(--color-accent)] text-[var(--color-accent)]" 
-          : "border-transparent text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
+          ? isDanger ? "border-status-danger text-status-danger" : "border-[var(--color-accent)] text-brand" 
+          : "border-transparent text-text-muted hover:text-foreground"
       }`}
     >
       {label}

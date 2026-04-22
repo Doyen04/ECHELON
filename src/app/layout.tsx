@@ -40,7 +40,7 @@ export default function RootLayout({
             lang="en"
             className={`${bodyFont.variable} ${displayFont.variable} ${monoFont.variable} h-full antialiased`}
         >
-            <body className="min-h-full bg-[var(--color-bg)] text-[var(--color-text-primary)] font-sans page-transition-enter">
+            <body className="min-h-full bg-background text-foreground font-sans page-transition-enter">
                 <AppSessionProvider>{children}</AppSessionProvider>
             </body>
         </html>

@@ -15,7 +15,7 @@ type PageHeaderProps = {
 
 export function PageHeader({ title, subtitle, breadcrumbs, action }: PageHeaderProps) {
     return (
-        <header className="sticky top-0 z-20 border-b border-(--color-border) bg-[var(--color-surface)]/95 backdrop-blur-sm">
+        <header className="sticky top-0 z-20 border-b border-(--color-border) bg-surface-main/95 backdrop-blur-sm">
             <div className="flex h-16 items-center justify-between gap-4 px-6 lg:px-8">
                 <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2 text-xs text-(--text-secondary)">

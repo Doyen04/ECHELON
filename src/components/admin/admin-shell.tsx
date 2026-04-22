@@ -12,7 +12,7 @@ export function AdminShell({ sidebar, children }: AdminShellProps) {
   const { isCollapsed } = useSidebar();
 
   return (
-    <div className="min-h-screen bg-[var(--color-bg)] flex transition-all duration-300">
+    <div className="min-h-screen bg-background flex transition-all duration-300">
       {/* Sidebar gets it's own internal width logic, but we need to ensure main respects it */}
       {sidebar}
       

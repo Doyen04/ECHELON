@@ -6,13 +6,13 @@ import { StatusBadge } from "@/components/ui/badges";
 
 export default function BatchesPage() {
     return (
-        <div className="flex flex-col h-full overflow-y-auto w-full bg-[var(--color-bg)]">
+        <div className="flex flex-col h-full overflow-y-auto w-full bg-background">
             <PageHeader
                 title="Result Batches"
                 action={
                     <Link
                         href="/admin/batches/upload"
-                        className="inline-flex items-center gap-2 rounded-md bg-[var(--color-accent)] px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-[var(--color-accent-hover)] transition-colors page-transition-enter"
+                        className="inline-flex items-center gap-2 rounded-md bg-brand px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-brand-hover transition-colors page-transition-enter"
                     >
                         <Upload className="h-4 w-4" />
                         Upload Batch
@@ -20,7 +20,7 @@ export default function BatchesPage() {
                 }
             />
 
-            <div className="p-6 md:p-8 space-y-6 max-w-[1600px] w-full mx-auto">
+            <div className="p-6 md:p-8 space-y-6 max-w-400 w-full mx-auto">
                 {/* Filter Bar */}
                 <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 dashboard-section">
                     <div className="flex flex-wrap items-center gap-3">
@@ -30,38 +30,38 @@ export default function BatchesPage() {
                         <FilterSelect placeholder="Department: All" options={["Computer Science", "Physics", "Chemistry"]} />
 
                         <div className="relative">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--color-text-muted)]" />
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-text-muted" />
                             <input
                                 type="text"
                                 placeholder="Search batches..."
-                                className="h-10 pl-9 pr-4 rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] text-sm focus:outline-none focus:border-[var(--color-accent)] focus:ring-1 focus:ring-[var(--color-accent)] min-w-[240px]"
+                                className="h-10 pl-9 pr-4 rounded-md border border-border-subtle bg-surface-main text-sm focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand min-w-60"
                             />
                         </div>
                     </div>
 
-                    <div className="text-sm text-[var(--color-text-muted)] xl:text-right whitespace-nowrap">
-                        Showing <span className="font-medium text-[var(--color-text-primary)]">24</span> batches
+                    <div className="text-sm text-text-muted xl:text-right whitespace-nowrap">
+                        Showing <span className="font-medium text-foreground">24</span> batches
                     </div>
                 </div>
 
                 {/* Batches Table List */}
-                <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-sm overflow-x-auto dashboard-section">
-                    <table className="min-w-full divide-y divide-[var(--color-border)]">
-                        <thead className="bg-[var(--color-surface-2)]/40">
+                <div className="rounded-xl border border-border-subtle bg-surface-main shadow-sm overflow-x-auto dashboard-section">
+                    <table className="min-w-full divide-y divide-border-subtle">
+                        <thead className="bg-surface-subtle/40">
                             <tr>
-                                <th className="px-4 py-3 text-left w-12"><input type="checkbox" className="rounded border-[var(--color-border)] accent-[var(--color-accent)]" /></th>
-                                <th className="px-4 py-3 text-left text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wider">Batch ID</th>
-                                <th className="px-4 py-3 text-left text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wider">Session</th>
-                                <th className="px-4 py-3 text-left text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wider">Semester</th>
-                                <th className="px-4 py-3 text-left text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wider">Department</th>
-                                <th className="px-4 py-3 text-left text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wider">Students</th>
-                                <th className="px-4 py-3 text-left text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wider">Source</th>
-                                <th className="px-4 py-3 text-left text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wider">Status</th>
-                                <th className="px-4 py-3 text-left text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wider">Uploaded</th>
+                                <th className="px-4 py-3 text-left w-12"><input type="checkbox" className="rounded border-border-subtle accent-brand" /></th>
+                                <th className="px-4 py-3 text-left text-xs font-semibold text-text-muted uppercase tracking-wider">Batch ID</th>
+                                <th className="px-4 py-3 text-left text-xs font-semibold text-text-muted uppercase tracking-wider">Session</th>
+                                <th className="px-4 py-3 text-left text-xs font-semibold text-text-muted uppercase tracking-wider">Semester</th>
+                                <th className="px-4 py-3 text-left text-xs font-semibold text-text-muted uppercase tracking-wider">Department</th>
+                                <th className="px-4 py-3 text-left text-xs font-semibold text-text-muted uppercase tracking-wider">Students</th>
+                                <th className="px-4 py-3 text-left text-xs font-semibold text-text-muted uppercase tracking-wider">Source</th>
+                                <th className="px-4 py-3 text-left text-xs font-semibold text-text-muted uppercase tracking-wider">Status</th>
+                                <th className="px-4 py-3 text-left text-xs font-semibold text-text-muted uppercase tracking-wider">Uploaded</th>
                                 <th className="px-4 py-3 text-right"></th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-[var(--color-border)] bg-[var(--color-surface)]">
+                        <tbody className="divide-y divide-border-subtle bg-surface-main">
                             {mockBatches.map((batch, i) => (
                                 <BatchRow key={batch.id} batch={batch} idx={i} />
                             ))}
@@ -69,13 +69,13 @@ export default function BatchesPage() {
                     </table>
 
                     {/* Pagination */}
-                    <div className="flex items-center justify-between px-6 py-4 border-t border-[var(--color-border)] bg-[var(--color-surface-2)]/20">
-                        <div className="text-sm text-[var(--color-text-muted)]">
+                    <div className="flex items-center justify-between px-6 py-4 border-t border-border-subtle bg-surface-subtle/20">
+                        <div className="text-sm text-text-muted">
                             Showing 1 to 10 of 24 entries
                         </div>
                         <div className="flex gap-2">
-                            <button disabled className="px-3 py-1 border border-[var(--color-border)] rounded bg-[var(--color-surface)] text-sm disabled:opacity-50 text-[var(--color-text-primary)]">Previous</button>
-                            <button className="px-3 py-1 border border-[var(--color-border)] rounded bg-white text-sm hover:bg-[var(--color-surface-2)] text-[var(--color-text-primary)]">Next</button>
+                            <button disabled className="px-3 py-1 border border-border-subtle rounded bg-surface-main text-sm disabled:opacity-50 text-foreground">Previous</button>
+                            <button className="px-3 py-1 border border-border-subtle rounded bg-white text-sm hover:bg-surface-subtle text-foreground">Next</button>
                         </div>
                     </div>
                 </div>
@@ -86,7 +86,7 @@ export default function BatchesPage() {
 
 function FilterSelect({ placeholder, options }: { placeholder: string, options: string[] }) {
     return (
-        <select defaultValue="" className="h-10 rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] px-3 text-sm text-[var(--color-text-primary)] focus:outline-none focus:border-[var(--color-accent)] focus:ring-1 focus:ring-[var(--color-accent)] hover:bg-[var(--color-surface-2)]/50 cursor-pointer">
+        <select defaultValue="" className="h-10 rounded-md border border-border-subtle bg-surface-main px-3 text-sm text-foreground focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand hover:bg-surface-subtle/50 cursor-pointer">
             <option value="" disabled hidden>{placeholder}</option>
             {options.map(opt => <option key={opt}>{opt}</option>)}
         </select>
@@ -95,15 +95,15 @@ function FilterSelect({ placeholder, options }: { placeholder: string, options: 
 
 function BatchRow({ batch, idx }: { batch: any, idx: number }) {
     return (
-        <tr className="hover:bg-[var(--color-surface-2)]/50 transition-colors group table-row-enter">
-            <td className="px-4 py-4 whitespace-nowrap"><input type="checkbox" className="rounded border-[var(--color-border)] accent-[var(--color-accent)]" /></td>
-            <td className="px-4 py-4 whitespace-nowrap text-sm font-mono text-[var(--color-text-secondary)]">{batch.id}</td>
-            <td className="px-4 py-4 whitespace-nowrap text-sm text-[var(--color-text-primary)]">{batch.session}</td>
-            <td className="px-4 py-4 whitespace-nowrap text-sm text-[var(--color-text-primary)]">{batch.semester}</td>
-            <td className="px-4 py-4 whitespace-nowrap text-sm font-medium text-[var(--color-text-primary)]">{batch.dept}</td>
-            <td className="px-4 py-4 whitespace-nowrap text-sm text-[var(--color-text-primary)]">{batch.students}</td>
+        <tr className="hover:bg-surface-subtle/50 transition-colors group table-row-enter">
+            <td className="px-4 py-4 whitespace-nowrap"><input type="checkbox" className="rounded border-border-subtle accent-brand" /></td>
+            <td className="px-4 py-4 whitespace-nowrap text-sm font-mono text-text-muted">{batch.id}</td>
+            <td className="px-4 py-4 whitespace-nowrap text-sm text-foreground">{batch.session}</td>
+            <td className="px-4 py-4 whitespace-nowrap text-sm text-foreground">{batch.semester}</td>
+            <td className="px-4 py-4 whitespace-nowrap text-sm font-medium text-foreground">{batch.dept}</td>
+            <td className="px-4 py-4 whitespace-nowrap text-sm text-foreground">{batch.students}</td>
             <td className="px-4 py-4 whitespace-nowrap">
-                <span className="inline-flex items-center rounded border border-[var(--color-border)] bg-[var(--color-surface-2)] px-2 py-0.5 text-[10px] font-medium tracking-wide uppercase text-[var(--color-text-muted)]">
+                <span className="inline-flex items-center rounded border border-border-subtle bg-surface-subtle px-2 py-0.5 text-[10px] font-medium tracking-wide uppercase text-text-muted">
                     {batch.source}
                 </span>
             </td>
@@ -112,14 +112,14 @@ function BatchRow({ batch, idx }: { batch: any, idx: number }) {
             </td>
             <td className="px-4 py-4 whitespace-nowrap">
                 <div className="flex flex-col">
-                    <span className="text-sm text-[var(--color-text-primary)]">{batch.uploadedBy}</span>
-                    <span className="text-xs text-[var(--color-text-muted)]">{batch.uploadedAt}</span>
+                    <span className="text-sm text-foreground">{batch.uploadedBy}</span>
+                    <span className="text-xs text-text-muted">{batch.uploadedAt}</span>
                 </div>
             </td>
             <td className="px-4 py-4 whitespace-nowrap text-right">
                 <Link
                     href={`/admin/batches/${batch.id}`}
-                    className="inline-flex items-center gap-1 text-sm font-medium text-[var(--color-accent)] hover:text-[var(--color-accent-hover)] hover:underline opacity-0 group-hover:opacity-100 transition-opacity"
+                    className="inline-flex items-center gap-1 text-sm font-medium text-brand hover:text-brand-hover hover:underline opacity-0 group-hover:opacity-100 transition-opacity"
                 >
                     View <ChevronRight className="h-4 w-4" />
                 </Link>
