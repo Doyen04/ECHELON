@@ -123,26 +123,24 @@ export function AdminSidebar({ email, name, role }: AdminSidebarProps) {
 
                 <div className="mt-auto px-1 pb-1">
                     <div className="rounded-3xl border border-white/10 bg-white/8 p-3 text-white/90 shadow-[0_12px_30px_-20px_rgba(0,0,0,0.45)]">
-                        <div className="flex items-center gap-3">
-                            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white/15 text-[11px] font-semibold text-white">
-                                {userInitials}
+                        <div className="flex items-center gap-3 justify-between">
+                            <div className="flex items-center gap-3 min-w-0">
+                                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/15 text-[11px] font-semibold text-white z-10 relative">
+                                    {userInitials}
+                                </div>
+                                <div className="min-w-0 opacity-0 transition-opacity duration-200 md:hidden xl:block xl:opacity-100 md:group-hover/sidebar:block md:group-hover/sidebar:opacity-100">
+                                    <p className="truncate text-sm font-medium text-white pr-2">{name ?? email ?? "User"}</p>
+                                    <span className="mt-1 inline-flex rounded-full bg-[#B8860B] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-white">
+                                        {roleLabel}
+                                    </span>
+                                </div>
                             </div>
-                            <div className="min-w-0 opacity-0 transition-opacity duration-200 md:hidden xl:block xl:opacity-100 md:group-hover/sidebar:block md:group-hover/sidebar:opacity-100">
-                                <p className="truncate text-sm font-medium text-white">{name ?? email ?? "User"}</p>
-                                <span className="mt-1 inline-flex rounded-full bg-[#B8860B] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-white">
-                                    {roleLabel}
-                                </span>
+                            
+                            <div className="opacity-0 transition-opacity duration-200 md:hidden xl:block xl:opacity-100 md:group-hover/sidebar:block md:group-hover/sidebar:opacity-100 shrink-0">
+                                <SignOutButton className="flex items-center justify-center h-8 w-8 rounded-full hover:bg-white/10 transition cursor-pointer text-white/70 hover:text-white" title="Log out">
+                                    <LogOut className="h-4 w-4" />
+                                </SignOutButton>
                             </div>
-                        </div>
-
-                        <div className="mt-3 flex items-center justify-between gap-2 opacity-0 transition-opacity duration-200 md:hidden xl:opacity-100 md:group-hover/sidebar:opacity-100">
-                            <Link href="/admin/settings" className="text-xs font-medium text-white/70 hover:text-white">
-                                Profile settings
-                            </Link>
-                            <span className="inline-flex items-center gap-1 text-xs text-white/55">
-                                <LogOut className="h-3.5 w-3.5" />
-                                <SignOutButton compact />
-                            </span>
                         </div>
                     </div>
                 </div>

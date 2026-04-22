@@ -7,19 +7,26 @@ type AdminLayoutProps = {
     children: ReactNode;
 };
 
+import { SidebarProvider } from "@/components/admin/sidebar-provider";
+import { AdminShell } from "@/components/admin/admin-shell";
+
+
 export default async function AdminLayout({ children }: AdminLayoutProps) {
     const session = await requireSuperAdminSession();
 
     return (
-        <div className="min-h-screen bg-background text-foreground">
-            <AdminSidebar
-                email={session.user.email}
-                name={session.user.name}
-                role={session.user.role}
-            />
-            <main className="min-h-screen md:pl-16 xl:pl-60">
+        <SidebarProvider>
+            <AdminShell
+                sidebar={
+                    <AdminSidebar
+                        email={session.user.email}
+                        name={session.user.name}
+                        role={session.user.role}
+                    />
+                }
+            >
                 {children}
-            </main>
-        </div>
+            </AdminShell>
+        </SidebarProvider>
     );
 }
