@@ -12,12 +12,14 @@ export default function BatchUploadPage() {
     const [sessionValue, setSessionValue] = useState("2024/2025");
     const [semesterValue, setSemesterValue] = useState("FIRST");
     const [departmentValue, setDepartmentValue] = useState("Computer Science");
+    const [autoDispatch, setAutoDispatch] = useState(true);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [submitError, setSubmitError] = useState<string | null>(null);
     const [submitSuccess, setSubmitSuccess] = useState<{
         batchId: string;
         dispatchId?: string;
         students: number;
+        autoDispatched: boolean;
     } | null>(null);
 
     const handleDragOver = (e: React.DragEvent) => {
@@ -66,7 +68,7 @@ export default function BatchUploadPage() {
             payload.append("session", sessionValue);
             payload.append("semester", semesterValue);
             payload.append("department", departmentValue);
-            payload.append("autoDispatch", "true");
+            payload.append("autoDispatch", autoDispatch ? "true" : "false");
 
             const response = await fetch("/api/batches/upload", {
                 method: "POST",
@@ -83,6 +85,7 @@ export default function BatchUploadPage() {
                 batchId: responseBody.batchId,
                 dispatchId: responseBody.dispatch?.dispatchId,
                 students: Number(responseBody.students ?? 0),
+                autoDispatched: Boolean(responseBody.dispatch?.dispatchId),
             });
         } catch {
             setSubmitError("Network error while uploading batch.");
@@ -161,6 +164,22 @@ export default function BatchUploadPage() {
                                             <span className="text-sm text-foreground flex items-center gap-2">SIS API Sync <span className="text-[10px] bg-surface-subtle px-1.5 py-0.5 rounded">Coming Soon</span></span>
                                         </label>
                                     </div>
+                                </div>
+                                <div className="space-y-2 md:col-span-2">
+                                    <label className="flex items-start gap-3 rounded-lg border border-border-subtle bg-surface-subtle/30 p-3 cursor-pointer">
+                                        <input
+                                            type="checkbox"
+                                            checked={autoDispatch}
+                                            onChange={(event) => setAutoDispatch(event.target.checked)}
+                                            className="mt-1 h-4 w-4 rounded border-border-subtle text-brand focus:ring-brand"
+                                        />
+                                        <span className="text-sm text-foreground">
+                                            <span className="block font-medium">Send results to parents immediately after upload</span>
+                                            <span className="text-text-muted text-xs">
+                                                When off, batch stays pending and can be dispatched later.
+                                            </span>
+                                        </span>
+                                    </label>
                                 </div>
                             </div>
                         </div>
@@ -278,7 +297,9 @@ export default function BatchUploadPage() {
                         {submitSuccess ? (
                             <div className="rounded-lg border border-status-success/40 bg-status-success/10 p-4 text-sm text-status-success">
                                 Upload complete for {submitSuccess.students} students. Batch ID: {submitSuccess.batchId}
-                                {submitSuccess.dispatchId ? ` | Dispatch ID: ${submitSuccess.dispatchId}` : ""}
+                                {submitSuccess.autoDispatched && submitSuccess.dispatchId
+                                    ? ` | Dispatch ID: ${submitSuccess.dispatchId}`
+                                    : " | Dispatch not started (batch is pending review)."}
                             </div>
                         ) : null}
 
