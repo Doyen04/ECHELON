@@ -29,7 +29,7 @@ export function ErrorState({
                         className="mt-6 rounded-md bg-brand px-4 py-2 text-sm font-medium text-white transition hover:bg-brand-hover"
                     >
                         Try again
-                    </>
+                    </button>
                 ) : null}
             </div>
         </div>

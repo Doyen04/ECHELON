@@ -26,8 +26,3 @@ export default function GlobalError({ reset }: { error: Error & { digest?: strin
             title="Something went wrong"
             description="The application encountered an unexpected error. You can try again or return to the home page."
             onRetry={reset}
-            ctaLabel="Go home"
-            ctaHref="/"
-        />
-    );
-}

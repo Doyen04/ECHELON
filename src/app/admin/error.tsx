@@ -16,16 +16,3 @@ export default function AdminError({ reset }: AdminErrorProps) {
         />
     );
 }
-
-
-export default function AdminError({ reset }: { error: Error & { digest?: string }; reset: () => void }) {
-    return (
-        <ErrorState
-            title="Admin workspace failed to load"
-            description="The dashboard route could not finish rendering. Retry to reload the current admin page."
-            onRetry={reset}
-            ctaLabel="Back to dashboard"
-            ctaHref="/admin/dashboard"
-        />
-    );
-}
