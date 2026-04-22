@@ -1,20 +1,24 @@
 import type { Metadata } from "next";
-import { IBM_Plex_Sans, Space_Grotesk } from "next/font/google";
+import { DM_Sans, DM_Serif_Display, JetBrains_Mono } from "next/font/google";
 
 import { AppSessionProvider } from "@/components/auth/session-provider";
 
 import "./globals.css";
 
-const bodyFont = IBM_Plex_Sans({
+const bodyFont = DM_Sans({
     variable: "--font-body",
     subsets: ["latin"],
-    weight: ["400", "500", "600", "700"],
 });
 
-const displayFont = Space_Grotesk({
+const displayFont = DM_Serif_Display({
     variable: "--font-display",
     subsets: ["latin"],
-    weight: ["500", "600", "700"],
+    weight: ["400"],
+});
+
+const monoFont = JetBrains_Mono({
+    variable: "--font-mono",
+    subsets: ["latin"],
 });
 
 export const metadata: Metadata = {
@@ -34,9 +38,9 @@ export default function RootLayout({
     return (
         <html
             lang="en"
-            className={`${bodyFont.variable} ${displayFont.variable} h-full antialiased`}
+            className={`${bodyFont.variable} ${displayFont.variable} ${monoFont.variable} h-full antialiased`}
         >
-            <body className="min-h-full font-sans text-foreground">
+            <body className="min-h-full bg-[var(--color-bg)] text-[var(--color-text-primary)] font-sans page-transition-enter">
                 <AppSessionProvider>{children}</AppSessionProvider>
             </body>
         </html>

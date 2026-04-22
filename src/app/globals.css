@@ -1,111 +1,200 @@
 @import "tailwindcss";
 
 :root {
-  --surface-0: #f4f1e8;
-  --surface-soft: #f8f5ef;
-  --surface-strong: #ffffff;
-  --surface-muted: #e8e1d2;
-  --text-primary: #15212b;
-  --text-secondary: #42515a;
-  --text-muted: #6e7a82;
-  --border-subtle: rgba(21, 33, 43, 0.1);
-  --border-strong: rgba(21, 33, 43, 0.22);
-  --accent-soft: #1f8f86;
-  --accent-strong: #0f5f73;
-  --hero-deep: #112f3c;
-  --hero-mid: #0e5162;
-  --hero-accent: #166675;
-  --hero-text: #f6fafb;
-  --hero-kicker: #c7e3e7;
-  --hero-subtle: #cfe6e9;
+    --color-bg: #F7F6F3;
+    --color-surface: #FFFFFF;
+    --color-surface-2: #F0EEE9;
+    --color-border: #E2DDD6;
+    --color-text-primary: #1A1714;
+    --color-text-secondary: #6B6560;
+    --color-accent: #1D4B8F;
+    --color-accent-hover: #163970;
+    --color-success: #1A7A4A;
+    --color-warning: #B45309;
+    --color-danger: #B91C1C;
+    --color-danger-soft: #FEF2F2;
+    --color-pending: #92400E;
+    --color-pending-soft: #FFFBEB;
+    --surface-0: var(--color-bg);
+    --surface-soft: var(--color-surface-2);
+    --surface-strong: var(--color-surface);
+    --surface-muted: #E8E1D2;
+    --text-primary: var(--color-text-primary);
+    --text-secondary: var(--color-text-secondary);
+    --text-muted: #6E7A82;
+    --border-subtle: rgba(26, 23, 20, 0.1);
+    --border-strong: rgba(26, 23, 20, 0.22);
+    --accent-soft: #1F8F86;
+    --accent-strong: var(--color-accent);
+    --hero-deep: #112F3C;
+    --hero-mid: #0E5162;
+    --hero-accent: #166675;
+    --hero-text: #F6FAFB;
+    --hero-kicker: #C7E3E7;
+    --hero-subtle: #CFE6E9;
+    --accent-hover: var(--color-accent-hover);
 }
 
 @theme inline {
-  --color-background: var(--surface-0);
-  --color-foreground: var(--text-primary);
-  --font-sans: var(--font-body);
-  --font-mono: "IBM Plex Mono", "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+    --color-background: var(--color-bg);
+    --color-foreground: var(--color-text-primary);
+    --color-surface-main: var(--color-surface);
+    --color-surface-subtle: var(--color-surface-2);
+    --color-border-subtle: var(--color-border);
+    --color-text-main: var(--color-text-primary);
+    --color-text-muted: var(--color-text-secondary);
+    --color-brand: var(--color-accent);
+    --color-brand-hover: var(--color-accent-hover);
+    --color-status-success: var(--color-success);
+    --color-status-warning: var(--color-warning);
+    --color-status-danger: var(--color-danger);
+    --color-status-danger-soft: var(--color-danger-soft);
+    --color-status-pending: var(--color-pending);
+    --color-status-pending-soft: var(--color-pending-soft);
+    --font-sans: var(--font-body), "Helvetica Neue", Arial, sans-serif;
+    --font-serif: var(--font-display), Georgia, "Times New Roman", serif;
+    --font-code: var(--font-mono), Consolas, monospace;
+}
+
+html {
+    background: var(--color-bg);
 }
 
 body {
-  background:
-    radial-gradient(circle at 12% 0%, rgba(15, 95, 115, 0.17), transparent 33%),
-    radial-gradient(circle at 86% -2%, rgba(180, 138, 62, 0.24), transparent 30%),
-    linear-gradient(180deg, #f4f1e8 0%, #f0ebdf 44%, #ebe6d8 100%);
-  color: var(--text-primary);
-  font-family: var(--font-body), "Segoe UI", sans-serif;
+    background:
+        radial-gradient(circle at top left, rgba(29, 75, 143, 0.08), transparent 32%),
+        radial-gradient(circle at 88% 0%, rgba(184, 134, 11, 0.08), transparent 28%),
+        var(--color-bg);
+    color: var(--color-foreground);
+    font-family: var(--font-sans);
 }
 
 h1,
 h2,
 h3,
-h4 {
-  font-family: var(--font-display), "Segoe UI", sans-serif;
+h4,
+h5,
+h6 {
+    font-family: var(--font-serif);
 }
 
 .dashboard-root {
-  isolation: isolate;
-  position: relative;
+    position: relative;
+    isolation: isolate;
 }
 
 .dashboard-grid-overlay {
-  pointer-events: none;
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  opacity: 0.32;
-  background-image:
-    linear-gradient(rgba(13, 81, 98, 0.06) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(13, 81, 98, 0.06) 1px, transparent 1px);
-  background-size: 34px 34px;
-  mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 1), rgba(0, 0, 0, 0.2));
-}
-
-.dashboard-header,
-.dashboard-card,
-.dashboard-section {
-  animation: rise-in 540ms cubic-bezier(0.21, 1, 0.2, 1) both;
+    pointer-events: none;
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    opacity: 0.22;
+    background-image:
+        linear-gradient(rgba(29, 75, 143, 0.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(29, 75, 143, 0.05) 1px, transparent 1px);
+    background-size: 32px 32px;
+    mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 1), rgba(0, 0, 0, 0.12));
 }
 
 .dashboard-card,
-.dashboard-section {
-  transition: transform 220ms ease, box-shadow 220ms ease, border-color 220ms ease;
+.dashboard-section,
+.dashboard-header {
+    animation: fade-in 150ms ease-out both;
 }
 
-.dashboard-card:hover,
-.dashboard-section:hover {
-  transform: translateY(-2px);
-  border-color: rgba(21, 33, 43, 0.3);
-  box-shadow: 0 25px 45px -38px rgba(6, 24, 30, 0.9);
+.page-transition-enter {
+    animation: fade-in 150ms ease-out both;
 }
 
-@keyframes rise-in {
-  from {
-    opacity: 0;
-    transform: translateY(16px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+.modal-enter {
+    animation: modal-scale-up 200ms ease-out both;
 }
 
-@media (max-width: 768px) {
-  .dashboard-grid-overlay {
-    opacity: 0.2;
-    background-size: 24px 24px;
-  }
+.table-row-enter {
+    animation: row-slide-up 300ms ease-out both;
+}
+
+.status-badge {
+    border-radius: 4px;
+    padding: 4px 10px;
+    font-size: 12px;
+    line-height: 1;
+    font-weight: 600;
+}
+
+.skeleton {
+    position: relative;
+    overflow: hidden;
+    background: linear-gradient(90deg, rgba(240, 238, 233, 0.75), rgba(255, 255, 255, 0.95), rgba(240, 238, 233, 0.75));
+    background-size: 200% 100%;
+}
+
+.skeleton::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    animation: shimmer 1.4s linear infinite;
+}
+
+@keyframes fade-in {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes modal-scale-up {
+    from {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+@keyframes row-slide-up {
+    from {
+        opacity: 0;
+        transform: translateY(4px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes shimmer {
+    from {
+        transform: translateX(-100%);
+    }
+
+    to {
+        transform: translateX(100%);
+    }
+}
+
+@media (max-width: 767px) {
+    .dashboard-grid-overlay {
+        opacity: 0.14;
+        background-size: 24px 24px;
+    }
 }
 
 @media (prefers-reduced-motion: reduce) {
 
-  *,
-  *::before,
-  *::after {
-    animation-duration: 1ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 1ms !important;
-    scroll-behavior: auto !important;
-  }
+    *,
+    *::before,
+    *::after {
+        animation-duration: 1ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 1ms !important;
+        scroll-behavior: auto !important;
+    }
 }
