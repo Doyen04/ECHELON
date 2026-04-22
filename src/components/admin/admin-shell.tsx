@@ -12,16 +12,15 @@ export function AdminShell({ sidebar, children }: AdminShellProps) {
   const { isCollapsed } = useSidebar();
 
   return (
-    <div className="min-h-screen bg-background flex transition-all duration-300">
-      {/* Sidebar gets it's own internal width logic, but we need to ensure main respects it */}
+    <div className="flex min-h-screen bg-background">
       {sidebar}
-      
+
       <main 
-        className={`min-h-screen flex-1 transition-all duration-300 ease-in-out ${
-          isCollapsed ? "md:pl-16" : "md:pl-16 xl:pl-60"
+        className={`min-h-screen flex-1 transition-[padding] duration-300 ease-in-out ${
+          isCollapsed ? "md:pl-16" : "md:pl-60"
         }`}
       >
-        <div className="h-full w-full relative">
+        <div className="relative h-full w-full">
           {children}
         </div>
       </main>
