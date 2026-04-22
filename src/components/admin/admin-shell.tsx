@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Menu } from "lucide-react";
+import { Menu, Layers } from "lucide-react";
 import { useSidebar } from "./sidebar-provider";
 
 interface AdminShellProps {
@@ -17,10 +17,10 @@ export function AdminShell({ sidebar, children }: AdminShellProps) {
             {/* Mobile Header */}
             <header className="fixed top-0 left-0 right-0 z-40 flex h-16 items-center justify-between border-b border-white/10 bg-brand px-4 text-white md:hidden">
                 <div className="flex items-center gap-3">
-                    <div className="flex h-9 w-9 items-center justify-center rounded-xl border border-white/20 bg-white/12 text-xs font-semibold text-white">
-                        RN
+                    <div className="flex h-9 w-9 items-center justify-center rounded-xl border border-white/20 bg-white/12 text-white">
+                        <Layers className="h-5 w-5" />
                     </div>
-                    <span className="font-serif text-lg">Echelon</span>
+                    <span className="font-serif text-lg tracking-tight">Echelon</span>
                 </div>
                 <button
                     onClick={toggleMobileMenu}

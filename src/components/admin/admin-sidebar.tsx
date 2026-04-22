@@ -95,8 +95,7 @@ export function AdminSidebar({ email, name, role }: AdminSidebarProps) {
                         className={`min-w-0 transition-all duration-200 ${isCollapsed ? "h-0 w-0 opacity-0 pointer-events-none overflow-hidden" : "w-auto opacity-100"
                             }`}
                     >
-                        <p className="text-[10px] uppercase tracking-[0.28em] text-white/45 font-medium">Institution</p>
-                        <h1 className="mt-0.5 truncate font-serif text-xl tracking-tight text-white">Echelon Registry</h1>
+                        <h1 className="truncate font-serif text-xl tracking-tight text-white">Echelon Registry</h1>
                     </div>
                     
                     <button
