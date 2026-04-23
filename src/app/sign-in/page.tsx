@@ -2,19 +2,40 @@
 
 import React, { useState } from "react";
 import { Building2 } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
+import { signIn } from "next-auth/react";
 
 export default function SignInPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const callbackUrl = searchParams.get("callbackUrl") || "/admin/dashboard";
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
 
-  const handleSignIn = (e: React.FormEvent) => {
+  const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    // Mock login delay
-    setTimeout(() => {
-      router.push("/admin/dashboard");
-    }, 1000);
+    setError(null);
+
+    try {
+      const result = await signIn("credentials", {
+        email,
+        password,
+        redirect: false,
+      });
+
+      if (result?.error) {
+        setError("Invalid email or password");
+      } else if (result?.ok) {
+        router.push(callbackUrl);
+      }
+    } catch (err) {
+      setError("An error occurred during sign in");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -78,6 +99,8 @@ export default function SignInPage() {
                   type="email"
                   placeholder="registrar@echelon.edu.ng"
                   autoComplete="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                   className="w-full h-11 border border-border-subtle rounded bg-white px-4 text-foreground focus:outline-none focus:ring-1 focus:border-brand focus:ring-brand transition-all shadow-sm"
                 />
               </div>
@@ -89,10 +112,18 @@ export default function SignInPage() {
                   type="password"
                   placeholder="Enter your password"
                   autoComplete="current-password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
                   className="w-full h-11 border border-border-subtle rounded bg-white px-4 text-foreground focus:outline-none focus:ring-1 focus:border-brand focus:ring-brand transition-all shadow-sm"
                 />
               </div>
             </div>
+
+            {error && (
+              <div className="p-3 rounded bg-red-50 border border-red-200 text-sm text-red-700">
+                {error}
+              </div>
+            )}
 
             <button 
               type="submit"
