@@ -54,6 +54,7 @@ const navItems: Array<{ section: string; items: NavItem[] }> = [
         section: "Admin",
         items: [
             { label: "Students", href: "/admin/students", icon: Users },
+            { label: "Upload Contacts", href: "/admin/students/contacts", icon: Upload },
             { label: "Audit Log", href: "/admin/audit", icon: BookOpen },
             { label: "Settings", href: "/admin/settings", icon: Settings },
         ],
@@ -172,7 +173,7 @@ export function AdminSidebar({ email, name, role }: AdminSidebarProps) {
                 </div>
 
                 <div className="mt-auto pt-4 px-1 pb-1">
-                    <div className={`rounded-[2rem] border border-white/15 bg-white/10 p-2.5 text-white/90 shadow-[0_8px_32px_-12px_rgba(0,0,0,0.5)] backdrop-blur-md transition-all duration-300 ${isCollapsed ? "items-center" : ""}`}>
+                    <div className={`rounded-4xl border border-white/15 bg-white/10 p-2.5 text-white/90 shadow-[0_8px_32px_-12px_rgba(0,0,0,0.5)] backdrop-blur-md transition-all duration-300 ${isCollapsed ? "items-center" : ""}`}>
                         <div
                             className={`flex ${isCollapsed ? "flex-col items-center gap-3 pt-1" : "items-center gap-3.5"
                                 }`}

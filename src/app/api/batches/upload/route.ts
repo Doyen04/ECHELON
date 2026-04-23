@@ -2,214 +2,36 @@ import { NextResponse } from "next/server";
 
 import { prisma } from "@/lib/db";
 import { DispatchTriggerError, triggerDispatchForBatch } from "@/lib/dispatch-service";
+import { parseStudentRowsFromCsv, parseStudentRowsFromPdf, type StudentImportRow } from "@/lib/result-import";
 import { getSuperAdminSession } from "@/lib/super-admin-session";
 
 const SEMESTER_VALUES = new Set(["FIRST", "SECOND", "THIRD"]);
-
-type CsvRow = {
-    matricNumber: string;
-    studentName: string;
-    department: string;
-    faculty: string;
-    level: number;
-    gpa: number;
-    cgpa: number | null;
-    courseCode: string;
-    courseTitle: string;
-    unit: number;
-    grade: string;
-    score: number | null;
-    parentName: string | null;
-    parentEmail: string | null;
-    parentPhone: string | null;
-    relationship: string;
-    preferredChannel: "WHATSAPP" | "EMAIL" | "SMS";
-    ndprConsent: boolean;
-};
-
-function normalizeHeader(header: string): string {
-    return header.trim().toLowerCase().replace(/\s+/g, "_");
-}
 
 function parseBoolean(value: string | undefined): boolean {
     const normalized = (value ?? "").trim().toLowerCase();
     return ["true", "1", "yes", "y"].includes(normalized);
 }
 
-function parseNumber(value: string | undefined, fallback = 0): number {
-    const parsed = Number((value ?? "").trim());
-    return Number.isFinite(parsed) ? parsed : fallback;
-}
+async function parseStudentRowsFromFile(file: File, fallbackDepartment: string): Promise<StudentImportRow[]> {
+    const loweredFileName = file.name.toLowerCase();
+    const mimeType = file.type.toLowerCase();
+    const isPdf = loweredFileName.endsWith(".pdf") || mimeType.includes("pdf");
+    const isCsv =
+        loweredFileName.endsWith(".csv") ||
+        mimeType.includes("csv") ||
+        mimeType === "text/plain";
 
-function parseNullableNumber(value: string | undefined): number | null {
-    const raw = (value ?? "").trim();
-    if (!raw) {
-        return null;
+    if (!isPdf && !isCsv) {
+        throw new Error("Only CSV or PDF uploads are supported.");
     }
 
-    const parsed = Number(raw);
-    return Number.isFinite(parsed) ? parsed : null;
-}
-
-function parseCsvLine(line: string): string[] {
-    const values: string[] = [];
-    let current = "";
-    let inQuotes = false;
-
-    for (let index = 0; index < line.length; index += 1) {
-        const char = line[index];
-        const nextChar = line[index + 1];
-
-        if (char === '"') {
-            if (inQuotes && nextChar === '"') {
-                current += '"';
-                index += 1;
-            } else {
-                inQuotes = !inQuotes;
-            }
-            continue;
-        }
-
-        if (char === "," && !inQuotes) {
-            values.push(current.trim());
-            current = "";
-            continue;
-        }
-
-        current += char;
+    if (isPdf) {
+        const fileBuffer = Buffer.from(await file.arrayBuffer());
+        return parseStudentRowsFromPdf(fileBuffer, fallbackDepartment);
     }
 
-    values.push(current.trim());
-    return values;
-}
-
-function csvToRows(csvText: string): Array<Record<string, string>> {
-    const lines = csvText
-        .split(/\r?\n/)
-        .map((line) => line.trim())
-        .filter((line) => line.length > 0);
-
-    if (lines.length < 2) {
-        return [];
-    }
-
-    const headers = parseCsvLine(lines[0]).map(normalizeHeader);
-    const rows: Array<Record<string, string>> = [];
-
-    for (let rowIndex = 1; rowIndex < lines.length; rowIndex += 1) {
-        const values = parseCsvLine(lines[rowIndex]);
-        const row: Record<string, string> = {};
-
-        headers.forEach((header, headerIndex) => {
-            row[header] = values[headerIndex] ?? "";
-        });
-
-        rows.push(row);
-    }
-
-    return rows;
-}
-
-function mapRow(raw: Record<string, string>, fallbackDepartment: string): CsvRow | null {
-    const matricNumber = (raw.matric_number ?? raw.matric ?? raw.matric_no ?? "").trim();
-    const studentName = (raw.student_name ?? raw.full_name ?? raw.name ?? "").trim();
-
-    if (!matricNumber || !studentName) {
-        return null;
-    }
-
-    const preferred = (raw.preferred_channel ?? "WHATSAPP").trim().toUpperCase();
-    const preferredChannel =
-        preferred === "EMAIL" || preferred === "SMS" ? preferred : "WHATSAPP";
-
-    return {
-        matricNumber,
-        studentName,
-        department: (raw.department ?? fallbackDepartment).trim() || fallbackDepartment,
-        faculty: (raw.faculty ?? "General").trim() || "General",
-        level: parseNumber(raw.level, 100),
-        gpa: parseNumber(raw.gpa, 0),
-        cgpa: parseNullableNumber(raw.cgpa),
-        courseCode: (raw.course_code ?? "GEN101").trim() || "GEN101",
-        courseTitle: (raw.course_title ?? "General Studies").trim() || "General Studies",
-        unit: parseNumber(raw.unit, 0),
-        grade: (raw.grade ?? "").trim() || "N/A",
-        score: parseNullableNumber(raw.score),
-        parentName: (raw.parent_name ?? raw.guardian_name ?? "").trim() || null,
-        parentEmail: (raw.parent_email ?? raw.email ?? "").trim() || null,
-        parentPhone: (raw.parent_phone ?? raw.phone ?? "").trim() || null,
-        relationship: (raw.relationship ?? "Parent").trim() || "Parent",
-        preferredChannel,
-        ndprConsent: parseBoolean(raw.ndpr_consent ?? "true"),
-    };
-}
-
-type AggregatedRow = {
-    matricNumber: string;
-    studentName: string;
-    department: string;
-    faculty: string;
-    level: number;
-    gpa: number;
-    cgpa: number | null;
-    parentName: string | null;
-    parentEmail: string | null;
-    parentPhone: string | null;
-    relationship: string;
-    preferredChannel: "WHATSAPP" | "EMAIL" | "SMS";
-    ndprConsent: boolean;
-    courses: Array<{
-        code: string;
-        title: string;
-        unit: number;
-        grade: string;
-        score: number | null;
-    }>;
-};
-
-function aggregateRows(rows: CsvRow[]): AggregatedRow[] {
-    const grouped = new Map<string, AggregatedRow>();
-
-    for (const row of rows) {
-        const existing = grouped.get(row.matricNumber);
-        const course = {
-            code: row.courseCode,
-            title: row.courseTitle,
-            unit: row.unit,
-            grade: row.grade,
-            score: row.score,
-        };
-
-        if (!existing) {
-            grouped.set(row.matricNumber, {
-                matricNumber: row.matricNumber,
-                studentName: row.studentName,
-                department: row.department,
-                faculty: row.faculty,
-                level: row.level,
-                gpa: row.gpa,
-                cgpa: row.cgpa,
-                parentName: row.parentName,
-                parentEmail: row.parentEmail,
-                parentPhone: row.parentPhone,
-                relationship: row.relationship,
-                preferredChannel: row.preferredChannel,
-                ndprConsent: row.ndprConsent,
-                courses: [course],
-            });
-            continue;
-        }
-
-        existing.courses.push(course);
-        if (row.gpa > 0) {
-            existing.gpa = row.gpa;
-        }
-        if (row.cgpa !== null) {
-            existing.cgpa = row.cgpa;
-        }
-    }
-
-    return Array.from(grouped.values());
+    const csvText = await file.text();
+    return parseStudentRowsFromCsv(csvText, fallbackDepartment);
 }
 
 export async function POST(request: Request) {
@@ -230,7 +52,7 @@ export async function POST(request: Request) {
     const autoDispatch = parseBoolean(String(formData.get("autoDispatch") ?? "true"));
 
     if (!(file instanceof File)) {
-        return NextResponse.json({ error: "CSV file is required." }, { status: 400 });
+        return NextResponse.json({ error: "Result file (CSV or PDF) is required." }, { status: 400 });
     }
 
     if (!sessionLabel || !department || !SEMESTER_VALUES.has(semester)) {
@@ -240,19 +62,17 @@ export async function POST(request: Request) {
         );
     }
 
-    const csvText = await file.text();
-    const parsedRows = csvToRows(csvText)
-        .map((row) => mapRow(row, department))
-        .filter((row): row is CsvRow => row !== null);
+    const groupedStudents = await parseStudentRowsFromFile(file, department).catch(() => []);
 
-    if (parsedRows.length === 0) {
+    if (groupedStudents.length === 0) {
         return NextResponse.json(
-            { error: "No valid student rows found. Ensure CSV contains matric_number and student_name." },
+            {
+                error:
+                    "No valid student results were extracted from the uploaded file. Check file format and include matric number and student name per student.",
+            },
             { status: 422 },
         );
     }
-
-    const groupedStudents = aggregateRows(parsedRows);
     const db = prisma as any;
 
     const actor = await db.user.findUnique({
@@ -275,7 +95,7 @@ export async function POST(request: Request) {
                 uploadedById: actor.id,
                 approvedById: autoDispatch ? actor.id : null,
                 approvedAt: autoDispatch ? new Date() : null,
-                source: "csv",
+                source: file.name.toLowerCase().endsWith(".pdf") ? "pdf" : "csv",
                 rawFileUrl: null,
             },
         });
@@ -360,7 +180,6 @@ export async function POST(request: Request) {
                 entityId: createdBatch.id,
                 metadata: {
                     filename: file.name,
-                    rowCount: parsedRows.length,
                     studentCount: groupedStudents.length,
                     autoDispatch,
                 },
@@ -373,7 +192,7 @@ export async function POST(request: Request) {
     if (!autoDispatch) {
         return NextResponse.json({
             batchId: batch.id,
-            uploadedRows: parsedRows.length,
+            uploadedRows: groupedStudents.length,
             students: groupedStudents.length,
             dispatch: null,
         });
@@ -387,7 +206,7 @@ export async function POST(request: Request) {
 
         return NextResponse.json({
             batchId: batch.id,
-            uploadedRows: parsedRows.length,
+            uploadedRows: groupedStudents.length,
             students: groupedStudents.length,
             dispatch,
         });
@@ -396,7 +215,7 @@ export async function POST(request: Request) {
             return NextResponse.json(
                 {
                     batchId: batch.id,
-                    uploadedRows: parsedRows.length,
+                    uploadedRows: groupedStudents.length,
                     students: groupedStudents.length,
                     dispatch: null,
                     error: error.message,
@@ -408,7 +227,7 @@ export async function POST(request: Request) {
         return NextResponse.json(
             {
                 batchId: batch.id,
-                uploadedRows: parsedRows.length,
+                uploadedRows: groupedStudents.length,
                 students: groupedStudents.length,
                 dispatch: null,
                 error: "Upload completed but dispatch failed.",

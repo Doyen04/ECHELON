@@ -32,6 +32,14 @@ export default async function StudentsPage() {
                 <p className="mt-3 text-sm text-(--text-secondary)">
                     Review student profiles and guardian contact coverage before dispatch.
                 </p>
+                <div className="mt-4">
+                    <Link
+                        href="/admin/students/contacts"
+                        className="inline-flex rounded-lg bg-(--accent-strong) px-3 py-2 text-xs font-semibold text-white"
+                    >
+                        Upload Parent Contacts
+                    </Link>
+                </div>
 
                 <div className="mt-6 space-y-3">
                     {students.map((student: any) => (

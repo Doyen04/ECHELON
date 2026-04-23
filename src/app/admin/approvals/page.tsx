@@ -4,6 +4,7 @@ import { ChevronDown, CheckSquare, Clock, ArrowRight } from "lucide-react";
 
 import { PageHeader } from "@/components/ui/page-header";
 import { StatusBadge } from "@/components/ui/badges";
+import { ApproveDispatchButton } from "@/components/admin/approve-dispatch-button";
 import { prisma } from "@/lib/db";
 import { relativeTimeFromNow, semesterLabel, toBadgeStatus } from "@/lib/admin-format";
 
@@ -91,12 +92,15 @@ export default async function ApprovalsPage() {
                                             </div>
 
                                             <div className="flex w-full shrink-0 items-center md:w-auto">
-                                                <Link
-                                                    href={`/admin/batches/${batch.id}`}
-                                                    className="group flex w-full items-center justify-center gap-2 rounded-md bg-brand px-6 py-2.5 text-sm font-medium text-white transition-all hover:bg-brand-hover active:scale-[0.98] md:w-auto"
-                                                >
-                                                    Begin Review <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
-                                                </Link>
+                                                <div className="flex w-full flex-col items-stretch gap-2 md:w-auto md:items-end">
+                                                    <Link
+                                                        href={`/admin/batches/${batch.id}`}
+                                                        className="group flex w-full items-center justify-center gap-2 rounded-md border border-border-subtle bg-surface-main px-6 py-2.5 text-sm font-medium text-foreground transition-all hover:bg-surface-subtle active:scale-[0.98] md:w-auto"
+                                                    >
+                                                        Begin Review <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+                                                    </Link>
+                                                    <ApproveDispatchButton batchId={batch.id} />
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -129,7 +133,7 @@ export default async function ApprovalsPage() {
                                     <tr>
                                         <th className="px-5 py-3 text-left text-xs font-medium uppercase tracking-wider text-text-muted">Batch ID</th>
                                         <th className="px-5 py-3 text-left text-xs font-medium uppercase tracking-wider text-text-muted">Session & Department</th>
-                                        <th className="px-5 py-3 text-left text-xs font-medium uppercase tracking-wider text-text-muted text-right">Status</th>
+                                        <th className="px-5 py-3 text-right text-xs font-medium uppercase tracking-wider text-text-muted">Status</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-border-subtle">

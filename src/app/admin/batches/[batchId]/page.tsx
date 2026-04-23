@@ -5,6 +5,7 @@ import { ArrowRight, Download, Send } from "lucide-react";
 
 import { PageHeader } from "@/components/ui/page-header";
 import { StatusBadge } from "@/components/ui/badges";
+import { ApproveDispatchButton } from "@/components/admin/approve-dispatch-button";
 import { prisma } from "@/lib/db";
 import { formatDateTime, relativeTimeFromNow, semesterLabel, toBadgeStatus } from "@/lib/admin-format";
 
@@ -76,6 +77,9 @@ export default async function BatchDetailPage({ params }: BatchPageProps) {
                 }
                 action={
                     <div className="flex items-center gap-2">
+                        {batch.status === "PENDING" || batch.status === "IN_REVIEW" ? (
+                            <ApproveDispatchButton batchId={batch.id} />
+                        ) : null}
                         <Link href={`/admin/batches/${batch.id}/dispatch`} className="inline-flex items-center gap-2 rounded-md bg-brand px-4 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-brand-hover">
                             <Send className="h-4 w-4" /> Dispatch
                         </Link>

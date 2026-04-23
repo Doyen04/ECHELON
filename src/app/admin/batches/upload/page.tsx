@@ -185,6 +185,19 @@ export default function BatchUploadPage() {
         autoDispatched: boolean;
     } | null>(null);
 
+    const selectedFileType = useMemo(() => {
+        if (!file) {
+            return null;
+        }
+
+        const lowered = file.name.toLowerCase();
+        if (lowered.endsWith(".pdf") || file.type.toLowerCase().includes("pdf")) {
+            return "pdf" as const;
+        }
+
+        return "csv" as const;
+    }, [file]);
+
     const hasValidationErrors = useMemo(() => {
         return Boolean(validation && validation.errors.length > 0);
     }, [validation]);
@@ -215,14 +228,17 @@ export default function BatchUploadPage() {
     };
 
     const processSelectedFile = async (selectedFile: File) => {
+        const isPdfFile =
+            selectedFile.name.toLowerCase().endsWith(".pdf") ||
+            selectedFile.type.toLowerCase().includes("pdf");
         const isCsvFile =
             selectedFile.name.toLowerCase().endsWith(".csv") ||
             selectedFile.type.includes("csv") ||
             selectedFile.type === "text/plain";
 
-        if (!isCsvFile) {
+        if (!isCsvFile && !isPdfFile) {
             resetUploadState();
-            setSubmitError("Please upload a valid CSV file.");
+            setSubmitError("Please upload a valid CSV or PDF file.");
             return;
         }
 
@@ -232,6 +248,13 @@ export default function BatchUploadPage() {
         setShowErrorDetails(false);
         setSubmitError(null);
         setSubmitSuccess(null);
+
+        if (isPdfFile) {
+            setValidation(null);
+            setShowPreview(false);
+            setIsParsing(false);
+            return;
+        }
 
         try {
             const csvText = await selectedFile.text();
@@ -276,7 +299,7 @@ export default function BatchUploadPage() {
             return;
         }
 
-        if (hasValidationErrors) {
+        if (selectedFileType === "csv" && hasValidationErrors) {
             setSubmitError("Fix validation errors before confirming upload.");
             return;
         }
@@ -376,7 +399,7 @@ export default function BatchUploadPage() {
                                     <div className="flex gap-6">
                                         <label className="flex items-center gap-2 cursor-pointer">
                                             <input type="radio" name="source" className="text-brand focus:ring-brand" defaultChecked />
-                                            <span className="text-sm text-foreground">CSV Upload</span>
+                                            <span className="text-sm text-foreground">CSV / PDF Upload</span>
                                         </label>
                                         <label className="flex items-center gap-2 cursor-pointer opacity-50">
                                             <input type="radio" name="source" disabled className="text-brand focus:ring-brand" />
@@ -415,14 +438,14 @@ export default function BatchUploadPage() {
                                     onDragLeave={handleDragLeave}
                                     onDrop={handleDrop}
                                 >
-                                    <input type="file" accept=".csv,text/csv" onChange={handleFileChange} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
+                                    <input type="file" accept=".csv,text/csv,.pdf,application/pdf" onChange={handleFileChange} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
                                     <div className="rounded-full bg-surface-main p-4 shadow-sm mb-4">
                                         <UploadCloud className="h-8 w-8 text-brand" />
                                     </div>
-                                    <h3 className="text-lg font-serif text-foreground mb-1">Drag and drop your CSV here</h3>
+                                    <h3 className="text-lg font-serif text-foreground mb-1">Drag and drop your result file here</h3>
                                     <p className="text-sm text-text-muted mb-2">or click anywhere to browse from your computer</p>
                                     <div className="text-xs text-text-muted flex items-center gap-2 mt-4 opacity-70">
-                                        <span>Accepted: .csv</span>
+                                        <span>Accepted: .csv, .pdf</span>
                                         <span>-</span>
                                         <span>Max: 5MB</span>
                                     </div>
@@ -436,7 +459,7 @@ export default function BatchUploadPage() {
                                         <div>
                                             <p className="text-sm font-medium text-foreground font-mono">{file.name}</p>
                                             <p className="text-xs text-text-muted mt-0.5">
-                                                {(file.size / 1024).toFixed(1)} KB - {isParsing ? "Parsing CSV..." : "Ready"}
+                                                {(file.size / 1024).toFixed(1)} KB - {isParsing ? "Parsing CSV..." : selectedFileType === "pdf" ? "PDF ready for server extraction" : "Ready"}
                                             </p>
                                         </div>
                                     </div>
@@ -449,6 +472,12 @@ export default function BatchUploadPage() {
                                 </div>
                             )}
                         </div>
+
+                        {selectedFileType === "pdf" && file ? (
+                            <div className="rounded-lg border border-border-subtle bg-surface-main p-4 text-sm text-text-muted">
+                                PDF selected. Student rows and courses will be extracted server-side when you confirm upload.
+                            </div>
+                        ) : null}
 
                         {showPreview && validation ? (
                             <div className="rounded-xl border border-border-subtle bg-surface-main shadow-sm overflow-hidden page-transition-enter">
@@ -549,7 +578,12 @@ export default function BatchUploadPage() {
                             </Link>
                             <button
                                 onClick={handleConfirmUpload}
-                                disabled={!showPreview || !file || isSubmitting || hasValidationErrors || isParsing}
+                                disabled={
+                                    !file ||
+                                    isSubmitting ||
+                                    isParsing ||
+                                    (selectedFileType === "csv" && (!showPreview || hasValidationErrors))
+                                }
                                 className="inline-flex items-center gap-2 rounded-md bg-brand px-5 py-2.5 text-sm font-medium text-white shadow-sm hover:bg-brand-hover transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 {isSubmitting ? "Uploading..." : "Confirm Upload"} <ArrowRight className="h-4 w-4" />
@@ -561,7 +595,7 @@ export default function BatchUploadPage() {
                         <div className="rounded-2xl border border-(--border-subtle) bg-(--surface-strong) p-6 shadow-sm">
                             <h3 className="font-serif text-lg text-foreground mb-4">Format Guide</h3>
                             <p className="text-sm text-text-muted mb-6">
-                                Ensure your CSV matches the required structure to avoid parsing errors. The system uses column headers to map data.
+                                Upload either a structured CSV or a combined PDF result sheet. CSV supports full preview, while PDF extraction happens on upload.
                             </p>
 
                             <div className="space-y-4 mb-8">
