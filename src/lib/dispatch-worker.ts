@@ -17,13 +17,11 @@ type ChannelSelection = {
 };
 
 function buildChannelPriority(preferredChannel: string) {
-    if (preferredChannel === "EMAIL") {
-        return ["EMAIL", "WHATSAPP", "SMS"] as const;
-    }
+    // Email is primary; phone channels are fallback when email is unavailable.
     if (preferredChannel === "SMS") {
-        return ["SMS", "WHATSAPP", "EMAIL"] as const;
+        return ["EMAIL", "SMS", "WHATSAPP"] as const;
     }
-    return ["WHATSAPP", "EMAIL", "SMS"] as const;
+    return ["EMAIL", "WHATSAPP", "SMS"] as const;
 }
 
 function selectChannel(guardian: any): ChannelSelection | null {

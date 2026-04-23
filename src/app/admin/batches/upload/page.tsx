@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
     UploadCloud,
     FileType,
@@ -164,6 +165,7 @@ function validateAndBuildPreview(text: string): ValidationState {
 }
 
 export default function BatchUploadPage() {
+    const router = useRouter();
     const [file, setFile] = useState<File | null>(null);
     const [isDragOver, setIsDragOver] = useState(false);
     const [showPreview, setShowPreview] = useState(false);
@@ -186,6 +188,22 @@ export default function BatchUploadPage() {
     const hasValidationErrors = useMemo(() => {
         return Boolean(validation && validation.errors.length > 0);
     }, [validation]);
+
+    useEffect(() => {
+        if (!submitSuccess?.autoDispatched) {
+            return;
+        }
+
+        const destination = submitSuccess.dispatchId
+            ? `/admin/delivery/${submitSuccess.dispatchId}`
+            : `/admin/batches/${submitSuccess.batchId}`;
+
+        const timeoutId = window.setTimeout(() => {
+            router.push(destination);
+        }, 1200);
+
+        return () => window.clearTimeout(timeoutId);
+    }, [router, submitSuccess]);
 
     const resetUploadState = () => {
         setFile(null);
@@ -300,7 +318,7 @@ export default function BatchUploadPage() {
     };
 
     return (
-        <div className="flex flex-col h-full overflow-y-auto w-full bg-background">
+        <div className="dashboard-root min-h-screen bg-background">
             <PageHeader
                 title="Upload Result Batch"
                 breadcrumbs={
@@ -312,10 +330,31 @@ export default function BatchUploadPage() {
                 }
             />
 
-            <div className="p-6 md:p-8 max-w-400 w-full mx-auto">
-                <div className="flex flex-col lg:flex-row gap-8">
+            <main className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
+                {/* <section className="rounded-3xl border border-(--border-subtle) bg-(--surface-strong) p-6 shadow-[0_25px_60px_-38px_rgba(2,23,23,0.75)] sm:p-8">
+                    <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+                        <div className="max-w-2xl space-y-3">
+                            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-(--text-muted)">
+                                Batch Ingestion
+                            </p>
+                            <h1 className="text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
+                                Upload once, validate fast, and notify parents in one flow.
+                            </h1>
+                            <p className="text-sm text-(--text-secondary) sm:text-base">
+                                Import CSV results, review the parsed records, and choose whether to dispatch immediately or hold the batch for approval.
+                            </p>
+                        </div>
 
-                    <div className="flex-1 lg:max-w-[65%] space-y-8 dashboard-section">
+                        <div className="flex flex-wrap gap-2 text-xs font-medium">
+                            <span className="rounded-full bg-emerald-100 px-3 py-1 text-emerald-800">CSV upload</span>
+                            <span className="rounded-full bg-blue-100 px-3 py-1 text-blue-800">NDPR consent</span>
+                            <span className="rounded-full bg-slate-100 px-3 py-1 text-slate-700">Auto dispatch</span>
+                        </div>
+                    </div>
+                </section> */}
+
+                <div className="mt-8 grid gap-8 xl:grid-cols-[minmax(0,1.45fr)_360px]">
+                    <div className="space-y-8 dashboard-section">
                         <div className="rounded-xl border border-border-subtle bg-surface-main p-6 shadow-sm">
                             <h2 className="text-sm font-semibold uppercase tracking-widest text-text-muted mb-6">Step 1: Batch Metadata</h2>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
@@ -540,8 +579,8 @@ export default function BatchUploadPage() {
                         </div>
                     </div>
 
-                    <div className="lg:w-fit lg:min-w-85">
-                        <div className="sticky top-24 rounded-xl border border-border-subtle bg-surface-main p-6 shadow-sm">
+                    <div className="xl:sticky xl:top-24 h-fit">
+                        <div className="rounded-2xl border border-(--border-subtle) bg-(--surface-strong) p-6 shadow-sm">
                             <h3 className="font-serif text-lg text-foreground mb-4">Format Guide</h3>
                             <p className="text-sm text-text-muted mb-6">
                                 Ensure your CSV matches the required structure to avoid parsing errors. The system uses column headers to map data.
@@ -568,14 +607,14 @@ export default function BatchUploadPage() {
                                 </div>
                             </div>
 
-                            <button className="flex w-full items-center justify-center gap-2 rounded border border-border-subtle bg-surface-main px-4 py-2.5 text-sm font-medium text-foreground hover:bg-surface-subtle transition-colors">
+                            <button className="flex w-full items-center justify-center gap-2 rounded-lg border border-border-subtle bg-surface-main px-4 py-2.5 text-sm font-medium text-foreground hover:bg-surface-subtle transition-colors">
                                 <Download className="h-4 w-4" />
                                 Download Template
                             </button>
                         </div>
                     </div>
                 </div>
-            </div>
+            </main>
         </div>
     );
 }
