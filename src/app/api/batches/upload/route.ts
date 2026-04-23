@@ -138,9 +138,6 @@ export async function POST(request: Request) {
                             relationship: studentRow.relationship,
                             email: studentRow.parentEmail,
                             phone: studentRow.parentPhone,
-                            preferredChannel: studentRow.preferredChannel,
-                            ndprConsent: studentRow.ndprConsent,
-                            consentDate: studentRow.ndprConsent ? new Date() : guardian.consentDate,
                         },
                     });
                 } else {
@@ -151,9 +148,6 @@ export async function POST(request: Request) {
                             relationship: studentRow.relationship,
                             email: studentRow.parentEmail,
                             phone: studentRow.parentPhone,
-                            preferredChannel: studentRow.preferredChannel,
-                            ndprConsent: studentRow.ndprConsent,
-                            consentDate: studentRow.ndprConsent ? new Date() : null,
                         },
                     });
                 }

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { UserCog, ChevronDown, ChevronRight, CheckCircle2, Phone, Mail, XCircle, Plus } from "lucide-react";
+import { UserCog, ChevronDown, ChevronRight, Phone, Mail, Plus } from "lucide-react";
 
 import { PageHeader } from "@/components/ui/page-header";
 import { StatusBadge } from "@/components/ui/badges";
@@ -197,14 +197,8 @@ export default async function StudentRecordPage({ params }: StudentPageProps) {
                                         )}
                                     </div>
 
-                                    <div className="border-t border-border-subtle pt-3">
-                                        <div className="flex items-center gap-2 text-sm">
-                                            NDPR Consent:
-                                            <div className={`flex items-center gap-1 rounded px-2 py-0.5 font-medium ${guardian.ndprConsent ? "bg-status-success/10 text-status-success" : "bg-status-danger/10 text-status-danger"}`}>
-                                                {guardian.ndprConsent ? <CheckCircle2 className="h-4 w-4" /> : <XCircle className="h-4 w-4" />}
-                                                {guardian.ndprConsent ? formatDateTime(guardian.consentDate) : "Missing"}
-                                            </div>
-                                        </div>
+                                    <div className="border-t border-border-subtle pt-3 text-sm text-text-muted">
+                                        Contact details are managed from the parent contacts page.
                                     </div>
                                 </div>
                             ))}

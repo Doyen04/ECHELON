@@ -87,9 +87,6 @@ export async function POST(request: Request) {
                         relationship: row.relationship,
                         email: row.parentEmail,
                         phone: row.parentPhone,
-                        preferredChannel: row.preferredChannel,
-                        ndprConsent: row.ndprConsent,
-                        consentDate: row.ndprConsent ? new Date() : existing.consentDate,
                     },
                 });
                 updated += 1;
@@ -101,9 +98,6 @@ export async function POST(request: Request) {
                         relationship: row.relationship,
                         email: row.parentEmail,
                         phone: row.parentPhone,
-                        preferredChannel: row.preferredChannel,
-                        ndprConsent: row.ndprConsent,
-                        consentDate: row.ndprConsent ? new Date() : null,
                     },
                 });
                 created += 1;

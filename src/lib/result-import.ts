@@ -1,7 +1,5 @@
 import { Buffer } from "node:buffer";
 
-export type PreferredChannel = "WHATSAPP" | "EMAIL" | "SMS";
-
 export type StudentImportRow = {
     matricNumber: string;
     studentName: string;
@@ -14,8 +12,6 @@ export type StudentImportRow = {
     parentEmail: string | null;
     parentPhone: string | null;
     relationship: string;
-    preferredChannel: PreferredChannel;
-    ndprConsent: boolean;
     courses: Array<{
         code: string;
         title: string;
@@ -31,17 +27,10 @@ export type ParentContactImportRow = {
     parentEmail: string | null;
     parentPhone: string | null;
     relationship: string;
-    preferredChannel: PreferredChannel;
-    ndprConsent: boolean;
 };
 
 function normalizeHeader(header: string): string {
     return header.trim().toLowerCase().replace(/\s+/g, "_");
-}
-
-function parseBoolean(value: string | undefined): boolean {
-    const normalized = (value ?? "").trim().toLowerCase();
-    return ["true", "1", "yes", "y"].includes(normalized);
 }
 
 function parseNumber(value: string | undefined, fallback = 0): number {
@@ -118,14 +107,6 @@ function csvToRows(csvText: string): Array<Record<string, string>> {
     return rows;
 }
 
-function normalizePreferredChannel(value: string | undefined): PreferredChannel {
-    const preferred = (value ?? "WHATSAPP").trim().toUpperCase();
-    if (preferred === "EMAIL" || preferred === "SMS") {
-        return preferred;
-    }
-    return "WHATSAPP";
-}
-
 type FlatStudentCsvRow = {
     matricNumber: string;
     studentName: string;
@@ -143,8 +124,6 @@ type FlatStudentCsvRow = {
     parentEmail: string | null;
     parentPhone: string | null;
     relationship: string;
-    preferredChannel: PreferredChannel;
-    ndprConsent: boolean;
 };
 
 function mapStudentCsvRow(raw: Record<string, string>, fallbackDepartment: string): FlatStudentCsvRow | null {
@@ -172,8 +151,6 @@ function mapStudentCsvRow(raw: Record<string, string>, fallbackDepartment: strin
         parentEmail: (raw.parent_email ?? raw.email ?? "").trim() || null,
         parentPhone: (raw.parent_phone ?? raw.phone ?? "").trim() || null,
         relationship: (raw.relationship ?? "Parent").trim() || "Parent",
-        preferredChannel: normalizePreferredChannel(raw.preferred_channel),
-        ndprConsent: parseBoolean(raw.ndpr_consent ?? "true"),
     };
 }
 
@@ -203,8 +180,6 @@ function aggregateStudentRows(rows: FlatStudentCsvRow[]): StudentImportRow[] {
                 parentEmail: row.parentEmail,
                 parentPhone: row.parentPhone,
                 relationship: row.relationship,
-                preferredChannel: row.preferredChannel,
-                ndprConsent: row.ndprConsent,
                 courses: [course],
             });
             continue;
@@ -393,8 +368,6 @@ function parseStudentRowsFromTabularPdf(lines: string[], fallbackDepartment: str
             parentEmail: null,
             parentPhone: null,
             relationship: "Parent",
-            preferredChannel: "WHATSAPP",
-            ndprConsent: true,
             courses: courses.length > 0
                 ? courses
                 : [
@@ -451,8 +424,6 @@ export async function parseStudentRowsFromPdf(pdfBuffer: Buffer, fallbackDepartm
                 parentEmail: null,
                 parentPhone: null,
                 relationship: "Parent",
-                preferredChannel: "WHATSAPP",
-                ndprConsent: true,
                 courses: [],
             };
             students.push(current);
@@ -502,8 +473,6 @@ export function parseParentContactsFromCsv(csvText: string): ParentContactImport
                 parentEmail,
                 parentPhone,
                 relationship: (row.relationship ?? "Parent").trim() || "Parent",
-                preferredChannel: normalizePreferredChannel(row.preferred_channel),
-                ndprConsent: parseBoolean(row.ndpr_consent ?? "true"),
             } satisfies ParentContactImportRow;
         })
         .filter((row): row is ParentContactImportRow => row !== null);

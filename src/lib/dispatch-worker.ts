@@ -16,27 +16,18 @@ type ChannelSelection = {
     destination: string;
 };
 
-function buildChannelPriority(preferredChannel: string) {
-    // Email is primary; phone channels are fallback when email is unavailable.
-    if (preferredChannel === "SMS") {
-        return ["EMAIL", "SMS", "WHATSAPP"] as const;
-    }
-    return ["EMAIL", "WHATSAPP", "SMS"] as const;
-}
+function selectChannels(guardian: any): ChannelSelection[] {
+    const channels: ChannelSelection[] = [];
 
-function selectChannel(guardian: any): ChannelSelection | null {
-    const channels = buildChannelPriority(guardian.preferredChannel ?? "WHATSAPP");
-
-    for (const channel of channels) {
-        if ((channel === "WHATSAPP" || channel === "SMS") && guardian.phone) {
-            return { channel, destination: guardian.phone };
-        }
-        if (channel === "EMAIL" && guardian.email) {
-            return { channel, destination: guardian.email };
-        }
+    if (guardian.email) {
+        channels.push({ channel: "EMAIL", destination: guardian.email });
     }
 
-    return null;
+    if (guardian.phone) {
+        channels.push({ channel: "WHATSAPP", destination: guardian.phone });
+    }
+
+    return channels;
 }
 
 async function getOrCreatePortalToken(studentResultId: string) {
@@ -114,6 +105,69 @@ async function sendNotification(
     };
 }
 
+async function sendGuardianNotifications(
+    guardian: any,
+    studentResult: any,
+    portalLink: string,
+) {
+    const channelSelections = selectChannels(guardian);
+    if (channelSelections.length === 0) {
+        return {
+            ok: false,
+            channel: null as ChannelSelection | null,
+            sentCount: 0,
+            failedCount: 1,
+            failureReason: "Guardian has no contact details.",
+        };
+    }
+
+    let sentCount = 0;
+    let failedCount = 0;
+    let primaryChannel: ChannelSelection | null = null;
+
+    for (const channelSelection of channelSelections) {
+        const sendResult = await sendNotification(channelSelection, {
+            parentName: guardian.name,
+            studentName: studentResult.student.fullName,
+            matricNumber: studentResult.student.matricNumber,
+            semester: `${studentResult.batch.session} ${studentResult.batch.semester}`,
+            portalLink,
+        });
+
+        if (!primaryChannel) {
+            primaryChannel = channelSelection;
+        }
+
+        if (sendResult.ok) {
+            sentCount += 1;
+        } else {
+            failedCount += 1;
+        }
+
+        await prisma.notificationLog.create({
+            data: {
+                dispatchId: studentResult.dispatchId,
+                studentResultId: studentResult.id,
+                studentId: studentResult.studentId,
+                guardianId: guardian.id,
+                channel: channelSelection.channel,
+                status: sendResult.ok ? sendResult.status : "FAILED",
+                providerMessageId: sendResult.providerMessageId,
+                failureReason: sendResult.ok ? null : "Provider rejected message.",
+                deliveredAt: sendResult.status === "DELIVERED" ? new Date() : null,
+            },
+        });
+    }
+
+    return {
+        ok: failedCount === 0,
+        channel: primaryChannel,
+        sentCount,
+        failedCount,
+        failureReason: null,
+    };
+}
+
 async function markDispatchProgress(dispatchId: string, ok: boolean) {
     const db = prisma as any;
 
@@ -170,12 +224,9 @@ export async function processNotifyJob(payload: NotifyJobPayload): Promise<Dispa
         return { ok: false, message: "Result is not approved for dispatch." };
     }
 
-    const guardians = (studentResult.student.guardians as any[]).filter(
-        (guardian) => guardian.ndprConsent === true,
-    );
+    const guardians = studentResult.student.guardians as any[];
 
-    const guardian = guardians[0];
-    if (!guardian) {
+    if (guardians.length === 0) {
         await db.notificationLog.create({
             data: {
                 dispatchId: payload.dispatchId,
@@ -183,63 +234,36 @@ export async function processNotifyJob(payload: NotifyJobPayload): Promise<Dispa
                 studentId: studentResult.studentId,
                 channel: "EMAIL",
                 status: "FAILED",
-                failureReason: "No guardian with valid NDPR consent.",
+                failureReason: "No guardian contact records available.",
             },
         });
 
         await markDispatchProgress(payload.dispatchId, false);
-        return { ok: false, message: "No guardian with valid NDPR consent." };
-    }
-
-    const channelSelection = selectChannel(guardian);
-    if (!channelSelection) {
-        await db.notificationLog.create({
-            data: {
-                dispatchId: payload.dispatchId,
-                studentResultId: studentResult.id,
-                studentId: studentResult.studentId,
-                guardianId: guardian.id,
-                channel: "EMAIL",
-                status: "FAILED",
-                failureReason: "Guardian has no sendable channel details.",
-            },
-        });
-
-        await markDispatchProgress(payload.dispatchId, false);
-        return { ok: false, message: "Guardian has no sendable channel details." };
+        return { ok: false, message: "No guardian contact records available." };
     }
 
     const token = await getOrCreatePortalToken(studentResult.id);
     const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
     const portalLink = `${appUrl}/results/view?token=${token}`;
 
-    const sendResult = await sendNotification(channelSelection, {
-        parentName: guardian.name,
-        studentName: studentResult.student.fullName,
-        matricNumber: studentResult.student.matricNumber,
-        semester: `${studentResult.batch.session} ${studentResult.batch.semester}`,
-        portalLink,
-    });
+    let sentCount = 0;
+    let failedCount = 0;
 
-    await db.notificationLog.create({
-        data: {
+    for (const guardian of guardians) {
+        const result = await sendGuardianNotifications(guardian, {
+            ...studentResult,
             dispatchId: payload.dispatchId,
-            studentResultId: studentResult.id,
-            studentId: studentResult.studentId,
-            guardianId: guardian.id,
-            channel: channelSelection.channel,
-            status: sendResult.ok ? sendResult.status : "FAILED",
-            providerMessageId: sendResult.providerMessageId,
-            failureReason: sendResult.ok ? null : "Provider rejected message.",
-            deliveredAt: sendResult.status === "DELIVERED" ? new Date() : null,
-        },
-    });
+        }, portalLink);
 
-    await markDispatchProgress(payload.dispatchId, sendResult.ok);
+        sentCount += result.sentCount;
+        failedCount += result.failedCount;
+    }
+
+    await markDispatchProgress(payload.dispatchId, sentCount > 0);
 
     return {
-        ok: sendResult.ok,
-        message: sendResult.ok ? "Notification processed." : "Notification failed.",
-        channel: channelSelection.channel,
+        ok: sentCount > 0,
+        message: sentCount > 0 ? "Notification processed." : "Notification failed.",
+        channel: sentCount > 0 ? "EMAIL" : undefined,
     };
 }

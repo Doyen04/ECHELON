@@ -213,8 +213,7 @@ export async function getDashboardViewData(): Promise<DashboardViewData> {
         studentIds.add(result.studentId);
 
         const hasValidContact = result.student.guardians.some(
-          (guardian: any) =>
-            guardian.ndprConsent && (guardian.phone || guardian.email),
+          (guardian: any) => guardian.phone || guardian.email,
         );
 
         if (hasValidContact) {

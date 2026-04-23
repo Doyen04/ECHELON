@@ -70,7 +70,7 @@ export default function StudentContactsUploadPage() {
         <section className="rounded-xl border border-border-subtle bg-surface-main p-6 shadow-sm">
           <h2 className="text-sm font-semibold uppercase tracking-widest text-text-muted">Contact Mapping File</h2>
           <p className="mt-3 text-sm text-text-muted">
-            Upload a CSV with: matric_number, parent_name, parent_email, parent_phone, relationship, preferred_channel, ndpr_consent.
+            Upload a CSV with: matric_number, parent_name, parent_email, parent_phone, and relationship.
           </p>
 
           <div className="mt-6">

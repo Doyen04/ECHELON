@@ -51,7 +51,7 @@ export default async function PublicResultViewPage({ searchParams }: ResultViewP
     const result = portalToken.studentResult;
     const student = result.student;
     const courses = Array.isArray(result.courses) ? (result.courses as Array<{ code: string; title: string; unit: number; grade: string; score?: number | null }>) : [];
-    const primaryGuardian = student.guardians.find((guardian: any) => guardian.ndprConsent) ?? student.guardians[0];
+    const primaryGuardian = student.guardians.find((guardian: any) => guardian.email || guardian.phone) ?? student.guardians[0];
 
     return (
         <div className="min-h-screen bg-background font-sans text-foreground">

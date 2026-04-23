@@ -1,21 +1,30 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
+import { GuardianContactManager } from "@/components/admin/guardian-contact-manager";
 import { prisma } from "@/lib/db";
 
 export const metadata: Metadata = {
-    title: "Students",
-    description: "Student and guardian contact records.",
+    title: "Parent Contacts",
+    description: "Manage parent and guardian contact records.",
 };
 
 export default async function StudentsPage() {
     const db = prisma as any;
 
-    const students = await db.student.findMany({
+    const guardians = await db.guardian.findMany({
         orderBy: { createdAt: "desc" },
-        take: 50,
         include: {
-            guardians: true,
+            student: {
+                select: {
+                    id: true,
+                    fullName: true,
+                    matricNumber: true,
+                    department: true,
+                    faculty: true,
+                    level: true,
+                },
+            },
         },
     });
 
@@ -27,10 +36,10 @@ export default async function StudentsPage() {
                     Contact Management
                 </p>
                 <h1 className="mt-2 text-3xl font-semibold tracking-tight text-foreground">
-                    Student Records
+                    Parent Contacts
                 </h1>
                 <p className="mt-3 text-sm text-(--text-secondary)">
-                    Review student profiles and guardian contact coverage before dispatch.
+                    Edit, search, and delete parent contact records linked to students.
                 </p>
                 <div className="mt-4">
                     <Link
@@ -42,41 +51,27 @@ export default async function StudentsPage() {
                 </div>
 
                 <div className="mt-6 space-y-3">
-                    {students.map((student: any) => (
-                        <article key={student.id} className="rounded-2xl border border-(--border-subtle) bg-(--surface-soft) p-4">
-                            <div className="flex flex-wrap items-start justify-between gap-3">
-                                <div>
-                                    <p className="text-sm font-semibold text-foreground">{student.fullName}</p>
-                                    <p className="mt-1 text-xs text-(--text-muted)">{student.matricNumber}</p>
-                                    <p className="mt-2 text-sm text-(--text-secondary)">
-                                        {student.department} • {student.faculty} • Level {student.level}
-                                    </p>
-                                </div>
-                                <Link
-                                    href={`/admin/students/${student.id}`}
-                                    className="rounded-lg bg-(--accent-strong) px-3 py-2 text-xs font-semibold text-white"
-                                >
-                                    Open Profile
-                                </Link>
-                            </div>
-                            <div className="mt-4 grid gap-2 text-xs text-(--text-secondary) sm:grid-cols-2 lg:grid-cols-3">
-                                {student.guardians.map((guardian: any) => (
-                                    <div key={guardian.id} className="rounded-xl border border-(--border-subtle) bg-(--surface-strong) p-3">
-                                        <p className="font-medium text-foreground">{guardian.name}</p>
-                                        <p>{guardian.relationship}</p>
-                                        <p className="mt-1 text-(--text-muted)">
-                                            {guardian.preferredChannel} • {guardian.ndprConsent ? "consented" : "no consent"}
-                                        </p>
-                                    </div>
-                                ))}
-                            </div>
-                        </article>
-                    ))}
-                    {students.length === 0 ? (
+                    {guardians.length > 0 ? (
+                        <GuardianContactManager
+                            guardians={guardians.map((guardian: any) => ({
+                                id: guardian.id,
+                                studentId: guardian.studentId,
+                                studentName: guardian.student.fullName,
+                                matricNumber: guardian.student.matricNumber,
+                                department: guardian.student.department,
+                                faculty: guardian.student.faculty,
+                                level: guardian.student.level,
+                                name: guardian.name,
+                                relationship: guardian.relationship,
+                                email: guardian.email,
+                                phone: guardian.phone,
+                            }))}
+                        />
+                    ) : (
                         <div className="rounded-2xl border border-dashed border-(--border-subtle) p-8 text-sm text-(--text-secondary)">
-                            No student records found.
+                            No parent contacts found.
                         </div>
-                    ) : null}
+                    )}
                 </div>
             </section>
         </main>
