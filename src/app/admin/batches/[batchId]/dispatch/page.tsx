@@ -1,254 +1,173 @@
-"use client";
-
-import React, { useState } from "react";
+import type { Metadata } from "next";
+import { notFound } from "next/navigation";
 import Link from "next/link";
-import { UploadCloud, FileType, CheckCircle, AlertTriangle, ArrowRight, Download, X } from "lucide-react";
+import { ArrowRight, Download, Send } from "lucide-react";
+
 import { PageHeader } from "@/components/ui/page-header";
+import { StatusBadge } from "@/components/ui/badges";
+import { prisma } from "@/lib/db";
+import { formatDateTime, relativeTimeFromNow, semesterLabel, toBadgeStatus } from "@/lib/admin-format";
 
-export default function BatchUploadPage() {
-    const [file, setFile] = useState<File | null>(null);
-    const [isDragOver, setIsDragOver] = useState(false);
-    const [showPreview, setShowPreview] = useState(false);
+type BatchDispatchPageProps = {
+    params: Promise<{
+        batchId: string;
+    }>;
+};
 
-    const handleDragOver = (e: React.DragEvent) => {
-        e.preventDefault();
-        setIsDragOver(true);
-    };
+export const metadata: Metadata = {
+    title: "Batch Dispatch",
+    description: "Dispatch status and delivery logs for a batch.",
+};
 
-    const handleDragLeave = (e: React.DragEvent) => {
-        e.preventDefault();
-        setIsDragOver(false);
-    };
+export default async function BatchDispatchPage({ params }: BatchDispatchPageProps) {
+    const db = prisma as any;
+    const { batchId } = await params;
 
-    const handleDrop = (e: React.DragEvent) => {
-        e.preventDefault();
-        setIsDragOver(false);
-        if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-            setFile(e.dataTransfer.files[0]);
-            // Simulate parsing delay
-            setTimeout(() => setShowPreview(true), 1200);
-        }
-    };
-
-    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (e.target.files && e.target.files.length > 0) {
-            setFile(e.target.files[0]);
-            setTimeout(() => setShowPreview(true), 1200);
-        }
+    if (!batchId) {
+        notFound();
     }
 
+    const batch = await db.resultBatch.findUnique({
+        where: { id: batchId },
+        include: {
+            uploadedBy: { select: { name: true } },
+            studentResults: {
+                select: { status: true },
+            },
+            dispatches: {
+                orderBy: { triggeredAt: "desc" },
+                include: {
+                    triggeredBy: { select: { name: true } },
+                    notificationLogs: {
+                        select: { status: true },
+                    },
+                },
+            },
+        },
+    });
+
+    if (!batch) {
+        notFound();
+    }
+
+    const approvedResults = batch.studentResults.filter((result: any) => result.status === "APPROVED").length;
+
     return (
-        <div className="flex flex-col h-full overflow-y-auto w-full bg-background">
+        <div className="dashboard-root flex h-full w-full flex-col overflow-y-auto bg-background">
             <PageHeader
-                title="Upload Result Batch"
+                title={`${batch.department} Dispatch`}
                 breadcrumbs={
                     <div className="flex items-center gap-1">
-                        <Link href="/admin/batches" className="hover:text-foreground transition-colors">Batches</Link>
+                        <Link href="/admin/batches" className="transition-colors hover:text-foreground">
+                            Batches
+                        </Link>
                         <span>/</span>
-                        <span className="text-foreground">Upload</span>
+                        <Link href={`/admin/batches/${batch.id}`} className="transition-colors hover:text-foreground">
+                            {batch.id}
+                        </Link>
+                        <span>/</span>
+                        <span className="text-foreground">Dispatch</span>
                     </div>
+                }
+                action={
+                    <button className="inline-flex items-center gap-2 rounded-md border border-border-subtle bg-surface-main px-4 py-2 text-sm font-medium text-foreground shadow-sm transition-colors hover:bg-surface-subtle">
+                        <Download className="h-4 w-4" /> Export
+                    </button>
                 }
             />
 
-            <div className="p-6 md:p-8 max-w-400 w-full mx-auto">
-                <div className="flex flex-col lg:flex-row gap-8">
-
-                    {/* Upload Form 65% */}
-                    <div className="flex-1 lg:max-w-[65%] space-y-8 dashboard-section">
-
-                        {/* Step 1: Metadata */}
-                        <div className="rounded-xl border border-border-subtle bg-surface-main p-6 shadow-sm">
-                            <h2 className="text-sm font-semibold uppercase tracking-widest text-text-muted mb-6">Step 1: Batch Metadata</h2>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                                <div className="space-y-2">
-                                    <label className="block text-sm font-medium text-foreground">Session</label>
-                                    <select className="w-full h-10 rounded-md border border-border-subtle bg-transparent px-3 text-sm focus:border-brand focus:ring-1 focus:ring-brand outline-none">
-                                        <option>2024/2025</option>
-                                        <option>2023/2024</option>
-                                    </select>
-                                </div>
-                                <div className="space-y-2">
-                                    <label className="block text-sm font-medium text-foreground">Semester</label>
-                                    <select className="w-full h-10 rounded-md border border-border-subtle bg-transparent px-3 text-sm focus:border-brand focus:ring-1 focus:ring-brand outline-none">
-                                        <option>First Semester</option>
-                                        <option>Second Semester</option>
-                                    </select>
-                                </div>
-                                <div className="space-y-2 md:col-span-2">
-                                    <label className="block text-sm font-medium text-foreground">Department</label>
-                                    <select className="w-full h-10 rounded-md border border-border-subtle bg-transparent px-3 text-sm focus:border-brand focus:ring-1 focus:ring-brand outline-none">
-                                        <option>Computer Science</option>
-                                        <option>Physics</option>
-                                        <option>Mathematics</option>
-                                    </select>
-                                </div>
-                                <div className="space-y-3 md:col-span-2 pt-2">
-                                    <label className="block text-sm font-medium text-foreground">Source Type</label>
-                                    <div className="flex gap-6">
-                                        <label className="flex items-center gap-2 cursor-pointer">
-                                            <input type="radio" name="source" className="text-brand focus:ring-brand" defaultChecked />
-                                            <span className="text-sm text-foreground">CSV Upload</span>
-                                        </label>
-                                        <label className="flex items-center gap-2 cursor-pointer opacity-50">
-                                            <input type="radio" name="source" disabled className="text-brand focus:ring-brand" />
-                                            <span className="text-sm text-foreground flex items-center gap-2">SIS API Sync <span className="text-[10px] bg-surface-subtle px-1.5 py-0.5 rounded">Coming Soon</span></span>
-                                        </label>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Step 2: File Upload */}
-                        <div className="rounded-xl border border-border-subtle bg-surface-main p-6 shadow-sm">
-                            <h2 className="text-sm font-semibold uppercase tracking-widest text-text-muted mb-6">Step 2: File Upload</h2>
-
-                            {!file ? (
-                                <div
-                                    className={`relative flex flex-col items-center justify-center rounded-xl p-12 text-center transition-all duration-200
-                    ${isDragOver ? "border-solid border-2 border-brand bg-brand/5" : "border-dashed border-2 border-border-subtle bg-surface-subtle/30 hover:bg-surface-subtle/60"}
-                  `}
-                                    onDragOver={handleDragOver}
-                                    onDragLeave={handleDragLeave}
-                                    onDrop={handleDrop}
-                                >
-                                    <input type="file" accept=".csv" onChange={handleFileChange} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
-                                    <div className="rounded-full bg-surface-main p-4 shadow-sm mb-4">
-                                        <UploadCloud className="h-8 w-8 text-brand" />
-                                    </div>
-                                    <h3 className="text-lg font-serif text-foreground mb-1">Drag & drop your CSV here</h3>
-                                    <p className="text-sm text-text-muted mb-2">or click anywhere to browse from your computer</p>
-                                    <div className="text-xs text-text-muted flex items-center gap-2 mt-4 opacity-70">
-                                        <span>Accepted: .csv</span>
-                                        <span>â€¢</span>
-                                        <span>Max: 5MB</span>
-                                    </div>
-                                </div>
-                            ) : (
-                                <div className="flex items-center justify-between rounded-lg border border-brand/30 bg-brand/5 p-4">
-                                    <div className="flex items-center gap-4">
-                                        <div className="rounded bg-brand/10 p-2 text-brand">
-                                            <FileType className="h-6 w-6" />
-                                        </div>
-                                        <div>
-                                            <p className="text-sm font-medium text-foreground font-mono">{file.name}</p>
-                                            <p className="text-xs text-text-muted mt-0.5">{(file.size / 1024).toFixed(1)} KB â€¢ Uploading & parsing...</p>
-                                        </div>
-                                    </div>
-                                    <button
-                                        onClick={() => { setFile(null); setShowPreview(false); }}
-                                        className="p-2 text-text-muted hover:text-red-500 transition-colors"
-                                    >
-                                        <X className="h-5 w-5" />
-                                    </button>
-                                </div>
-                            )}
-                        </div>
-
-                        {/* Step 3: Preview */}
-                        {showPreview && (
-                            <div className="rounded-xl border border-border-subtle bg-surface-main shadow-sm overflow-hidden page-transition-enter">
-                                <div className="p-6 border-b border-border-subtle">
-                                    <h2 className="text-sm font-semibold uppercase tracking-widest text-text-muted mb-4">Step 3: Preview & Validation</h2>
-                                    <div className="space-y-2 mb-6">
-                                        <div className="flex items-center gap-2 text-sm text-status-success font-medium">
-                                            <CheckCircle className="h-4 w-4" /> 247 students parsed
-                                        </div>
-                                        <div className="flex items-center gap-2 text-sm text-status-success font-medium">
-                                            <CheckCircle className="h-4 w-4" /> 1,482 course records
-                                        </div>
-                                        <div className="flex items-center gap-2 text-sm text-status-danger font-medium">
-                                            <AlertTriangle className="h-4 w-4" /> 3 rows with format errors <button className="underline ml-1">View errors</button>
-                                        </div>
-                                    </div>
-
-                                    {/* Duplicate warning */}
-                                    <div className="rounded-lg border border-status-warning/40 bg-status-warning/10 p-4 flex gap-3 text-status-warning mb-6">
-                                        <AlertTriangle className="h-5 w-5 shrink-0 mt-0.5" />
-                                        <p className="text-sm">
-                                            <span className="font-semibold block mb-1">A batch for this session already exists.</span>
-                                            Uploading will create a new version. The existing batch will not be deleted, but this new one will become the active pending batch.
-                                        </p>
-                                    </div>
-                                </div>
-
-                                <div className="bg-surface-subtle/20 p-6">
-                                    <h4 className="text-xs font-semibold uppercase tracking-widest text-text-muted mb-4">Data Preview (first 5 rows)</h4>
-                                    <div className="rounded-lg border border-border-subtle bg-white overflow-x-auto">
-                                        <table className="min-w-full divide-y divide-border-subtle">
-                                            <thead className="bg-surface-subtle/30">
-                                                <tr>
-                                                    <th className="px-3 py-2 text-left text-xs font-medium text-text-muted">Matric Number</th>
-                                                    <th className="px-3 py-2 text-left text-xs font-medium text-text-muted">Student Name</th>
-                                                    <th className="px-3 py-2 text-left text-xs font-medium text-text-muted">GPA</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody className="divide-y divide-border-subtle">
-                                                {[1, 2, 3, 4, 5].map(i => (
-                                                    <tr key={i}>
-                                                        <td className="px-3 py-2 text-sm font-mono text-text-muted">CSC/2021/00{i}</td>
-                                                        <td className="px-3 py-2 text-sm text-foreground">Student Name {i}</td>
-                                                        <td className="px-3 py-2 text-sm text-foreground">{(4.0 - Math.random()).toFixed(2)}</td>
-                                                    </tr>
-                                                ))}
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-
-                        {/* Actions */}
-                        <div className="flex items-center justify-end gap-4 pt-4 pb-12">
-                            <Link href="/admin/batches" className="px-5 py-2.5 text-sm font-medium text-text-muted hover:text-foreground transition-colors">
-                                Cancel
-                            </Link>
-                            <button
-                                disabled={!showPreview}
-                                className="inline-flex items-center gap-2 rounded-md bg-brand px-5 py-2.5 text-sm font-medium text-white shadow-sm hover:bg-brand-hover transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
-                                Confirm Upload <ArrowRight className="h-4 w-4" />
-                            </button>
-                        </div>
-                    </div>
-
-                    {/* Right format guide 35% */}
-                    <div className="lg:w-fit lg:min-w-85">
-                        <div className="sticky top-24 rounded-xl border border-border-subtle bg-[#faf9f7] p-6 shadow-sm">
-                            <h3 className="font-serif text-lg text-foreground mb-4">Format Guide</h3>
-                            <p className="text-sm text-text-muted mb-6">
-                                Ensure your CSV matches the required structure to avoid parsing errors. The system uses column headers to map data.
+            <main className="mx-auto w-full max-w-7xl space-y-6 px-4 py-6 sm:px-6 lg:px-8 lg:py-8 pb-24">
+                <section className="rounded-3xl border border-(--border-subtle) bg-(--surface-strong) p-6 shadow-[0_25px_60px_-38px_rgba(2,23,23,0.75)] sm:p-8">
+                    <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+                        <div>
+                            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-(--text-muted)">Dispatch Overview</p>
+                            <h1 className="mt-2 text-3xl font-semibold tracking-tight text-foreground">{batch.department}</h1>
+                            <p className="mt-2 text-sm text-(--text-secondary)">
+                                {batch.session} • {semesterLabel(batch.semester)} Semester • Uploaded {relativeTimeFromNow(batch.uploadedAt)}
                             </p>
+                        </div>
 
-                            <div className="space-y-4 mb-8">
-                                <div>
-                                    <div className="text-xs font-semibold uppercase tracking-widest text-foreground mb-2">Required Columns</div>
-                                    <ul className="text-sm text-text-muted space-y-2 font-mono bg-white p-4 rounded border border-border-subtle">
-                                        <li>matric_number</li>
-                                        <li>student_name</li>
-                                        <li>department</li>
-                                        <li>course_code</li>
-                                        <li>grade</li>
-                                    </ul>
-                                </div>
-                                <div>
-                                    <div className="text-xs font-semibold uppercase tracking-widest text-foreground mb-2 mt-6">Optional Columns</div>
-                                    <ul className="text-sm text-text-muted space-y-2 font-mono bg-white p-4 rounded border border-border-subtle">
-                                        <li>parent_phone</li>
-                                        <li>parent_email</li>
-                                        <li>score</li>
-                                    </ul>
-                                </div>
-                            </div>
-
-                            <button className="flex w-full items-center justify-center gap-2 rounded border border-border-subtle bg-white px-4 py-2.5 text-sm font-medium text-foreground hover:bg-surface-subtle transition-colors">
-                                <Download className="h-4 w-4" />
-                                Download Template
-                            </button>
+                        <div className="flex flex-wrap gap-2">
+                            <StatusBadge status={toBadgeStatus(batch.status)} />
+                            <span className="inline-flex items-center rounded px-2.5 py-1 text-xs font-medium bg-slate-100 text-slate-700">
+                                {batch.id}
+                            </span>
                         </div>
                     </div>
 
-                </div>
-            </div>
+                    <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                        <SummaryCard title="Approved Results" value={String(approvedResults)} />
+                        <SummaryCard title="Dispatches" value={String(batch.dispatches.length)} color="text-[var(--color-success)]" />
+                        <SummaryCard title="Uploaded By" value={batch.uploadedBy?.name ?? "System"} />
+                        <SummaryCard title="Last Activity" value={batch.dispatches[0] ? relativeTimeFromNow(batch.dispatches[0].triggeredAt) : "N/A"} />
+                    </div>
+
+                    <div className="mt-6 flex flex-col gap-3 rounded-2xl border border-(--border-subtle) bg-(--surface-soft) p-5 sm:flex-row sm:items-center sm:justify-between">
+                        <div>
+                            <p className="text-sm font-medium text-foreground">Trigger parent notification delivery for approved student results.</p>
+                            <p className="text-sm text-(--text-secondary)">The dispatch worker will prioritize email and fall back to phone channels when needed.</p>
+                        </div>
+                        <Link href={`/admin/delivery/${batch.dispatches[0]?.id ?? ""}`} className="inline-flex items-center justify-center gap-2 rounded-md bg-brand px-4 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-brand-hover">
+                            <Send className="h-4 w-4" /> {batch.dispatches[0] ? "Open latest delivery" : "No delivery yet"}
+                        </Link>
+                    </div>
+                </section>
+
+                <section className="overflow-hidden rounded-3xl border border-(--border-subtle) bg-(--surface-strong) shadow-[0_25px_60px_-38px_rgba(2,23,23,0.75)]">
+                    <div className="border-b border-(--border-subtle) px-6 py-4 sm:px-8">
+                        <h2 className="text-lg font-semibold text-foreground">Dispatch Jobs</h2>
+                        <p className="mt-1 text-sm text-(--text-secondary)">
+                            Each dispatch record represents a run of the notification worker for this batch.
+                        </p>
+                    </div>
+
+                    {batch.dispatches.length > 0 ? (
+                        <div className="space-y-3 p-6 sm:p-8">
+                            {batch.dispatches.map((dispatch: any) => {
+                                const sentCount = dispatch.notificationLogs.filter((log: any) => log.status === "SENT" || log.status === "DELIVERED").length;
+                                const failedCount = dispatch.notificationLogs.filter((log: any) => log.status === "FAILED").length;
+
+                                return (
+                                    <article key={dispatch.id} className="rounded-2xl border border-(--border-subtle) bg-(--surface-soft) p-5">
+                                        <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+                                            <div>
+                                                <p className="text-sm font-semibold text-foreground">{dispatch.id}</p>
+                                                <p className="mt-1 text-xs text-(--text-muted)">Triggered by {dispatch.triggeredBy?.name ?? "System"} • {formatDateTime(dispatch.triggeredAt)}</p>
+                                            </div>
+
+                                            <StatusBadge status={toBadgeStatus(dispatch.status)} />
+                                        </div>
+
+                                        <div className="mt-4 grid gap-2 text-xs text-(--text-secondary) sm:grid-cols-3">
+                                            <p>Total: {dispatch.totalCount}</p>
+                                            <p>Sent/Delivered: {sentCount}</p>
+                                            <p>Failed: {failedCount}</p>
+                                        </div>
+
+                                        <div className="mt-4 flex items-center justify-between gap-3 rounded-xl border border-(--border-subtle) bg-(--surface-strong) px-4 py-3 text-sm">
+                                            <span className="text-(--text-secondary)">{dispatch.notificationLogs.length} notification log entries</span>
+                                            <Link href={`/admin/delivery/${dispatch.id}`} className="inline-flex items-center gap-1 font-medium text-brand hover:underline">
+                                                Open log <ArrowRight className="h-4 w-4" />
+                                            </Link>
+                                        </div>
+                                    </article>
+                                );
+                            })}
+                        </div>
+                    ) : (
+                        <div className="px-6 py-10 text-sm text-(--text-secondary)">No dispatch jobs exist for this batch yet.</div>
+                    )}
+                </section>
+            </main>
         </div>
+    );
+}
+
+function SummaryCard({ title, value, color }: { title: string; value: string; color?: string }) {
+    return (
+        <article className="flex flex-col justify-between rounded-2xl border border-(--border-subtle) bg-(--surface-soft) p-5 shadow-sm">
+            <div className="mb-2 text-xs font-semibold uppercase tracking-widest text-text-muted">{title}</div>
+            <div className={`text-3xl font-serif text-foreground ${color ?? ""}`}>{value}</div>
+        </article>
     );
 }

@@ -1,149 +1,158 @@
-import React from "react";
+import type { Metadata } from "next";
 import Link from "next/link";
+import { ChevronDown, CheckSquare, Clock, ArrowRight } from "lucide-react";
+
 import { PageHeader } from "@/components/ui/page-header";
 import { StatusBadge } from "@/components/ui/badges";
-import { ArrowRight, ChevronDown, CheckSquare, Clock } from "lucide-react";
+import { prisma } from "@/lib/db";
+import { relativeTimeFromNow, semesterLabel, toBadgeStatus } from "@/lib/admin-format";
 
-export default function ApprovalsPage() {
+export const metadata: Metadata = {
+    title: "Approvals",
+    description: "Result batch review queue and approval history.",
+};
+
+export default async function ApprovalsPage() {
+    const db = prisma as any;
+
+    const [pendingBatches, reviewedBatches] = await Promise.all([
+        db.resultBatch.findMany({
+            where: { status: { in: ["PENDING", "IN_REVIEW"] } },
+            orderBy: { uploadedAt: "desc" },
+            include: {
+                uploadedBy: { select: { name: true } },
+                studentResults: { select: { status: true } },
+            },
+        }),
+        db.resultBatch.findMany({
+            where: { status: { in: ["APPROVED", "DISPATCHED"] } },
+            orderBy: { approvedAt: "desc" },
+            take: 12,
+            include: {
+                approvedBy: { select: { name: true } },
+                studentResults: { select: { status: true } },
+            },
+        }),
+    ]);
+
     return (
-        <div className="flex flex-col h-full overflow-y-auto w-full bg-background">
+        <div className="flex h-full w-full flex-col overflow-y-auto bg-background">
             <PageHeader
                 title="Approvals"
                 breadcrumbs={
                     <div className="flex items-center gap-1">
-                        <Link href="/admin/dashboard" className="hover:text-foreground transition-colors">Dashboard</Link>
+                        <Link href="/admin/dashboard" className="transition-colors hover:text-foreground">
+                            Dashboard
+                        </Link>
                         <span>/</span>
                         <span className="text-foreground">Review Queue</span>
                     </div>
                 }
             />
 
-            <div className="p-6 md:p-8 space-y-8 max-w-400 w-full mx-auto">
-                <div className="space-y-6 dashboard-section">
-                    <h2 className="text-xl font-serif text-foreground flex items-center gap-2">
-                        <Clock className="h-5 w-5 text-status-warning" /> Action Required (4)
+            <main className="mx-auto w-full max-w-7xl space-y-8 px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
+                <section className="space-y-6 dashboard-section">
+                    <h2 className="flex items-center gap-2 text-xl font-serif text-foreground">
+                        <Clock className="h-5 w-5 text-status-warning" /> Action Required ({pendingBatches.length})
                     </h2>
 
                     <div className="grid gap-4">
-                        <PendingCard
-                            id="BCH-8A92"
-                            title="Computer Science — First Semester 2024/2025"
-                            uploader="Registrar Adeyemi"
-                            time="2 days ago"
-                            students={247}
-                            source="CSV"
-                            delay={0}
-                        />
-                        <PendingCard
-                            id="BCH-9M2P"
-                            title="Mathematics — First Semester 2024/2025"
-                            uploader="Registrar Adeyemi"
-                            time="2 days ago"
-                            students={86}
-                            source="CSV"
-                            delay={1}
-                        />
-                        <PendingCard
-                            id="BCH-2N5A"
-                            title="Biology — First Semester 2024/2025"
-                            uploader="M. Eze"
-                            time="1 week ago"
-                            students={210}
-                            source="CSV"
-                            delay={2}
-                        />
-                        <PendingCard
-                            id="BCH-5Y7K"
-                            title="Medicine — First Semester 2023/2024"
-                            uploader="Registrar Adeyemi"
-                            time="2 weeks ago"
-                            students={310}
-                            source="API"
-                            delay={3}
-                        />
-                    </div>
-                </div>
+                        {pendingBatches.length > 0 ? (
+                            pendingBatches.map((batch: any, index: number) => {
+                                const studentCount = batch.studentResults.length;
+                                const pendingCount = batch.studentResults.filter((result: any) => result.status === "PENDING").length;
+                                const approvedCount = batch.studentResults.filter((result: any) => result.status === "APPROVED").length;
 
-                <div className="pt-4 dashboard-section" style={{ animationDelay: '150ms' }}>
-                    <h2 className="text-lg font-serif text-foreground mb-4">Historical Approvals</h2>
-                    <details className="group rounded-xl border border-border-subtle bg-surface-main shadow-sm overflow-hidden">
-                        <summary className="flex cursor-pointer items-center justify-between p-5 list-none [&::-webkit-details-marker]:hidden bg-surface-subtle/20 hover:bg-surface-subtle/40 transition-colors">
+                                return (
+                                    <div key={batch.id} className="dashboard-card rounded-xl border border-border-subtle bg-surface-main p-6 shadow-sm transition-colors hover:border-brand/30" style={{ animationDelay: `${index * 60}ms` }}>
+                                        <div className="flex flex-col justify-between gap-6 md:flex-row md:items-center">
+                                            <div className="space-y-4 flex-1">
+                                                <div>
+                                                    <h3 className="mb-1 font-serif text-lg text-foreground">
+                                                        {batch.department} - {semesterLabel(batch.semester)} {batch.session}
+                                                    </h3>
+                                                    <p className="text-sm text-text-muted">
+                                                        Uploaded by <span className="font-medium text-foreground">{batch.uploadedBy?.name ?? "System"}</span> • {relativeTimeFromNow(batch.uploadedAt)}
+                                                    </p>
+                                                </div>
+
+                                                <div className="flex flex-wrap items-center gap-3">
+                                                    <span className="inline-flex items-center rounded-full border border-border-subtle/50 bg-surface-subtle/60 px-3 py-1 text-[11px] font-medium text-text-muted">
+                                                        {studentCount} student records
+                                                    </span>
+                                                    <span className="inline-flex items-center rounded-full border border-border-subtle/50 bg-surface-subtle/60 px-3 py-1 text-[11px] font-medium uppercase tracking-wider text-text-muted">
+                                                        Pending: {pendingCount}
+                                                    </span>
+                                                    <span className="inline-flex items-center rounded-full border border-border-subtle/50 bg-surface-subtle/60 px-3 py-1 text-[11px] font-medium uppercase tracking-wider text-text-muted">
+                                                        Approved: {approvedCount}
+                                                    </span>
+                                                    <StatusBadge status="pending" />
+                                                </div>
+                                            </div>
+
+                                            <div className="flex w-full shrink-0 items-center md:w-auto">
+                                                <Link
+                                                    href={`/admin/batches/${batch.id}`}
+                                                    className="group flex w-full items-center justify-center gap-2 rounded-md bg-brand px-6 py-2.5 text-sm font-medium text-white transition-all hover:bg-brand-hover active:scale-[0.98] md:w-auto"
+                                                >
+                                                    Begin Review <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+                                                </Link>
+                                            </div>
+                                        </div>
+                                    </div>
+                                );
+                            })
+                        ) : (
+                            <div className="rounded-xl border border-dashed border-border-subtle bg-surface-main p-6 text-sm text-text-muted">
+                                No batches are waiting for review right now.
+                            </div>
+                        )}
+                    </div>
+                </section>
+
+                <div className="pt-4 dashboard-section" style={{ animationDelay: "150ms" }}>
+                    <h2 className="mb-4 text-lg font-serif text-foreground">Historical Approvals</h2>
+                    <details className="group overflow-hidden rounded-xl border border-border-subtle bg-surface-main shadow-sm">
+                        <summary className="flex cursor-pointer list-none items-center justify-between bg-surface-subtle/20 p-5 transition-colors hover:bg-surface-subtle/40 [&::-webkit-details-marker]:hidden">
                             <div className="flex items-center gap-2">
                                 <CheckSquare className="h-5 w-5 text-status-success" />
-                                <h3 className="font-medium text-foreground">Recently Reviewed Batches <span className="text-text-muted ml-1">(12 total)</span></h3>
+                                <h3 className="font-medium text-foreground">
+                                    Recently Reviewed Batches <span className="ml-1 text-text-muted">({reviewedBatches.length} total)</span>
+                                </h3>
                             </div>
                             <ChevronDown className="h-5 w-5 text-text-muted transition-transform group-open:rotate-180" />
                         </summary>
 
-                        <div className="border-t border-border-subtle bg-surface-main overflow-x-auto">
+                        <div className="overflow-x-auto border-t border-border-subtle bg-surface-main">
                             <table className="min-w-full divide-y divide-border-subtle">
                                 <thead className="bg-surface-subtle/30">
                                     <tr>
-                                        <th className="px-5 py-3 text-left text-xs font-medium text-text-muted uppercase tracking-wider">Batch ID</th>
-                                        <th className="px-5 py-3 text-left text-xs font-medium text-text-muted uppercase tracking-wider">Session & Department</th>
-                                        <th className="px-5 py-3 text-left text-xs font-medium text-text-muted uppercase tracking-wider text-right">Status</th>
+                                        <th className="px-5 py-3 text-left text-xs font-medium uppercase tracking-wider text-text-muted">Batch ID</th>
+                                        <th className="px-5 py-3 text-left text-xs font-medium uppercase tracking-wider text-text-muted">Session & Department</th>
+                                        <th className="px-5 py-3 text-left text-xs font-medium uppercase tracking-wider text-text-muted text-right">Status</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-border-subtle">
-                                    <ApprovedRow id="BCH-7F1X" label="Physics — 2024/2025" />
-                                    <ApprovedRow id="BCH-4L8K" label="Chemistry — 2024/2025" />
-                                    <ApprovedRow id="BCH-1P3V" label="Accounting — 2023/2024" />
+                                    {reviewedBatches.map((batch: any) => (
+                                        <tr key={batch.id} className="transition-colors hover:bg-surface-subtle/30">
+                                            <td className="px-5 py-4 text-sm font-mono text-text-muted">{batch.id}</td>
+                                            <td className="px-5 py-4 text-sm font-medium text-foreground">
+                                                {batch.department} - {batch.session}
+                                            </td>
+                                            <td className="px-5 py-4 text-right">
+                                                <StatusBadge status={toBadgeStatus(batch.status)} />
+                                            </td>
+                                        </tr>
+                                    ))}
                                 </tbody>
                             </table>
-                            <div className="px-5 py-4 text-sm text-brand hover:text-brand-hover cursor-pointer border-t border-border-subtle bg-surface-subtle/5 transition-colors text-center font-medium hover:underline">
+                            <div className="border-t border-border-subtle bg-surface-subtle/5 px-5 py-4 text-center text-sm font-medium text-brand transition-colors hover:text-brand-hover hover:underline cursor-pointer">
                                 View complete review history
                             </div>
                         </div>
                     </details>
                 </div>
-            </div>
+            </main>
         </div>
-    );
-}
-
-function PendingCard({ id, title, uploader, time, students, source, delay }: any) {
-    return (
-        <div 
-            className="rounded-xl border border-border-subtle bg-surface-main p-6 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-6 dashboard-card hover:border-brand/30 transition-colors"
-            style={{ animationDelay: `${delay * 60}ms` }}
-        >
-            <div className="space-y-4 flex-1">
-                <div>
-                    <h3 className="font-serif text-lg text-foreground mb-1">{title}</h3>
-                    <p className="text-sm text-text-muted">
-                        Uploaded by <span className="text-foreground font-medium">{uploader}</span> • {time}
-                    </p>
-                </div>
-
-                <div className="flex flex-wrap items-center gap-3">
-                    <span className="inline-flex items-center rounded-full bg-surface-subtle/60 px-3 py-1 text-[11px] font-medium text-text-muted border border-border-subtle/50">
-                        {students} students
-                    </span>
-                    <span className="inline-flex items-center rounded-full bg-surface-subtle/60 px-3 py-1 text-[11px] font-medium text-text-muted uppercase tracking-wider border border-border-subtle/50">
-                        {source} source
-                    </span>
-                    <StatusBadge status="pending" />
-                </div>
-            </div>
-
-            <div className="shrink-0 flex items-center self-start md:self-auto w-full md:w-auto">
-                <Link
-                    href={`/admin/batches/${id}`}
-                    className="flex w-full md:w-auto items-center justify-center gap-2 rounded-md bg-brand px-6 py-2.5 text-sm font-medium text-white shadow-sm hover:bg-brand-hover transition-all active:scale-[0.98] group"
-                >
-                    Begin Review <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
-                </Link>
-            </div>
-        </div>
-    )
-}
-
-function ApprovedRow({ id, label }: { id: string, label: string }) {
-    return (
-        <tr className="hover:bg-surface-subtle/30 transition-colors">
-            <td className="px-5 py-4 text-sm font-mono text-text-muted">{id}</td>
-            <td className="px-5 py-4 text-sm text-foreground font-medium">{label}</td>
-            <td className="px-5 py-4 text-right"><StatusBadge status="approved" /></td>
-        </tr>
     );
 }

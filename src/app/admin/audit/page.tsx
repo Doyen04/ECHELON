@@ -1,42 +1,46 @@
-"use client";
+import type { Metadata } from "next";
+import { Download, Search } from "lucide-react";
 
-import React, { useState, useEffect } from "react";
-import { Download, Search, ChevronRight, X } from "lucide-react";
 import { PageHeader } from "@/components/ui/page-header";
-import { EmptyState } from "@/components/ui/empty-state";
+import { EmptyState } from "@/components/dashboard";
+import { prisma } from "@/lib/db";
+import { formatDateTime, humanizeEnum } from "@/lib/admin-format";
 
-export default function AuditLogPage() {
-    const [selectedLog, setSelectedLog] = useState<any>(null);
+export const metadata: Metadata = {
+    title: "Audit Log",
+    description: "Immutable action history for the institution.",
+};
 
-    // Close drawer on escape
-    useEffect(() => {
-        const handleEscape = (e: KeyboardEvent) => {
-            if (e.key === "Escape") setSelectedLog(null);
-        };
-        window.addEventListener("keydown", handleEscape);
-        return () => window.removeEventListener("keydown", handleEscape);
-    }, []);
+export default async function AuditLogPage() {
+    const db = prisma as any;
+
+    const logs = await db.auditLog.findMany({
+        orderBy: { createdAt: "desc" },
+        take: 200,
+        include: {
+            actor: { select: { name: true } },
+        },
+    });
 
     return (
-        <div className="flex flex-col h-full overflow-y-auto w-full bg-background dashboard-root overflow-x-hidden relative">
+        <div className="dashboard-root relative flex h-full w-full flex-col overflow-x-hidden overflow-y-auto bg-background">
             <PageHeader
                 title="Audit Log"
                 action={
-                    <button className="inline-flex items-center gap-2 rounded-md border border-border-subtle bg-white px-4 py-2 text-sm font-medium text-foreground shadow-sm hover:bg-surface-subtle transition-colors">
+                    <button className="inline-flex items-center gap-2 rounded-md border border-border-subtle bg-surface-main px-4 py-2 text-sm font-medium text-foreground shadow-sm transition-colors hover:bg-surface-subtle">
                         <Download className="h-4 w-4" />
                         Export
                     </button>
                 }
             />
 
-            <div className={`p-6 md:p-8 space-y-6 max-w-400 w-full mx-auto transition-all duration-300 ${selectedLog ? 'mr-105' : ''}`}>
-                {/* Filter Bar */}
-                <div className="flex flex-wrap items-center gap-3 dashboard-section">
+            <main className="mx-auto w-full max-w-7xl space-y-6 px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
+                <section className="dashboard-section flex flex-wrap items-center gap-3">
                     <input
                         type="date"
-                        className="h-10 rounded-md border border-border-subtle bg-surface-main px-3 text-sm focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand cursor-pointer text-foreground"
+                        className="h-10 cursor-pointer rounded-md border border-border-subtle bg-surface-main px-3 text-sm text-foreground focus:border-brand focus:ring-1 focus:ring-brand focus:outline-none"
                     />
-                    <select defaultValue="" className="h-10 rounded-md border border-border-subtle bg-surface-main px-3 text-sm focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand hover:bg-surface-subtle/50 cursor-pointer text-foreground">
+                    <select defaultValue="" className="h-10 cursor-pointer rounded-md border border-border-subtle bg-surface-main px-3 text-sm text-foreground focus:border-brand focus:ring-1 focus:ring-brand focus:outline-none">
                         <option value="" disabled hidden>Action Type: All</option>
                         <option>batch.*</option>
                         <option>result.*</option>
@@ -44,25 +48,24 @@ export default function AuditLogPage() {
                         <option>user.*</option>
                         <option>auth.*</option>
                     </select>
-                    <select defaultValue="" className="h-10 rounded-md border border-border-subtle bg-surface-main px-3 text-sm focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand hover:bg-surface-subtle/50 cursor-pointer text-foreground">
+                    <select defaultValue="" className="h-10 cursor-pointer rounded-md border border-border-subtle bg-surface-main px-3 text-sm text-foreground focus:border-brand focus:ring-1 focus:ring-brand focus:outline-none">
                         <option value="" disabled hidden>Actor: All</option>
                         <option>Prof. A. Okoye</option>
                         <option>Registrar Adeyemi</option>
                         <option>System</option>
                     </select>
                     <div className="relative flex-1 min-w-60">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-text-muted" />
+                        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-muted" />
                         <input
                             type="text"
                             placeholder="Search entity ID or keyword..."
-                            className="w-full h-10 pl-9 pr-4 rounded-md border border-border-subtle bg-surface-main text-sm focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand text-foreground"
+                            className="h-10 w-full rounded-md border border-border-subtle bg-surface-main pl-9 pr-4 text-sm text-foreground focus:border-brand focus:ring-1 focus:ring-brand focus:outline-none"
                         />
                     </div>
-                </div>
+                </section>
 
-                {/* Audit Table */}
-                <div className="rounded-xl border border-border-subtle bg-surface-main shadow-sm overflow-x-auto dashboard-section" style={{ animationDelay: '100ms' }}>
-                    {mockAudits.length === 0 ? (
+                <section className="overflow-x-auto rounded-xl border border-border-subtle bg-surface-main shadow-sm dashboard-section" style={{ animationDelay: "100ms" }}>
+                    {logs.length === 0 ? (
                         <div className="p-6">
                             <EmptyState
                                 title="No audit entries yet"
@@ -73,144 +76,43 @@ export default function AuditLogPage() {
                         <table className="min-w-full divide-y divide-border-subtle">
                             <thead className="bg-surface-subtle/40">
                                 <tr>
-                                    <th className="px-5 py-3 text-left text-xs font-semibold text-text-muted uppercase tracking-wider">Timestamp</th>
-                                    <th className="px-5 py-3 text-left text-xs font-semibold text-text-muted uppercase tracking-wider">Actor</th>
-                                    <th className="px-5 py-3 text-left text-xs font-semibold text-text-muted uppercase tracking-wider">Action</th>
-                                    <th className="px-5 py-3 text-left text-xs font-semibold text-text-muted uppercase tracking-wider">Entity</th>
-                                    <th className="px-5 py-3 text-left text-xs font-semibold text-text-muted uppercase tracking-wider">IP Address</th>
-                                    <th className="px-5 py-3 text-right"></th>
+                                    <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-text-muted">Timestamp</th>
+                                    <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-text-muted">Actor</th>
+                                    <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-text-muted">Action</th>
+                                    <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-text-muted">Entity</th>
+                                    <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-text-muted">IP Address</th>
+                                    <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-text-muted">Metadata</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-border-subtle bg-surface-main">
-                                {mockAudits.map((log, idx) => (
-                                    <tr key={idx} className="hover:bg-surface-subtle/40 transition-colors table-row-enter cursor-pointer" onClick={() => setSelectedLog(log)} style={{ animationDelay: `${idx * 20}ms` }}>
-                                        <td className="px-5 py-4 whitespace-nowrap group">
-                                            <span className="text-sm text-foreground group-hover:hidden">{log.relTime}</span>
-                                            <span className="text-sm text-text-muted hidden group-hover:inline">{log.absTime}</span>
-                                        </td>
+                                {logs.map((log: any, index: number) => (
+                                    <tr key={log.id} className="table-row-enter hover:bg-surface-subtle/40 transition-colors" style={{ animationDelay: `${index * 20}ms` }}>
+                                        <td className="px-5 py-4 whitespace-nowrap text-sm text-foreground">{formatDateTime(log.createdAt)}</td>
                                         <td className="px-5 py-4 whitespace-nowrap">
                                             <div className="flex items-center gap-2">
-                                                <span className="text-sm font-medium text-foreground">{log.actor}</span>
-                                                <span className="inline-flex rounded-full bg-surface-subtle px-2 py-0.5 text-[10px] uppercase font-semibold text-text-muted">{log.role}</span>
+                                                <span className="text-sm font-medium text-foreground">{log.actor?.name ?? "System"}</span>
+                                                <span className="inline-flex rounded-full bg-surface-subtle px-2 py-0.5 text-[10px] font-semibold uppercase text-text-muted">
+                                                    {humanizeEnum(log.action.split(".")[0] ?? "system")}
+                                                </span>
                                             </div>
                                         </td>
-                                        <td className="px-5 py-4 whitespace-nowrap">
-                                            <ActionChip action={log.action} />
+                                        <td className="px-5 py-4 whitespace-nowrap text-sm text-foreground">{log.action}</td>
+                                        <td className="px-5 py-4 whitespace-nowrap text-sm text-foreground">
+                                            {log.entityType} {log.entityId}
                                         </td>
-                                        <td className="px-5 py-4 whitespace-nowrap text-sm text-foreground">{log.entity}</td>
-                                        <td className="px-5 py-4 whitespace-nowrap text-sm font-mono text-text-muted">{log.ip}</td>
-                                        <td className="px-5 py-4 whitespace-nowrap text-right">
-                                            <button className="inline-flex items-center gap-1 text-sm font-medium text-brand hover:text-brand-hover hover:underline">
-                                                Details <ChevronRight className="h-4 w-4" />
-                                            </button>
+                                        <td className="px-5 py-4 whitespace-nowrap text-sm font-mono text-text-muted">{log.ipAddress ?? "N/A"}</td>
+                                        <td className="px-5 py-4 text-sm text-text-muted">
+                                            <pre className="max-w-xl whitespace-pre-wrap break-words font-mono text-[11px] leading-5">
+                                                {JSON.stringify(log.metadata ?? {}, null, 2)}
+                                            </pre>
                                         </td>
                                     </tr>
                                 ))}
                             </tbody>
                         </table>
                     )}
-                    <div className="flex items-center justify-between px-6 py-4 border-t border-border-subtle bg-surface-subtle/20">
-                        <div className="text-sm text-text-muted">Showing 1 to 8 of 1,204 entries</div>
-                        <div className="flex gap-2">
-                            <button disabled className="px-3 py-1 border border-border-subtle rounded bg-surface-main text-sm disabled:opacity-50 text-foreground">Previous</button>
-                            <button className="px-3 py-1 border border-border-subtle rounded bg-white text-sm hover:bg-surface-subtle text-foreground">Next</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            {/* DETAIL DRAWER */}
-            {/* Backdrop */}
-            {selectedLog && (
-                <div className="fixed inset-0 z-40 bg-black/20 backdrop-blur-sm transition-opacity" onClick={() => setSelectedLog(null)} />
-            )}
-
-            {/* Drawer */}
-            <div className={`fixed inset-y-0 right-0 z-50 w-105 bg-surface-main border-l border-border-subtle shadow-2xl transition-transform duration-300 ease-out transform ${selectedLog ? 'translate-x-0' : 'translate-x-full'}`}>
-                {selectedLog && (
-                    <div className="h-full flex flex-col">
-                        <div className="flex items-center justify-between p-6 border-b border-border-subtle">
-                            <h2 className="font-serif text-xl text-foreground">Audit Details</h2>
-                            <button onClick={() => setSelectedLog(null)} className="p-1 rounded text-text-muted hover:bg-surface-subtle hover:text-foreground transition-colors">
-                                <X className="h-5 w-5" />
-                            </button>
-                        </div>
-
-                        <div className="flex-1 overflow-y-auto p-6 space-y-6">
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <div className="text-xs uppercase tracking-widest font-semibold text-text-muted mb-1">Actor</div>
-                                    <div className="text-sm font-medium text-foreground">{selectedLog.actor}</div>
-                                    <div className="text-xs text-text-muted">{selectedLog.role}</div>
-                                </div>
-                                <div>
-                                    <div className="text-xs uppercase tracking-widest font-semibold text-text-muted mb-1">Timestamp</div>
-                                    <div className="text-sm font-medium text-foreground">{selectedLog.absTime}</div>
-                                    <div className="text-xs text-text-muted">{selectedLog.relTime}</div>
-                                </div>
-                            </div>
-
-                            <div>
-                                <div className="text-xs uppercase tracking-widest font-semibold text-text-muted mb-1">Action</div>
-                                <ActionChip action={selectedLog.action} />
-                            </div>
-
-                            <div>
-                                <div className="text-xs uppercase tracking-widest font-semibold text-text-muted mb-1">Entity</div>
-                                <div className="text-sm font-mono text-foreground bg-surface-subtle p-2 rounded border border-border-subtle">
-                                    {selectedLog.entity}
-                                </div>
-                            </div>
-
-                            <div>
-                                <div className="text-xs uppercase tracking-widest font-semibold text-text-muted mb-2 flex items-center justify-between">
-                                    <span>Metadata</span>
-                                    <button className="text-brand hover:underline lowercase tracking-normal">Copy JSON</button>
-                                </div>
-                                <div className="bg-[#1e1e1e] rounded-md p-4 overflow-x-auto text-sm font-mono text-[#d4d4d4] leading-relaxed">
-                                    <pre>{JSON.stringify(selectedLog.metadata, null, 2)}</pre>
-                                </div>
-                            </div>
-
-                            <div>
-                                <div className="text-xs uppercase tracking-widest font-semibold text-text-muted mb-1">IP Address & User Agent</div>
-                                <div className="text-sm font-mono text-foreground mb-1">{selectedLog.ip}</div>
-                                <div className="text-xs text-text-muted">Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36</div>
-                            </div>
-                        </div>
-                    </div>
-                )}
-            </div>
-
+                </section>
+            </main>
         </div>
     );
 }
-
-function ActionChip({ action }: { action: string }) {
-    const parts = action.split('.');
-    const namespace = parts[0];
-
-    let colorClass = "bg-slate-100 text-slate-700";
-    if (namespace === "batch") colorClass = "bg-blue-100 text-blue-800";
-    else if (namespace === "result") colorClass = "bg-amber-100 text-amber-800";
-    else if (namespace === "dispatch") colorClass = "bg-indigo-100 text-indigo-800";
-    else if (namespace === "user") colorClass = "bg-slate-100 text-slate-700";
-    else if (namespace === "auth") colorClass = "bg-green-100 text-green-800";
-
-    return (
-        <span className={`inline-flex items-center rounded px-2 py-0.5 text-xs font-mono font-medium ${colorClass}`}>
-            {action}
-        </span>
-    );
-}
-
-const mockAudits = [
-    { relTime: "10 mins ago", absTime: "14 Jan 2025, 12:45:00 UTC", actor: "Prof. A. Okoye", role: "senate_officer", action: "batch.approved", entity: "Batch #BCH-8A92", ip: "196.223.111.94", metadata: { "batchId": "BCH-8A92", "approvalStatus": "approved", "studentsApproved": 231, "studentsWithheld": 8 } },
-    { relTime: "1 hour ago", absTime: "14 Jan 2025, 11:30:12 UTC", actor: "Registrar Adeyemi", role: "registrar", action: "batch.uploaded", entity: "Batch #BCH-8A92", ip: "41.190.2.14", metadata: { "filename": "CSC_results_2024.csv", "rowCount": 247, "size": "45KB", "session": "2024/2025" } },
-    { relTime: "2 hours ago", absTime: "14 Jan 2025, 10:15:00 UTC", actor: "Prof. A. Okoye", role: "senate_officer", action: "auth.login", entity: "User #USR-992", ip: "196.223.111.94", metadata: { "provider": "credentials", "success": true } },
-    { relTime: "Yesterday", absTime: "13 Jan 2025, 15:20:00 UTC", actor: "System", role: "system", action: "dispatch.completed", entity: "Dispatch #DSP-551", ip: "10.0.0.5", metadata: { "dispatchId": "DSP-551", "delivered": 410, "failed": 2, "timeElapsed": "4m12s" } },
-    { relTime: "Yesterday", absTime: "13 Jan 2025, 15:15:00 UTC", actor: "Registrar Adeyemi", role: "registrar", action: "dispatch.triggered", entity: "Batch #BCH-6K9M", ip: "41.190.2.14", metadata: { "batchId": "BCH-6K9M", "audience": 412, "channels": ["whatsapp", "email"] } },
-    { relTime: "2 days ago", absTime: "12 Jan 2025, 09:00:00 UTC", actor: "Admin Manager", role: "super_admin", action: "user.role_changed", entity: "User #USR-105", ip: "41.190.2.88", metadata: { "targetUserId": "USR-105", "oldRole": "viewer", "newRole": "senate_officer" } },
-    { relTime: "3 days ago", absTime: "11 Jan 2025, 14:10:00 UTC", actor: "M. Eze", role: "registrar", action: "result.withheld", entity: "Result #RSLT-009", ip: "41.190.2.102", metadata: { "matric": "CSC/2021/005", "reason": "Outstanding fees - confirmed by bursary" } },
-    { relTime: "5 days ago", absTime: "09 Jan 2025, 08:30:00 UTC", actor: "System", role: "system", action: "batch.sync_failed", entity: "API Sync / Biology", ip: "10.0.0.5", metadata: { "endpoint": "/api/sis/results", "statusCode": 503, "error": "Upstream timeout" } },
-];

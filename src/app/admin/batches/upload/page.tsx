@@ -331,29 +331,7 @@ export default function BatchUploadPage() {
             />
 
             <main className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
-                {/* <section className="rounded-3xl border border-(--border-subtle) bg-(--surface-strong) p-6 shadow-[0_25px_60px_-38px_rgba(2,23,23,0.75)] sm:p-8">
-                    <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-                        <div className="max-w-2xl space-y-3">
-                            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-(--text-muted)">
-                                Batch Ingestion
-                            </p>
-                            <h1 className="text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
-                                Upload once, validate fast, and notify parents in one flow.
-                            </h1>
-                            <p className="text-sm text-(--text-secondary) sm:text-base">
-                                Import CSV results, review the parsed records, and choose whether to dispatch immediately or hold the batch for approval.
-                            </p>
-                        </div>
-
-                        <div className="flex flex-wrap gap-2 text-xs font-medium">
-                            <span className="rounded-full bg-emerald-100 px-3 py-1 text-emerald-800">CSV upload</span>
-                            <span className="rounded-full bg-blue-100 px-3 py-1 text-blue-800">NDPR consent</span>
-                            <span className="rounded-full bg-slate-100 px-3 py-1 text-slate-700">Auto dispatch</span>
-                        </div>
-                    </div>
-                </section> */}
-
-                <div className="mt-8 grid gap-8 xl:grid-cols-[minmax(0,1.45fr)_360px]">
+                <div className="grid gap-8 xl:grid-cols-[minmax(0,1.45fr)_360px]">
                     <div className="space-y-8 dashboard-section">
                         <div className="rounded-xl border border-border-subtle bg-surface-main p-6 shadow-sm">
                             <h2 className="text-sm font-semibold uppercase tracking-widest text-text-muted mb-6">Step 1: Batch Metadata</h2>
