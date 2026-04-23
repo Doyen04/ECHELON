@@ -73,13 +73,6 @@ export const summaryMetrics: SummaryMetric[] = [
         trend: "up",
         helper: "Last 7 days",
     },
-    {
-        label: "NDPR Consent Coverage",
-        value: "92.1%",
-        change: "-0.6%",
-        trend: "down",
-        helper: "Guardian records with consent",
-    },
 ];
 
 export const approvalBatches: ApprovalBatch[] = [

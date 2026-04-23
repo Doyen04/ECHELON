@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
-import { ApprovalPipelineTable, DeliveryChannels, DispatchQueuePanel, PageHeader, RecentActivity, SummaryMetrics } from "@/components/dashboard";
+import { ApprovalPipelineTable, DeliveryChannels, DispatchQueuePanel, RecentActivity, SummaryMetrics } from "@/components/dashboard";
+import { PageHeader } from "@/components/ui/page-header";
 import { getDashboardViewData } from "@/lib/dashboard-queries";
 
 export const metadata: Metadata = {
@@ -13,10 +14,16 @@ export default async function DashboardPage() {
     const data = await getDashboardViewData();
 
     return (
-        <main className="dashboard-root min-h-screen bg-background">
+        <div className="flex h-full w-full flex-col overflow-y-auto bg-background">
             <PageHeader
                 title="Dashboard"
-                breadcrumbs="2024/2025 • First Semester"
+                breadcrumbs={
+                    <div className="flex items-center gap-1">
+                        <span>2024/2025</span>
+                        <span>/</span>
+                        <span className="text-(--text-muted)">First Semester</span>
+                    </div>
+                }
                 action={
                     <Link
                         href="/admin/batches/upload"
@@ -40,6 +47,6 @@ export default async function DashboardPage() {
                     <RecentActivity events={data.recentActivity} />
                 </div>
             </div>
-        </main>
+        </div>
     );
 }

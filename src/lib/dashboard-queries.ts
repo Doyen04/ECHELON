@@ -105,8 +105,6 @@ export async function getDashboardViewData(): Promise<DashboardViewData> {
     const [
       pendingReviewCount,
       approvedResultCount,
-      totalGuardians,
-      consentedGuardians,
       attemptedDeliveries,
       deliveredCount,
       batchRows,
@@ -116,8 +114,6 @@ export async function getDashboardViewData(): Promise<DashboardViewData> {
     ] = await Promise.all([
       db.studentResult.count({ where: { status: "PENDING" } }),
       db.studentResult.count({ where: { status: "APPROVED" } }),
-      db.guardian.count(),
-      db.guardian.count({ where: { ndprConsent: true } }),
       db.notificationLog.count({
         where: {
           attemptedAt: { gte: sevenDaysAgo },
@@ -175,11 +171,6 @@ export async function getDashboardViewData(): Promise<DashboardViewData> {
         ? 0
         : Number(((deliveredCount / attemptedDeliveries) * 100).toFixed(1));
 
-    const consentRate =
-      totalGuardians === 0
-        ? 0
-        : Number(((consentedGuardians / totalGuardians) * 100).toFixed(1));
-
     const metrics: SummaryMetric[] = [
       {
         label: "Pending Result Reviews",
@@ -201,13 +192,6 @@ export async function getDashboardViewData(): Promise<DashboardViewData> {
         change: "7 days",
         trend: metricTrend(deliveryRate, 95),
         helper: "From attempted notifications",
-      },
-      {
-        label: "NDPR Consent Coverage",
-        value: `${consentRate}%`,
-        change: "Live",
-        trend: metricTrend(consentRate, 90),
-        helper: "Guardian records with consent",
       },
     ];
 

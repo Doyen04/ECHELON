@@ -8,7 +8,7 @@ const trendTone: Record<SummaryMetric["trend"], string> = {
 
 export function SummaryMetrics({ metrics }: { metrics: SummaryMetric[] }) {
     return (
-        <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
             {metrics.map((metric, index) => (
                 <article
                     key={metric.label}
