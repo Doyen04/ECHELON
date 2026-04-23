@@ -12,7 +12,7 @@ export function SummaryMetrics({ metrics }: { metrics: SummaryMetric[] }) {
             {metrics.map((metric, index) => (
                 <article
                     key={metric.label}
-                    className="dashboard-card group rounded-2xl border border-(--border-subtle) bg-(--surface-strong) px-5 py-5 shadow-[0_20px_40px_-35px_rgba(2,23,23,0.75)]"
+                    className="dashboard-card group rounded-2xl border border-(--border-subtle) bg-(--surface-strong) px-5 py-5"
                     style={{ animationDelay: `${index * 90}ms` }}
                 >
                     <p className="text-xs font-semibold uppercase tracking-[0.16em] text-(--text-muted)">

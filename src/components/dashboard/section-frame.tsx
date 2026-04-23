@@ -17,7 +17,7 @@ export function SectionFrame({
 }: SectionFrameProps) {
     return (
         <section
-            className={`dashboard-section rounded-3xl border border-(--border-subtle) bg-(--surface-strong) p-6 shadow-[0_20px_50px_-35px_rgba(2,23,23,0.55)] ${className ?? ""}`}
+            className={`dashboard-section rounded-3xl border border-(--border-subtle) bg-(--surface-strong) p-6 ${className ?? ""}`}
         >
             <header className="mb-5 flex flex-wrap items-start justify-between gap-3">
                 <div>

@@ -10,7 +10,7 @@ export function FeaturePlaceholder({ title, description }: FeaturePlaceholderPro
         <main className="dashboard-root min-h-screen bg-background px-4 py-8 sm:px-6 lg:px-8">
             <div className="dashboard-grid-overlay" aria-hidden="true" />
 
-            <section className="mx-auto w-full max-w-3xl rounded-3xl border border-(--border-subtle) bg-(--surface-strong) p-8 shadow-[0_25px_60px_-38px_rgba(2,23,23,0.75)]">
+            <section className="mx-auto w-full max-w-3xl rounded-3xl border border-(--border-subtle) bg-(--surface-strong) p-8">
                 <p className="text-xs font-semibold uppercase tracking-[0.16em] text-(--text-muted)">
                     Admin Module
                 </p>
