@@ -17,18 +17,26 @@ export default async function BatchesPage() {
 
     const batches = await db.resultBatch.findMany({
         orderBy: { uploadedAt: "desc" },
-        take: 50,
-        include: {
+        take: 25,
+        select: {
+            id: true,
+            session: true,
+            semester: true,
+            department: true,
+            source: true,
+            status: true,
+            uploadedAt: true,
             uploadedBy: { select: { name: true } },
-            approvedBy: { select: { name: true } },
-            studentResults: {
-                select: { status: true },
+            _count: {
+                select: {
+                    studentResults: true,
+                },
             },
         },
     });
 
     return (
-        <div className="flex h-full w-full flex-col overflow-y-auto bg-background">
+        <div className="flex h-full w-full flex-col overflow-x-hidden overflow-y-auto bg-background">
             <PageHeader
                 title="Result Batches"
                 action={
@@ -42,8 +50,8 @@ export default async function BatchesPage() {
                 }
             />
 
-            <main className="mx-auto w-full max-w-7xl space-y-6 px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
-                <section className="dashboard-section flex flex-col justify-between gap-4 xl:flex-row xl:items-center">
+            <main className="mx-auto w-full max-w-7xl min-w-0 space-y-6 px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
+                <section className="dashboard-section flex min-w-0 flex-col justify-between gap-4 xl:flex-row xl:items-center">
                     <div className="flex flex-wrap items-center gap-3">
                         <FilterSelect placeholder="Session: All" options={Array.from(new Set(batches.map((batch: any) => batch.session)))} />
                         <FilterSelect placeholder="Semester: All" options={Array.from(new Set(batches.map((batch: any) => semesterLabel(batch.semester))))} />
@@ -65,8 +73,9 @@ export default async function BatchesPage() {
                     </div>
                 </section>
 
-                <section className="overflow-x-auto rounded-xl border border-border-subtle bg-surface-main shadow-sm dashboard-section">
-                    <table className="min-w-full divide-y divide-border-subtle">
+                <section className="dashboard-section min-w-0 overflow-hidden rounded-xl border border-border-subtle bg-surface-main shadow-sm">
+                    <div className="max-h-[calc(100vh-18rem)] min-w-0 overflow-auto">
+                    <table className="min-w-[1100px] table-fixed divide-y divide-border-subtle">
                         <thead className="bg-surface-subtle/40">
                             <tr>
                                 <th className="w-12 px-4 py-3 text-left"><input type="checkbox" className="rounded border-border-subtle accent-brand" /></th>
@@ -87,33 +96,37 @@ export default async function BatchesPage() {
                         </thead>
                         <tbody className="divide-y divide-border-subtle bg-surface-main">
                             {batches.map((batch: any, index: number) => {
-                                const studentCount = batch.studentResults.length;
+                                const studentCount = batch._count?.studentResults ?? 0;
                                 const uploader = batch.uploadedBy?.name ?? "System";
                                 const source = String(batch.source).toUpperCase();
 
                                 return (
                                     <tr key={batch.id} className="group table-row-enter hover:bg-surface-subtle/50 transition-colors" style={{ animationDelay: `${index * 30}ms` }}>
-                                        <td className="px-4 py-4 whitespace-nowrap"><input type="checkbox" className="rounded border-border-subtle accent-brand" /></td>
-                                        <td className="px-4 py-4 whitespace-nowrap text-sm font-mono text-text-muted">{batch.id}</td>
-                                        <td className="px-4 py-4 whitespace-nowrap text-sm text-foreground">{batch.session}</td>
-                                        <td className="px-4 py-4 whitespace-nowrap text-sm text-foreground">{semesterLabel(batch.semester)}</td>
-                                        <td className="px-4 py-4 whitespace-nowrap text-sm font-medium text-foreground">{batch.department}</td>
-                                        <td className="px-4 py-4 whitespace-nowrap text-sm text-foreground">{studentCount}</td>
-                                        <td className="px-4 py-4 whitespace-nowrap">
+                                        <td className="px-3 py-3 align-top whitespace-nowrap"><input type="checkbox" className="rounded border-border-subtle accent-brand" /></td>
+                                        <td className="px-3 py-3 align-top text-xs font-mono text-text-muted">
+                                            <div className="max-w-[9rem] truncate" title={batch.id}>
+                                                {batch.id}
+                                            </div>
+                                        </td>
+                                        <td className="truncate px-3 py-3 align-top text-sm text-foreground">{batch.session}</td>
+                                        <td className="truncate px-3 py-3 align-top text-sm text-foreground">{semesterLabel(batch.semester)}</td>
+                                        <td className="truncate px-3 py-3 align-top text-sm font-medium text-foreground">{batch.department}</td>
+                                        <td className="px-3 py-3 align-top text-sm text-foreground">{studentCount}</td>
+                                        <td className="px-3 py-3 align-top whitespace-nowrap">
                                             <span className="inline-flex items-center rounded border border-border-subtle bg-surface-subtle px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-text-muted">
                                                 {source}
                                             </span>
                                         </td>
-                                        <td className="px-4 py-4 whitespace-nowrap">
+                                        <td className="px-3 py-3 align-top whitespace-nowrap">
                                             <StatusBadge status={toBadgeStatus(batch.status)} />
                                         </td>
-                                        <td className="px-4 py-4 whitespace-nowrap">
-                                            <div className="flex flex-col">
-                                                <span className="text-sm text-foreground">{uploader}</span>
+                                        <td className="px-3 py-3 align-top">
+                                            <div className="min-w-0 flex flex-col">
+                                                <span className="truncate text-sm text-foreground">{uploader}</span>
                                                 <span className="text-xs text-text-muted">{relativeTimeFromNow(batch.uploadedAt)}</span>
                                             </div>
                                         </td>
-                                        <td className="px-4 py-4 whitespace-nowrap text-right">
+                                        <td className="px-3 py-3 align-top whitespace-nowrap text-right">
                                             <Link
                                                 href={`/admin/batches/${batch.id}`}
                                                 className="inline-flex items-center gap-1 text-sm font-medium text-brand opacity-0 transition-opacity hover:text-brand-hover hover:underline group-hover:opacity-100"
@@ -126,6 +139,7 @@ export default async function BatchesPage() {
                             })}
                         </tbody>
                     </table>
+                    </div>
 
                     <div className="flex items-center justify-between border-t border-border-subtle bg-surface-subtle/20 px-6 py-4">
                         <div className="text-sm text-text-muted">
