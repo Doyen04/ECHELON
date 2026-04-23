@@ -368,7 +368,7 @@ export async function POST(request: Request) {
         });
 
         return createdBatch;
-    });
+    }, { timeout: 60000, maxWait: 10000 });
 
     if (!autoDispatch) {
         return NextResponse.json({
@@ -417,3 +417,7 @@ export async function POST(request: Request) {
         );
     }
 }
+
+
+
+
