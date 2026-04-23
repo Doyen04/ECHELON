@@ -102,16 +102,16 @@ export function AdminSidebar({ email, name, role }: AdminSidebarProps) {
                     <div className={`flex shrink-0 items-center justify-center rounded-2xl border border-white/25 bg-white/15 text-white shadow-xl transition-all duration-300 ${isCollapsed ? "h-10 w-10" : "h-11 w-11"}`}>
                         <Layers className={`${isCollapsed ? "h-5 w-5" : "h-6 w-6"} text-white`} strokeWidth={2.5} />
                     </div>
-                    
+
                     <div
                         className={`min-w-0 transition-all duration-200 ${isCollapsed ? "h-0 w-0 opacity-0 pointer-events-none overflow-hidden" : "w-auto opacity-100"
                             }`}
                     >
                         <h1 className="truncate font-serif text-xl tracking-tight text-white">Echelon Registry</h1>
                     </div>
-                    
+
                     {/* Close Mobile Menu Button */}
-                    <button 
+                    <button
                         onClick={closeMobileMenu}
                         className="absolute top-4 right-4 md:hidden text-white/50 hover:text-white"
                     >
@@ -135,7 +135,7 @@ export function AdminSidebar({ email, name, role }: AdminSidebarProps) {
                                         .filter((item) => !item.roles || item.roles.includes(role))
                                         .map((item) => {
                                             const Icon = item.icon;
-                                            
+
                                             // 1. Exact match always wins
                                             // 2. Partial match (startsWith) only applies if no other item has an exact match
                                             const isExactMatch = pathname === item.href;
@@ -153,19 +153,19 @@ export function AdminSidebar({ email, name, role }: AdminSidebarProps) {
                                                             : "text-white/60 hover:bg-white/5 hover:text-white"
                                                         }`}
                                                 >
-                                                <Icon className={`h-5 w-5 shrink-0 transition-transform group-hover/link:scale-110 ${active ? "text-white" : "text-white/70"}`} />
-                                                <span
-                                                    className={`min-w-0 truncate font-medium transition-all duration-300 ${isCollapsed ? "w-0 opacity-0 pointer-events-none" : "w-auto opacity-100"
-                                                        }`}
-                                                >
-                                                    {item.label}
-                                                </span>
-                                                {!isCollapsed && active && (
-                                                    <div className="ml-auto h-1.5 w-1.5 rounded-full bg-white shadow-[0_0_8px_rgba(255,255,255,0.8)]" />
-                                                )}
-                                            </Link>
-                                        );
-                                    })}
+                                                    <Icon className={`h-5 w-5 shrink-0 transition-transform group-hover/link:scale-110 ${active ? "text-white" : "text-white/70"}`} />
+                                                    <span
+                                                        className={`min-w-0 truncate font-medium transition-all duration-300 ${isCollapsed ? "w-0 opacity-0 pointer-events-none" : "w-auto opacity-100"
+                                                            }`}
+                                                    >
+                                                        {item.label}
+                                                    </span>
+                                                    {!isCollapsed && active && (
+                                                        <div className="ml-auto h-1.5 w-1.5 rounded-full bg-white shadow-[0_0_8px_rgba(255,255,255,0.8)]" />
+                                                    )}
+                                                </Link>
+                                            );
+                                        })}
                                 </div>
                             </div>
                         ));
@@ -198,10 +198,9 @@ export function AdminSidebar({ email, name, role }: AdminSidebarProps) {
                             </div>
 
                             <div className={`${isCollapsed ? "w-full flex justify-center border-t border-white/10 pt-2 pb-1" : ""}`}>
-                                <SignOutButton 
-                                    className={`flex items-center justify-center rounded-full transition-all duration-200 hover:bg-white/15 hover:scale-105 active:scale-95 text-white/70 hover:text-white ${
-                                        isCollapsed ? "h-9 w-9 bg-white/5" : "h-9 w-9"
-                                    }`} 
+                                <SignOutButton
+                                    className={`flex items-center justify-center rounded-full transition-all duration-200 hover:bg-white/15 hover:scale-105 active:scale-95 text-white/70 hover:text-white ${isCollapsed ? "h-9 w-9 bg-white/5" : "h-9 w-9"
+                                        }`}
                                     title="Log out"
                                 >
                                     <LogOut className="h-4.5 w-4.5" />
