@@ -1,14 +1,175 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import Link from "next/link";
-import { UploadCloud, FileType, CheckCircle, AlertTriangle, ArrowRight, Download, X } from "lucide-react";
+import {
+    UploadCloud,
+    FileType,
+    CheckCircle,
+    AlertTriangle,
+    ArrowRight,
+    Download,
+    X,
+} from "lucide-react";
 import { PageHeader } from "@/components/ui/page-header";
+
+type ParsedRow = {
+    matricNumber: string;
+    studentName: string;
+    department: string;
+    courseCode: string;
+    grade: string;
+    score: string;
+};
+
+type ValidationState = {
+    headers: string[];
+    rowCount: number;
+    studentCount: number;
+    previewRows: ParsedRow[];
+    errors: string[];
+};
+
+const REQUIRED_HEADERS = [
+    "matric_number",
+    "student_name",
+    "department",
+    "course_code",
+    "grade",
+] as const;
+
+function normalizeHeader(header: string): string {
+    return header.trim().toLowerCase().replace(/\s+/g, "_");
+}
+
+function parseCsvLine(line: string): string[] {
+    const values: string[] = [];
+    let current = "";
+    let inQuotes = false;
+
+    for (let index = 0; index < line.length; index += 1) {
+        const char = line[index];
+        const nextChar = line[index + 1];
+
+        if (char === '"') {
+            if (inQuotes && nextChar === '"') {
+                current += '"';
+                index += 1;
+            } else {
+                inQuotes = !inQuotes;
+            }
+            continue;
+        }
+
+        if (char === "," && !inQuotes) {
+            values.push(current.trim());
+            current = "";
+            continue;
+        }
+
+        current += char;
+    }
+
+    values.push(current.trim());
+    return values;
+}
+
+function parseCsv(text: string): Array<Record<string, string>> {
+    const lines = text
+        .split(/\r?\n/)
+        .map((line) => line.trim())
+        .filter((line) => line.length > 0);
+
+    if (lines.length < 2) {
+        return [];
+    }
+
+    const headers = parseCsvLine(lines[0]).map(normalizeHeader);
+
+    return lines.slice(1).map((line) => {
+        const values = parseCsvLine(line);
+        const row: Record<string, string> = {};
+
+        headers.forEach((header, index) => {
+            row[header] = values[index] ?? "";
+        });
+
+        return row;
+    });
+}
+
+function validateAndBuildPreview(text: string): ValidationState {
+    const lines = text
+        .split(/\r?\n/)
+        .map((line) => line.trim())
+        .filter((line) => line.length > 0);
+
+    if (lines.length < 2) {
+        return {
+            headers: [],
+            rowCount: 0,
+            studentCount: 0,
+            previewRows: [],
+            errors: ["CSV must include a header row and at least one data row."],
+        };
+    }
+
+    const headers = parseCsvLine(lines[0]).map(normalizeHeader);
+    const missingHeaders = REQUIRED_HEADERS.filter((required) => !headers.includes(required));
+    const parsedRows = parseCsv(text);
+
+    const errors: string[] = [];
+    if (missingHeaders.length > 0) {
+        errors.push(`Missing required columns: ${missingHeaders.join(", ")}`);
+    }
+
+    parsedRows.forEach((row, index) => {
+        const rowNumber = index + 2;
+        if (!(row.matric_number ?? "").trim()) {
+            errors.push(`Row ${rowNumber}: matric_number is required.`);
+        }
+        if (!(row.student_name ?? "").trim()) {
+            errors.push(`Row ${rowNumber}: student_name is required.`);
+        }
+        if (!(row.course_code ?? "").trim()) {
+            errors.push(`Row ${rowNumber}: course_code is required.`);
+        }
+        if (!(row.grade ?? "").trim()) {
+            errors.push(`Row ${rowNumber}: grade is required.`);
+        }
+    });
+
+    const previewRows: ParsedRow[] = parsedRows.slice(0, 5).map((row) => ({
+        matricNumber: (row.matric_number ?? "").trim(),
+        studentName: (row.student_name ?? "").trim(),
+        department: (row.department ?? "").trim(),
+        courseCode: (row.course_code ?? "").trim(),
+        grade: (row.grade ?? "").trim(),
+        score: (row.score ?? "").trim(),
+    }));
+
+    const uniqueStudents = new Set(
+        parsedRows
+            .map((row) => (row.matric_number ?? "").trim())
+            .filter((value) => value.length > 0),
+    );
+
+    return {
+        headers,
+        rowCount: parsedRows.length,
+        studentCount: uniqueStudents.size,
+        previewRows,
+        errors,
+    };
+}
 
 export default function BatchUploadPage() {
     const [file, setFile] = useState<File | null>(null);
     const [isDragOver, setIsDragOver] = useState(false);
     const [showPreview, setShowPreview] = useState(false);
+    const [showErrorDetails, setShowErrorDetails] = useState(false);
+    const [isParsing, setIsParsing] = useState(false);
+    const [validation, setValidation] = useState<ValidationState | null>(null);
     const [sessionValue, setSessionValue] = useState("2024/2025");
     const [semesterValue, setSemesterValue] = useState("FIRST");
     const [departmentValue, setDepartmentValue] = useState("Computer Science");
@@ -22,6 +183,52 @@ export default function BatchUploadPage() {
         autoDispatched: boolean;
     } | null>(null);
 
+    const hasValidationErrors = useMemo(() => {
+        return Boolean(validation && validation.errors.length > 0);
+    }, [validation]);
+
+    const resetUploadState = () => {
+        setFile(null);
+        setShowPreview(false);
+        setShowErrorDetails(false);
+        setValidation(null);
+        setSubmitError(null);
+        setSubmitSuccess(null);
+    };
+
+    const processSelectedFile = async (selectedFile: File) => {
+        const isCsvFile =
+            selectedFile.name.toLowerCase().endsWith(".csv") ||
+            selectedFile.type.includes("csv") ||
+            selectedFile.type === "text/plain";
+
+        if (!isCsvFile) {
+            resetUploadState();
+            setSubmitError("Please upload a valid CSV file.");
+            return;
+        }
+
+        setFile(selectedFile);
+        setIsParsing(true);
+        setShowPreview(false);
+        setShowErrorDetails(false);
+        setSubmitError(null);
+        setSubmitSuccess(null);
+
+        try {
+            const csvText = await selectedFile.text();
+            const validationResult = validateAndBuildPreview(csvText);
+            setValidation(validationResult);
+            setShowPreview(true);
+        } catch {
+            setValidation(null);
+            setShowPreview(false);
+            setSubmitError("Unable to read the CSV file. Please try again.");
+        } finally {
+            setIsParsing(false);
+        }
+    };
+
     const handleDragOver = (e: React.DragEvent) => {
         e.preventDefault();
         setIsDragOver(true);
@@ -32,29 +239,27 @@ export default function BatchUploadPage() {
         setIsDragOver(false);
     };
 
-    const handleDrop = (e: React.DragEvent) => {
+    const handleDrop = async (e: React.DragEvent) => {
         e.preventDefault();
         setIsDragOver(false);
         if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-            setFile(e.dataTransfer.files[0]);
-            setSubmitError(null);
-            setSubmitSuccess(null);
-            // Simulate parsing delay
-            setTimeout(() => setShowPreview(true), 1200);
+            await processSelectedFile(e.dataTransfer.files[0]);
         }
     };
 
-    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files.length > 0) {
-            setFile(e.target.files[0]);
-            setSubmitError(null);
-            setSubmitSuccess(null);
-            setTimeout(() => setShowPreview(true), 1200);
+            await processSelectedFile(e.target.files[0]);
         }
     };
 
     const handleConfirmUpload = async () => {
         if (!file || isSubmitting) {
+            return;
+        }
+
+        if (hasValidationErrors) {
+            setSubmitError("Fix validation errors before confirming upload.");
             return;
         }
 
@@ -110,10 +315,7 @@ export default function BatchUploadPage() {
             <div className="p-6 md:p-8 max-w-400 w-full mx-auto">
                 <div className="flex flex-col lg:flex-row gap-8">
 
-                    {/* Upload Form 65% */}
                     <div className="flex-1 lg:max-w-[65%] space-y-8 dashboard-section">
-
-                        {/* Step 1: Metadata */}
                         <div className="rounded-xl border border-border-subtle bg-surface-main p-6 shadow-sm">
                             <h2 className="text-sm font-semibold uppercase tracking-widest text-text-muted mb-6">Step 1: Batch Metadata</h2>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
@@ -184,7 +386,6 @@ export default function BatchUploadPage() {
                             </div>
                         </div>
 
-                        {/* Step 2: File Upload */}
                         <div className="rounded-xl border border-border-subtle bg-surface-main p-6 shadow-sm">
                             <h2 className="text-sm font-semibold uppercase tracking-widest text-text-muted mb-6">Step 2: File Upload</h2>
 
@@ -197,11 +398,11 @@ export default function BatchUploadPage() {
                                     onDragLeave={handleDragLeave}
                                     onDrop={handleDrop}
                                 >
-                                    <input type="file" accept=".csv" onChange={handleFileChange} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
+                                    <input type="file" accept=".csv,text/csv" onChange={handleFileChange} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
                                     <div className="rounded-full bg-surface-main p-4 shadow-sm mb-4">
                                         <UploadCloud className="h-8 w-8 text-brand" />
                                     </div>
-                                    <h3 className="text-lg font-serif text-foreground mb-1">Drag & drop your CSV here</h3>
+                                    <h3 className="text-lg font-serif text-foreground mb-1">Drag and drop your CSV here</h3>
                                     <p className="text-sm text-text-muted mb-2">or click anywhere to browse from your computer</p>
                                     <div className="text-xs text-text-muted flex items-center gap-2 mt-4 opacity-70">
                                         <span>Accepted: .csv</span>
@@ -217,16 +418,13 @@ export default function BatchUploadPage() {
                                         </div>
                                         <div>
                                             <p className="text-sm font-medium text-foreground font-mono">{file.name}</p>
-                                            <p className="text-xs text-text-muted mt-0.5">{(file.size / 1024).toFixed(1)} KB - Uploading and parsing...</p>
+                                            <p className="text-xs text-text-muted mt-0.5">
+                                                {(file.size / 1024).toFixed(1)} KB - {isParsing ? "Parsing CSV..." : "Ready"}
+                                            </p>
                                         </div>
                                     </div>
                                     <button
-                                        onClick={() => {
-                                            setFile(null);
-                                            setShowPreview(false);
-                                            setSubmitError(null);
-                                            setSubmitSuccess(null);
-                                        }}
+                                        onClick={resetUploadState}
                                         className="p-2 text-text-muted hover:text-red-500 transition-colors"
                                     >
                                         <X className="h-5 w-5" />
@@ -235,31 +433,44 @@ export default function BatchUploadPage() {
                             )}
                         </div>
 
-                        {/* Step 3: Preview */}
-                        {showPreview && (
+                        {showPreview && validation ? (
                             <div className="rounded-xl border border-border-subtle bg-surface-main shadow-sm overflow-hidden page-transition-enter">
                                 <div className="p-6 border-b border-border-subtle">
-                                    <h2 className="text-sm font-semibold uppercase tracking-widest text-text-muted mb-4">Step 3: Preview & Validation</h2>
+                                    <h2 className="text-sm font-semibold uppercase tracking-widest text-text-muted mb-4">Step 3: Preview and Validation</h2>
                                     <div className="space-y-2 mb-6">
                                         <div className="flex items-center gap-2 text-sm text-status-success font-medium">
-                                            <CheckCircle className="h-4 w-4" /> 247 students parsed
+                                            <CheckCircle className="h-4 w-4" /> {validation.studentCount} students parsed
                                         </div>
                                         <div className="flex items-center gap-2 text-sm text-status-success font-medium">
-                                            <CheckCircle className="h-4 w-4" /> 1,482 course records
+                                            <CheckCircle className="h-4 w-4" /> {validation.rowCount} course records
                                         </div>
-                                        <div className="flex items-center gap-2 text-sm text-status-danger font-medium">
-                                            <AlertTriangle className="h-4 w-4" /> 3 rows with format errors <button className="underline ml-1">View errors</button>
+                                        <div className={`flex items-center gap-2 text-sm font-medium ${validation.errors.length > 0 ? "text-status-danger" : "text-status-success"}`}>
+                                            {validation.errors.length > 0 ? <AlertTriangle className="h-4 w-4" /> : <CheckCircle className="h-4 w-4" />}
+                                            {validation.errors.length > 0
+                                                ? `${validation.errors.length} validation issues found`
+                                                : "No validation errors found"}
+                                            {validation.errors.length > 0 ? (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setShowErrorDetails((value) => !value)}
+                                                    className="underline ml-1"
+                                                >
+                                                    {showErrorDetails ? "Hide errors" : "View errors"}
+                                                </button>
+                                            ) : null}
                                         </div>
                                     </div>
 
-                                    {/* Duplicate warning */}
-                                    <div className="rounded-lg border border-status-warning/40 bg-status-warning/10 p-4 flex gap-3 text-status-warning mb-6">
-                                        <AlertTriangle className="h-5 w-5 shrink-0 mt-0.5" />
-                                        <p className="text-sm">
-                                            <span className="font-semibold block mb-1">A batch for this session already exists.</span>
-                                            Uploading will create a new version. The existing batch will not be deleted, but this new one will become the active pending batch.
-                                        </p>
-                                    </div>
+                                    {showErrorDetails && validation.errors.length > 0 ? (
+                                        <div className="rounded-lg border border-status-danger/40 bg-status-danger/10 p-4 text-sm text-status-danger space-y-1 mb-6">
+                                            {validation.errors.slice(0, 20).map((error) => (
+                                                <p key={error}>- {error}</p>
+                                            ))}
+                                            {validation.errors.length > 20 ? (
+                                                <p>- ...and {validation.errors.length - 20} more errors</p>
+                                            ) : null}
+                                        </div>
+                                    ) : null}
                                 </div>
 
                                 <div className="bg-surface-subtle/20 p-6">
@@ -270,23 +481,35 @@ export default function BatchUploadPage() {
                                                 <tr>
                                                     <th className="px-3 py-2 text-left text-xs font-medium text-text-muted">Matric Number</th>
                                                     <th className="px-3 py-2 text-left text-xs font-medium text-text-muted">Student Name</th>
-                                                    <th className="px-3 py-2 text-left text-xs font-medium text-text-muted">GPA</th>
+                                                    <th className="px-3 py-2 text-left text-xs font-medium text-text-muted">Department</th>
+                                                    <th className="px-3 py-2 text-left text-xs font-medium text-text-muted">Course</th>
+                                                    <th className="px-3 py-2 text-left text-xs font-medium text-text-muted">Grade</th>
                                                 </tr>
                                             </thead>
                                             <tbody className="divide-y divide-border-subtle">
-                                                {[1, 2, 3, 4, 5].map(i => (
-                                                    <tr key={i}>
-                                                        <td className="px-3 py-2 text-sm font-mono text-text-muted">CSC/2021/00{i}</td>
-                                                        <td className="px-3 py-2 text-sm text-foreground">Student Name {i}</td>
-                                                        <td className="px-3 py-2 text-sm text-foreground">{(4.0 - Math.random()).toFixed(2)}</td>
+                                                {validation.previewRows.length > 0 ? (
+                                                    validation.previewRows.map((row, index) => (
+                                                        <tr key={`${row.matricNumber}-${row.courseCode}-${index}`}>
+                                                            <td className="px-3 py-2 text-sm font-mono text-text-muted">{row.matricNumber || "-"}</td>
+                                                            <td className="px-3 py-2 text-sm text-foreground">{row.studentName || "-"}</td>
+                                                            <td className="px-3 py-2 text-sm text-foreground">{row.department || "-"}</td>
+                                                            <td className="px-3 py-2 text-sm text-foreground">{row.courseCode || "-"}</td>
+                                                            <td className="px-3 py-2 text-sm text-foreground">{row.grade || "-"}</td>
+                                                        </tr>
+                                                    ))
+                                                ) : (
+                                                    <tr>
+                                                        <td className="px-3 py-4 text-sm text-text-muted" colSpan={5}>
+                                                            No preview rows found.
+                                                        </td>
                                                     </tr>
-                                                ))}
+                                                )}
                                             </tbody>
                                         </table>
                                     </div>
                                 </div>
                             </div>
-                        )}
+                        ) : null}
 
                         {submitError ? (
                             <div className="rounded-lg border border-status-danger/40 bg-status-danger/10 p-4 text-sm text-status-danger">
@@ -303,14 +526,13 @@ export default function BatchUploadPage() {
                             </div>
                         ) : null}
 
-                        {/* Actions */}
                         <div className="flex items-center justify-end gap-4 pt-4 pb-12">
                             <Link href="/admin/batches" className="px-5 py-2.5 text-sm font-medium text-text-muted hover:text-foreground transition-colors">
                                 Cancel
                             </Link>
                             <button
                                 onClick={handleConfirmUpload}
-                                disabled={!showPreview || !file || isSubmitting}
+                                disabled={!showPreview || !file || isSubmitting || hasValidationErrors || isParsing}
                                 className="inline-flex items-center gap-2 rounded-md bg-brand px-5 py-2.5 text-sm font-medium text-white shadow-sm hover:bg-brand-hover transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 {isSubmitting ? "Uploading..." : "Confirm Upload"} <ArrowRight className="h-4 w-4" />
@@ -318,7 +540,6 @@ export default function BatchUploadPage() {
                         </div>
                     </div>
 
-                    {/* Right format guide 35% */}
                     <div className="lg:w-fit lg:min-w-85">
                         <div className="sticky top-24 rounded-xl border border-border-subtle bg-surface-main p-6 shadow-sm">
                             <h3 className="font-serif text-lg text-foreground mb-4">Format Guide</h3>
@@ -353,7 +574,6 @@ export default function BatchUploadPage() {
                             </button>
                         </div>
                     </div>
-
                 </div>
             </div>
         </div>
