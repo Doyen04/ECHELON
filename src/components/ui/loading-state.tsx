@@ -1,36 +1,63 @@
 "use client";
 
-import React from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "./card";
+import { Skeleton } from "./skeleton";
 
 type LoadingStateProps = {
     title?: string;
     rows?: number;
+    showMetrics?: boolean;
 };
 
-export function LoadingState({ title = "Loading...", rows = 5 }: LoadingStateProps) {
+export function LoadingState({
+    title = "Loading...",
+    rows = 5,
+    showMetrics = true,
+}: LoadingStateProps) {
     return (
-        <div className="dashboard-root min-h-[50vh] p-6 md:p-8">
-            <div className="mx-auto w-full max-w-300 space-y-5">
-                <div className="h-7 w-60 rounded-md skeleton" aria-hidden="true" />
-                <p className="text-sm text-text-muted">{title}</p>
+        <section aria-live="polite" aria-busy="true" className="min-h-[50vh] w-full p-4 sm:p-6 md:p-8">
+            <div className="mx-auto w-full max-w-5xl space-y-6">
+                <div className="space-y-2">
+                    <CardTitle className="sr-only">{title}</CardTitle>
+                    <Skeleton className="h-8 w-48" aria-hidden="true" />
+                    <Skeleton className="h-4 w-32" aria-hidden="true" />
+                </div>
 
-                <section className="rounded-xl border border-border-subtle bg-surface-main p-4">
-                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-                        <div className="h-24 rounded-lg skeleton" aria-hidden="true" />
-                        <div className="h-24 rounded-lg skeleton" aria-hidden="true" />
-                        <div className="h-24 rounded-lg skeleton" aria-hidden="true" />
-                        <div className="h-24 rounded-lg skeleton" aria-hidden="true" />
-                    </div>
-                </section>
-
-                <section className="rounded-xl border border-border-subtle bg-surface-main p-4">
-                    <div className="space-y-3">
-                        {Array.from({ length: rows }).map((_, index) => (
-                            <div key={index} className="h-12 rounded-md skeleton" aria-hidden="true" />
+                {showMetrics && (
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                        {[...Array(4)].map((_, index) => (
+                            <Card key={index}>
+                                <CardContent className="pt-6">
+                                    <div className="space-y-3">
+                                        <Skeleton className="h-4 w-20" aria-hidden="true" />
+                                        <Skeleton className="h-8 w-32" aria-hidden="true" />
+                                    </div>
+                                </CardContent>
+                            </Card>
                         ))}
                     </div>
-                </section>
+                )}
+
+                <Card>
+                    <CardHeader>
+                        <Skeleton className="h-6 w-40" aria-hidden="true" />
+                    </CardHeader>
+                    <CardContent>
+                        <div className="space-y-3">
+                            {[...Array(rows)].map((_, index) => (
+                                <div key={index} className="flex gap-4">
+                                    <div className="flex-1">
+                                        <Skeleton className="h-5 w-full" aria-hidden="true" />
+                                    </div>
+                                    <div className="w-24">
+                                        <Skeleton className="h-5" aria-hidden="true" />
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </CardContent>
+                </Card>
             </div>
-        </div>
+        </section>
     );
 }

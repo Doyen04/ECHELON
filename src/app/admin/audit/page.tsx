@@ -2,7 +2,10 @@ import type { Metadata } from "next";
 import { Download, Search } from "lucide-react";
 
 import { PageHeader } from "@/components/ui/page-header";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/dashboard";
+import { Input } from "@/components/ui/input";
 import { prisma } from "@/lib/db";
 import { formatDateTime, humanizeEnum } from "@/lib/admin-format";
 
@@ -27,20 +30,20 @@ export default async function AuditLogPage() {
             <PageHeader
                 title="Audit Log"
                 action={
-                    <button className="inline-flex items-center gap-2 rounded-md border border-border-subtle bg-surface-main px-4 py-2 text-sm font-medium text-foreground shadow-sm transition-colors hover:bg-surface-subtle">
+                    <Button variant="outline" className="rounded-full">
                         <Download className="h-4 w-4" />
                         Export
-                    </button>
+                    </Button>
                 }
             />
 
             <main className="mx-auto w-full max-w-7xl space-y-6 px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
-                <section className="dashboard-section flex flex-wrap items-center gap-3">
+                <Card className="dashboard-section flex flex-wrap items-center gap-3 p-4 shadow-sm">
                     <input
                         type="date"
-                        className="h-10 cursor-pointer rounded-md border border-border-subtle bg-surface-main px-3 text-sm text-foreground focus:border-brand focus:ring-1 focus:ring-brand focus:outline-none"
+                        className="h-10 cursor-pointer rounded-full border border-input bg-background px-3 text-sm text-foreground shadow-sm focus:border-ring focus:ring-2 focus:ring-ring/30 focus:outline-none"
                     />
-                    <select defaultValue="" className="h-10 cursor-pointer rounded-md border border-border-subtle bg-surface-main px-3 text-sm text-foreground focus:border-brand focus:ring-1 focus:ring-brand focus:outline-none">
+                    <select defaultValue="" className="h-10 cursor-pointer rounded-full border border-input bg-background px-3 text-sm text-foreground shadow-sm focus:border-ring focus:ring-2 focus:ring-ring/30 focus:outline-none">
                         <option value="" disabled hidden>Action Type: All</option>
                         <option>batch.*</option>
                         <option>result.*</option>
@@ -48,7 +51,7 @@ export default async function AuditLogPage() {
                         <option>user.*</option>
                         <option>auth.*</option>
                     </select>
-                    <select defaultValue="" className="h-10 cursor-pointer rounded-md border border-border-subtle bg-surface-main px-3 text-sm text-foreground focus:border-brand focus:ring-1 focus:ring-brand focus:outline-none">
+                    <select defaultValue="" className="h-10 cursor-pointer rounded-full border border-input bg-background px-3 text-sm text-foreground shadow-sm focus:border-ring focus:ring-2 focus:ring-ring/30 focus:outline-none">
                         <option value="" disabled hidden>Actor: All</option>
                         <option>Prof. A. Okoye</option>
                         <option>Registrar Adeyemi</option>
@@ -56,15 +59,15 @@ export default async function AuditLogPage() {
                     </select>
                     <div className="relative flex-1 min-w-60">
                         <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-muted" />
-                        <input
+                        <Input
                             type="text"
                             placeholder="Search entity ID or keyword..."
-                            className="h-10 w-full rounded-md border border-border-subtle bg-surface-main pl-9 pr-4 text-sm text-foreground focus:border-brand focus:ring-1 focus:ring-brand focus:outline-none"
+                            className="h-10 w-full rounded-full pl-9 pr-4"
                         />
                     </div>
-                </section>
+                </Card>
 
-                <section className="overflow-x-auto rounded-xl border border-border-subtle bg-surface-main shadow-sm dashboard-section" style={{ animationDelay: "100ms" }}>
+                <Card className="overflow-x-auto rounded-xl bg-surface-main shadow-sm dashboard-section" style={{ animationDelay: "100ms" }}>
                     {logs.length === 0 ? (
                         <div className="p-6">
                             <EmptyState
@@ -113,7 +116,7 @@ export default async function AuditLogPage() {
                             </tbody>
                         </table>
                     )}
-                </section>
+                </Card>
             </main>
         </div>
     );

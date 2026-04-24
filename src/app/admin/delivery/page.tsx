@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { prisma } from "@/lib/db";
 
 export const metadata: Metadata = {
@@ -24,7 +27,7 @@ export default async function DeliveryPage() {
     return (
         <main className="dashboard-root min-h-screen bg-background px-4 py-8 sm:px-6 lg:px-8">
             <div className="dashboard-grid-overlay" aria-hidden="true" />
-            <section className="mx-auto w-full max-w-6xl rounded-3xl border border-(--border-subtle) bg-(--surface-strong) p-6 shadow-[0_25px_60px_-38px_rgba(2,23,23,0.75)] sm:p-8">
+            <Card className="mx-auto w-full max-w-6xl rounded-3xl p-6 shadow-[0_25px_60px_-38px_rgba(2,23,23,0.75)] sm:p-8">
                 <p className="text-xs font-semibold uppercase tracking-[0.16em] text-(--text-muted)">
                     Delivery Monitoring
                 </p>
@@ -37,7 +40,7 @@ export default async function DeliveryPage() {
 
                 <div className="mt-6 space-y-3">
                     {dispatches.map((dispatch: any) => (
-                        <article key={dispatch.id} className="rounded-2xl border border-(--border-subtle) bg-(--surface-soft) p-4">
+                        <article key={dispatch.id} className="rounded-2xl border border-border/70 bg-muted/30 p-4">
                             <div className="flex flex-wrap items-start justify-between gap-3">
                                 <div>
                                     <p className="text-sm font-semibold text-foreground">
@@ -50,16 +53,14 @@ export default async function DeliveryPage() {
                                         Triggered by {dispatch.triggeredBy?.name ?? "System"}
                                     </p>
                                 </div>
-                                <Link
-                                    href={`/admin/delivery/${dispatch.id}`}
-                                    className="rounded-lg bg-(--accent-strong) px-3 py-2 text-xs font-semibold text-white"
-                                >
-                                    Open Logs
-                                </Link>
+                                <Button asChild size="sm" className="rounded-full">
+                                    <Link href={`/admin/delivery/${dispatch.id}`}>Open Logs</Link>
+                                </Button>
                             </div>
                             <p className="mt-3 text-xs text-(--text-secondary)">
                                 {dispatch._count.notificationLogs} notification log(s)
                             </p>
+                            <Badge variant="outline" className="mt-3 rounded-full text-[11px]">Dispatch</Badge>
                         </article>
                     ))}
                     {dispatches.length === 0 ? (
@@ -68,7 +69,7 @@ export default async function DeliveryPage() {
                         </div>
                     ) : null}
                 </div>
-            </section>
+            </Card>
         </main>
     );
 }

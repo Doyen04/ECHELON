@@ -3,6 +3,8 @@
 import { useState } from "react";
 import Link from "next/link";
 
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/page-header";
 
 type UploadResult = {
@@ -67,7 +69,7 @@ export default function StudentContactsUploadPage() {
             />
 
             <main className="mx-auto w-full max-w-4xl px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
-                <section className="rounded-xl border border-border-subtle bg-surface-main p-6 shadow-sm">
+                <Card className="rounded-xl p-6 shadow-sm">
                     <h2 className="text-sm font-semibold uppercase tracking-widest text-text-muted">Contact Mapping File</h2>
                     <p className="mt-3 text-sm text-text-muted">
                         Upload a CSV with: matric_number, parent_name, parent_email, parent_phone, and relationship.
@@ -83,14 +85,14 @@ export default function StudentContactsUploadPage() {
                     </div>
 
                     <div className="mt-6">
-                        <button
+                        <Button
                             type="button"
                             onClick={onUpload}
                             disabled={!file || isSubmitting}
-                            className="rounded-md bg-brand px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-brand-hover disabled:cursor-not-allowed disabled:opacity-70"
+                            className="rounded-full"
                         >
                             {isSubmitting ? "Uploading..." : "Upload Contacts"}
-                        </button>
+                        </Button>
                     </div>
 
                     {error ? <p className="mt-4 text-sm text-status-danger">{error}</p> : null}
@@ -107,7 +109,7 @@ export default function StudentContactsUploadPage() {
                             ) : null}
                         </div>
                     ) : null}
-                </section>
+                </Card>
             </main>
         </div>
     );

@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Building2, CheckCircle2, AlertCircle, XCircle } from "lucide-react";
+import { Building2, CheckCircle2 } from "lucide-react";
 
+import { ErrorState as UiErrorState } from "@/components/ui/error-state";
 import { prisma } from "@/lib/db";
 import { formatDateTime } from "@/lib/admin-format";
 
@@ -21,7 +22,7 @@ export default async function PublicResultViewPage({ searchParams }: ResultViewP
     const { token } = await searchParams;
 
     if (!token) {
-        return <ErrorState type="not_found" />;
+        return <TokenErrorState type="not_found" />;
     }
 
     const portalToken = await db.portalToken.findUnique({
@@ -41,11 +42,11 @@ export default async function PublicResultViewPage({ searchParams }: ResultViewP
     });
 
     if (!portalToken) {
-        return <ErrorState type="not_found" />;
+        return <TokenErrorState type="not_found" />;
     }
 
     if (portalToken.invalidated || portalToken.expiresAt <= new Date()) {
-        return <ErrorState type="expired" />;
+        return <TokenErrorState type="expired" />;
     }
 
     const result = portalToken.studentResult;
@@ -148,23 +149,32 @@ export default async function PublicResultViewPage({ searchParams }: ResultViewP
     );
 }
 
-function ErrorState({ type }: { type: "expired" | "not_found" }) {
+function TokenErrorState({ type }: { type: "expired" | "not_found" }) {
+    const copy =
+        type === "expired"
+            ? {
+                title: "Link Expired",
+                description:
+                    "For security reasons, result notification links expire after the configured token lifetime. Please contact the Registry office for assistance if you still need access.",
+                code: "TOKEN_EXPIRED",
+            }
+            : {
+                title: "Result Link Not Found",
+                description:
+                    "This link does not exist, is malformed, or access has been revoked by the institution.",
+                code: "TOKEN_NOT_FOUND",
+            };
+
     return (
-        <div className="flex min-h-screen flex-col items-center justify-center bg-background p-4">
-            <div className="page-transition-enter w-full max-w-md rounded-2xl border border-border-subtle bg-surface-main p-8 text-center shadow-xl">
-                <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-status-danger/10">
-                    {type === "expired" ? <AlertCircle className="h-8 w-8 text-status-danger" /> : <XCircle className="h-8 w-8 text-status-danger" />}
-                </div>
-
-                <h1 className="mb-2 font-serif text-2xl text-foreground">{type === "expired" ? "Link Expired" : "Not Found"}</h1>
-
-                <p className="mb-8 text-sm text-text-muted">
-                    {type === "expired"
-                        ? "For security reasons, result notification links expire after the configured token lifetime. Please contact the Registry office for assistance if you still need access."
-                        : "This link does not exist, is malformed, or access has been revoked by the institution."}
-                </p>
-
-                <Link href="/" className="block w-full rounded border border-border-subtle bg-surface-subtle/50 py-3 text-sm font-medium text-foreground transition-colors hover:bg-surface-subtle">
+        <div className="page-transition-enter min-h-screen bg-background p-4 sm:p-6">
+            <UiErrorState
+                title={copy.title}
+                description={copy.description}
+                code={copy.code}
+                details="If this link was sent recently, ask the registry to issue a new secure token."
+            />
+            <div className="mx-auto mt-4 flex w-full max-w-xl justify-center">
+                <Link href="/" className="text-sm font-medium text-primary underline-offset-4 hover:underline">
                     Return Home
                 </Link>
             </div>

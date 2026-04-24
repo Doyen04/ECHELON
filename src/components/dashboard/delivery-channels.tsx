@@ -1,5 +1,6 @@
 import type { ChannelDelivery } from "@/lib/dashboard-data";
 
+import { Badge } from "@/components/ui/badge";
 import { SectionFrame } from "./section-frame";
 
 function deliveryRate(channel: ChannelDelivery) {
@@ -22,15 +23,13 @@ export function DeliveryChannels({ channels }: { channels: ChannelDelivery[] }) 
                     return (
                         <article
                             key={channel.channel}
-                            className="rounded-2xl border border-(--border-subtle) bg-(--surface-soft) p-4"
+                            className="rounded-2xl border border-border/70 bg-muted/30 p-4"
                         >
                             <div className="flex items-center justify-between gap-3">
-                                <h3 className="text-sm font-semibold capitalize text-foreground">
-                                    {channel.channel}
-                                </h3>
-                                <p className="text-xs font-medium text-(--text-secondary)">
-                                    Delivery: {rate}%
-                                </p>
+                                <h3 className="text-sm font-semibold capitalize text-foreground">{channel.channel}</h3>
+                                <Badge variant="outline" className="rounded-full px-2.5 py-1 text-[11px] uppercase tracking-[0.08em] text-muted-foreground">
+                                    Delivery {rate}%
+                                </Badge>
                             </div>
 
                             <div className="mt-2 h-2 rounded-full bg-(--surface-muted)">

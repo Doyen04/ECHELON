@@ -3,6 +3,9 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { ArrowRight, Download, Send } from "lucide-react";
 
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/page-header";
 import { StatusBadge } from "@/components/ui/badges";
 import { ApproveDispatchButton } from "@/components/admin/approve-dispatch-button";
@@ -80,18 +83,20 @@ export default async function BatchDetailPage({ params }: BatchPageProps) {
                         {batch.status === "PENDING" || batch.status === "IN_REVIEW" ? (
                             <ApproveDispatchButton batchId={batch.id} />
                         ) : null}
-                        <Link href={`/admin/batches/${batch.id}/dispatch`} className="inline-flex items-center gap-2 rounded-md bg-brand px-4 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-brand-hover">
-                            <Send className="h-4 w-4" /> Dispatch
-                        </Link>
-                        <button className="inline-flex items-center gap-2 rounded-md border border-border-subtle bg-surface-main px-4 py-2 text-sm font-medium text-foreground shadow-sm transition-colors hover:bg-surface-subtle">
+                        <Button asChild className="rounded-full">
+                            <Link href={`/admin/batches/${batch.id}/dispatch`}>
+                                <Send className="h-4 w-4" /> Dispatch
+                            </Link>
+                        </Button>
+                        <Button variant="outline" className="rounded-full">
                             <Download className="h-4 w-4" /> Export
-                        </button>
+                        </Button>
                     </div>
                 }
             />
 
             <main className="mx-auto w-full max-w-7xl space-y-6 px-4 py-6 sm:px-6 lg:px-8 lg:py-8 pb-24">
-                <section className="rounded-3xl border border-(--border-subtle) bg-(--surface-strong) p-6 shadow-[0_25px_60px_-38px_rgba(2,23,23,0.75)] sm:p-8">
+                <Card className="rounded-3xl p-6 shadow-[0_25px_60px_-38px_rgba(2,23,23,0.75)] sm:p-8">
                     <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
                         <div>
                             <p className="text-xs font-semibold uppercase tracking-[0.16em] text-(--text-muted)">Batch Overview</p>
@@ -103,9 +108,9 @@ export default async function BatchDetailPage({ params }: BatchPageProps) {
 
                         <div className="flex flex-wrap gap-2">
                             <StatusBadge status={toBadgeStatus(batch.status)} />
-                            <span className="inline-flex items-center rounded px-2.5 py-1 text-xs font-medium bg-slate-100 text-slate-700">
+                            <Badge variant="outline" className="rounded-full px-2.5 py-1 text-xs font-medium">
                                 {batch.id}
-                            </span>
+                            </Badge>
                         </div>
                     </div>
 
@@ -152,7 +157,7 @@ export default async function BatchDetailPage({ params }: BatchPageProps) {
                             </div>
                         </article>
                     </div>
-                </section>
+                </Card>
 
                 <section className="overflow-hidden rounded-3xl border border-(--border-subtle) bg-(--surface-strong) shadow-[0_25px_60px_-38px_rgba(2,23,23,0.75)]">
                     <div className="border-b border-(--border-subtle) px-6 py-4 sm:px-8">

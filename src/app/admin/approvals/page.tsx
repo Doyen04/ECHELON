@@ -2,6 +2,9 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ChevronDown, CheckSquare, Clock, ArrowRight } from "lucide-react";
 
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/page-header";
 import { StatusBadge } from "@/components/ui/badges";
 import { ApproveDispatchButton } from "@/components/admin/approve-dispatch-button";
@@ -52,7 +55,7 @@ export default async function ApprovalsPage() {
             />
 
             <main className="mx-auto w-full max-w-7xl space-y-8 px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
-                <section className="space-y-6 dashboard-section">
+                <Card className="space-y-6 p-6 dashboard-section shadow-sm">
                     <h2 className="flex items-center gap-2 text-xl font-serif text-foreground">
                         <Clock className="h-5 w-5 text-status-warning" /> Action Required ({pendingBatches.length})
                     </h2>
@@ -65,7 +68,7 @@ export default async function ApprovalsPage() {
                                 const approvedCount = batch.studentResults.filter((result: any) => result.status === "APPROVED").length;
 
                                 return (
-                                    <div key={batch.id} className="dashboard-card rounded-xl border border-border-subtle bg-surface-main p-6 shadow-sm transition-colors hover:border-brand/30" style={{ animationDelay: `${index * 60}ms` }}>
+                                    <Card key={batch.id} className="dashboard-card rounded-xl border-border/70 bg-card p-6 shadow-sm transition-colors hover:border-brand/30" style={{ animationDelay: `${index * 60}ms` }}>
                                         <div className="flex flex-col justify-between gap-6 md:flex-row md:items-center">
                                             <div className="space-y-4 flex-1">
                                                 <div>
@@ -78,15 +81,15 @@ export default async function ApprovalsPage() {
                                                 </div>
 
                                                 <div className="flex flex-wrap items-center gap-3">
-                                                    <span className="inline-flex items-center rounded-full border border-border-subtle/50 bg-surface-subtle/60 px-3 py-1 text-[11px] font-medium text-text-muted">
+                                                    <Badge variant="outline" className="rounded-full px-3 py-1 text-[11px] font-medium text-text-muted">
                                                         {studentCount} student records
-                                                    </span>
-                                                    <span className="inline-flex items-center rounded-full border border-border-subtle/50 bg-surface-subtle/60 px-3 py-1 text-[11px] font-medium uppercase tracking-wider text-text-muted">
+                                                    </Badge>
+                                                    <Badge variant="outline" className="rounded-full px-3 py-1 text-[11px] font-medium uppercase tracking-wider text-text-muted">
                                                         Pending: {pendingCount}
-                                                    </span>
-                                                    <span className="inline-flex items-center rounded-full border border-border-subtle/50 bg-surface-subtle/60 px-3 py-1 text-[11px] font-medium uppercase tracking-wider text-text-muted">
+                                                    </Badge>
+                                                    <Badge variant="outline" className="rounded-full px-3 py-1 text-[11px] font-medium uppercase tracking-wider text-text-muted">
                                                         Approved: {approvedCount}
-                                                    </span>
+                                                    </Badge>
                                                     <StatusBadge status="pending" />
                                                 </div>
                                             </div>
@@ -95,7 +98,7 @@ export default async function ApprovalsPage() {
                                                 <div className="flex w-full flex-col items-stretch gap-2 md:w-auto md:items-end">
                                                     <Link
                                                         href={`/admin/batches/${batch.id}`}
-                                                        className="group flex w-full items-center justify-center gap-2 rounded-md border border-border-subtle bg-surface-main px-6 py-2.5 text-sm font-medium text-foreground transition-all hover:bg-surface-subtle active:scale-[0.98] md:w-auto"
+                                                        className="group flex w-full items-center justify-center gap-2 rounded-full border border-border bg-background px-6 py-2.5 text-sm font-medium text-foreground transition-all hover:bg-muted active:scale-[0.98] md:w-auto"
                                                     >
                                                         Begin Review <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
                                                     </Link>
@@ -103,7 +106,7 @@ export default async function ApprovalsPage() {
                                                 </div>
                                             </div>
                                         </div>
-                                    </div>
+                                    </Card>
                                 );
                             })
                         ) : (
@@ -112,9 +115,9 @@ export default async function ApprovalsPage() {
                             </div>
                         )}
                     </div>
-                </section>
+                </Card>
 
-                <div className="pt-4 dashboard-section" style={{ animationDelay: "150ms" }}>
+                <Card className="pt-4 p-6 dashboard-section shadow-sm" style={{ animationDelay: "150ms" }}>
                     <h2 className="mb-4 text-lg font-serif text-foreground">Historical Approvals</h2>
                     <details className="group overflow-hidden rounded-xl border border-border-subtle bg-surface-main shadow-sm">
                         <summary className="flex cursor-pointer list-none items-center justify-between bg-surface-subtle/20 p-5 transition-colors hover:bg-surface-subtle/40 [&::-webkit-details-marker]:hidden">
@@ -155,7 +158,7 @@ export default async function ApprovalsPage() {
                             </div>
                         </div>
                     </details>
-                </div>
+                </Card>
             </main>
         </div>
     );

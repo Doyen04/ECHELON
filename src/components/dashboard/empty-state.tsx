@@ -1,4 +1,8 @@
 import Link from "next/link";
+import { Inbox } from "lucide-react";
+
+import { EmptyState as UiEmptyState } from "@/components/ui/empty-state";
+import { Button } from "@/components/ui/button";
 
 type EmptyStateProps = {
     title: string;
@@ -9,20 +13,18 @@ type EmptyStateProps = {
 
 export function EmptyState({ title, description, ctaLabel, ctaHref }: EmptyStateProps) {
     return (
-        <div className="rounded-3xl border border-dashed border-border-subtle bg-surface-subtle p-8 text-center">
-            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-white text-2xl text-brand shadow-sm">
-                â€¢
-            </div>
-            <h3 className="mt-4 text-lg font-semibold text-foreground">{title}</h3>
-            <p className="mx-auto mt-2 max-w-xl text-sm leading-6 text-(--text-secondary)">{description}</p>
-            {ctaLabel && ctaHref ? (
-                <Link
-                    href={ctaHref}
-                    className="mt-5 inline-flex rounded-xl bg-(--accent-strong) px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-(--hero-mid)"
-                >
-                    {ctaLabel}
-                </Link>
-            ) : null}
-        </div>
+        <UiEmptyState
+            icon={<Inbox className="h-7 w-7" />}
+            title={title}
+            description={description}
+            className="min-h-0 p-0"
+            action={
+                ctaLabel && ctaHref ? (
+                    <Button asChild variant="default" className="rounded-full">
+                        <Link href={ctaHref}>{ctaLabel}</Link>
+                    </Button>
+                ) : undefined
+            }
+        />
     );
 }

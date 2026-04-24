@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import { GuardianContactManager } from "@/components/admin/guardian-contact-manager";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { prisma } from "@/lib/db";
 
 export const metadata: Metadata = {
@@ -31,7 +33,7 @@ export default async function StudentsPage() {
     return (
         <main className="dashboard-root min-h-screen bg-background px-4 py-8 sm:px-6 lg:px-8">
             <div className="dashboard-grid-overlay" aria-hidden="true" />
-            <section className="mx-auto w-full max-w-7xl rounded-3xl border border-(--border-subtle) bg-(--surface-strong) p-6 shadow-[0_25px_60px_-38px_rgba(2,23,23,0.75)] sm:p-8">
+            <Card className="mx-auto w-full max-w-7xl rounded-3xl p-6 shadow-[0_25px_60px_-38px_rgba(2,23,23,0.75)] sm:p-8">
                 <p className="text-xs font-semibold uppercase tracking-[0.16em] text-(--text-muted)">
                     Contact Management
                 </p>
@@ -42,12 +44,9 @@ export default async function StudentsPage() {
                     Edit, search, and delete parent contact records linked to students.
                 </p>
                 <div className="mt-4">
-                    <Link
-                        href="/admin/students/contacts"
-                        className="inline-flex rounded-lg bg-(--accent-strong) px-3 py-2 text-xs font-semibold text-white"
-                    >
-                        Upload Parent Contacts
-                    </Link>
+                    <Button asChild size="sm" className="rounded-full">
+                        <Link href="/admin/students/contacts">Upload Parent Contacts</Link>
+                    </Button>
                 </div>
 
                 <div className="mt-6 space-y-3">
@@ -73,7 +72,7 @@ export default async function StudentsPage() {
                         </div>
                     )}
                 </div>
-            </section>
+            </Card>
         </main>
     );
 }

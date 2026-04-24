@@ -3,6 +3,9 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { ArrowRight, Download, Send } from "lucide-react";
 
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/page-header";
 import { StatusBadge } from "@/components/ui/badges";
 import { prisma } from "@/lib/db";
@@ -70,14 +73,14 @@ export default async function BatchDispatchPage({ params }: BatchDispatchPagePro
                     </div>
                 }
                 action={
-                    <button className="inline-flex items-center gap-2 rounded-md border border-border-subtle bg-surface-main px-4 py-2 text-sm font-medium text-foreground shadow-sm transition-colors hover:bg-surface-subtle">
+                    <Button variant="outline" className="rounded-full">
                         <Download className="h-4 w-4" /> Export
-                    </button>
+                    </Button>
                 }
             />
 
             <main className="mx-auto w-full max-w-7xl space-y-6 px-4 py-6 sm:px-6 lg:px-8 lg:py-8 pb-24">
-                <section className="rounded-3xl border border-(--border-subtle) bg-(--surface-strong) p-6 shadow-[0_25px_60px_-38px_rgba(2,23,23,0.75)] sm:p-8">
+                <Card className="rounded-3xl p-6 shadow-[0_25px_60px_-38px_rgba(2,23,23,0.75)] sm:p-8">
                     <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
                         <div>
                             <p className="text-xs font-semibold uppercase tracking-[0.16em] text-(--text-muted)">Dispatch Overview</p>
@@ -89,9 +92,9 @@ export default async function BatchDispatchPage({ params }: BatchDispatchPagePro
 
                         <div className="flex flex-wrap gap-2">
                             <StatusBadge status={toBadgeStatus(batch.status)} />
-                            <span className="inline-flex items-center rounded px-2.5 py-1 text-xs font-medium bg-slate-100 text-slate-700">
+                            <Badge variant="outline" className="rounded-full px-2.5 py-1 text-xs font-medium">
                                 {batch.id}
-                            </span>
+                            </Badge>
                         </div>
                     </div>
 
@@ -107,13 +110,15 @@ export default async function BatchDispatchPage({ params }: BatchDispatchPagePro
                             <p className="text-sm font-medium text-foreground">Trigger parent notification delivery for approved student results.</p>
                             <p className="text-sm text-(--text-secondary)">The dispatch worker will prioritize email and fall back to phone channels when needed.</p>
                         </div>
-                        <Link href={`/admin/delivery/${batch.dispatches[0]?.id ?? ""}`} className="inline-flex items-center justify-center gap-2 rounded-md bg-brand px-4 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-brand-hover">
-                            <Send className="h-4 w-4" /> {batch.dispatches[0] ? "Open latest delivery" : "No delivery yet"}
-                        </Link>
+                        <Button asChild className="rounded-full">
+                            <Link href={`/admin/delivery/${batch.dispatches[0]?.id ?? ""}`}>
+                                <Send className="h-4 w-4" /> {batch.dispatches[0] ? "Open latest delivery" : "No delivery yet"}
+                            </Link>
+                        </Button>
                     </div>
-                </section>
+                </Card>
 
-                <section className="overflow-hidden rounded-3xl border border-(--border-subtle) bg-(--surface-strong) shadow-[0_25px_60px_-38px_rgba(2,23,23,0.75)]">
+                <Card className="overflow-hidden rounded-3xl shadow-[0_25px_60px_-38px_rgba(2,23,23,0.75)]">
                     <div className="border-b border-(--border-subtle) px-6 py-4 sm:px-8">
                         <h2 className="text-lg font-semibold text-foreground">Dispatch Jobs</h2>
                         <p className="mt-1 text-sm text-(--text-secondary)">
@@ -157,7 +162,7 @@ export default async function BatchDispatchPage({ params }: BatchDispatchPagePro
                     ) : (
                         <div className="px-6 py-10 text-sm text-(--text-secondary)">No dispatch jobs exist for this batch yet.</div>
                     )}
-                </section>
+                </Card>
             </main>
         </div>
     );

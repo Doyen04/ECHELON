@@ -2,6 +2,10 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Download, Filter, Search, ChevronRight, Upload } from "lucide-react";
 
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { PageHeader } from "@/components/ui/page-header";
 import { StatusBadge } from "@/components/ui/badges";
 import { prisma } from "@/lib/db";
@@ -40,18 +44,17 @@ export default async function BatchesPage() {
             <PageHeader
                 title="Result Batches"
                 action={
-                    <Link
-                        href="/admin/batches/upload"
-                        className="inline-flex items-center gap-2 rounded-md bg-brand px-4 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-brand-hover page-transition-enter"
-                    >
-                        <Upload className="h-4 w-4" />
-                        Upload Batch
-                    </Link>
+                    <Button asChild className="rounded-full page-transition-enter">
+                        <Link href="/admin/batches/upload">
+                            <Upload className="h-4 w-4" />
+                            Upload Batch
+                        </Link>
+                    </Button>
                 }
             />
 
             <main className="mx-auto w-full max-w-7xl min-w-0 space-y-6 px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
-                <section className="dashboard-section flex min-w-0 flex-col justify-between gap-4 xl:flex-row xl:items-center">
+                <Card className="dashboard-section flex min-w-0 flex-col justify-between gap-4 p-4 shadow-sm xl:flex-row xl:items-center">
                     <div className="flex flex-wrap items-center gap-3">
                         <FilterSelect placeholder="Session: All" options={Array.from(new Set(batches.map((batch: any) => batch.session)))} />
                         <FilterSelect placeholder="Semester: All" options={Array.from(new Set(batches.map((batch: any) => semesterLabel(batch.semester))))} />
@@ -60,10 +63,10 @@ export default async function BatchesPage() {
 
                         <div className="relative min-w-0">
                             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-muted" />
-                            <input
+                            <Input
                                 type="text"
                                 placeholder="Search batches..." 
-                                className="min-w-0 rounded-md border border-border-subtle bg-surface-main pl-9 pr-4 text-sm focus:border-brand focus:ring-1 focus:ring-brand focus:outline-none"
+                                className="min-w-0 rounded-full pl-9"
                             />
                         </div>
                     </div>
@@ -71,9 +74,9 @@ export default async function BatchesPage() {
                     <div className="text-sm text-text-muted xl:text-right whitespace-nowrap">
                         Showing <span className="font-medium text-foreground">{batches.length}</span> live batches 
                     </div>
-                </section>
+                </Card>
 
-                <section className="dashboard-section min-w-0 overflow-hidden rounded-xl border border-border-subtle bg-surface-main shadow-sm">
+                <Card className="dashboard-section min-w-0 overflow-hidden rounded-xl shadow-sm">
                     <div className="max-h-[calc(100vh-18rem)] min-w-0 overflow-auto">
                         <table className="w-full table-fixed divide-y divide-border-subtle">
                         <thead className="bg-surface-subtle/40">
@@ -88,9 +91,9 @@ export default async function BatchesPage() {
                                 <th className="w-24 px-2 py-3 text-left text-xs font-semibold uppercase tracking-wider text-text-muted">Status</th>
                                 <th className="w-36 px-2 py-3 text-left text-xs font-semibold uppercase tracking-wider text-text-muted">Uploaded</th>
                                 <th className="w-20 px-2 py-3 text-right">
-                                    <button className="inline-flex items-center gap-2 rounded-md border border-border-subtle bg-surface-main px-2 py-2 text-xs font-medium text-foreground shadow-sm transition-colors hover:bg-surface-subtle">
+                                    <Button variant="outline" size="xs" className="rounded-full">
                                         <Download className="h-4 w-4" /> Export
-                                    </button>
+                                    </Button>
                                 </th>
                             </tr>
                         </thead>
@@ -104,7 +107,7 @@ export default async function BatchesPage() {
                                     <tr key={batch.id} className="group table-row-enter hover:bg-surface-subtle/50 transition-colors" style={{ animationDelay: `${index * 30}ms` }}>
                                         <td className="px-2 py-3 align-top whitespace-nowrap"><input type="checkbox" className="rounded border-border-subtle accent-brand" /></td>
                                         <td className="px-2 py-3 align-top text-[10px] font-mono text-text-muted">
-                                            <div className="max-w-[6rem] truncate" title={batch.id}>
+                                            <div className="max-w-24 truncate" title={batch.id}>
                                                 {batch.id}
                                             </div>
                                         </td>
@@ -113,9 +116,9 @@ export default async function BatchesPage() {
                                         <td className="truncate px-2 py-3 align-top text-sm font-medium text-foreground">{batch.department}</td>
                                         <td className="px-2 py-3 align-top text-sm text-foreground">{studentCount}</td>
                                         <td className="px-2 py-3 align-top whitespace-nowrap">
-                                            <span className="inline-flex items-center rounded border border-border-subtle bg-surface-subtle px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-text-muted">
+                                            <Badge variant="outline" className="rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-text-muted">
                                                 {source}
-                                            </span>
+                                            </Badge>
                                         </td>
                                         <td className="px-2 py-3 align-top whitespace-nowrap">
                                             <StatusBadge status={toBadgeStatus(batch.status)} />
@@ -146,15 +149,15 @@ export default async function BatchesPage() {
                             Showing 1 to {Math.min(batches.length, 10)} of {batches.length} entries
                         </div>
                         <div className="flex gap-2">
-                            <button disabled className="rounded border border-border-subtle bg-surface-main px-3 py-1 text-sm text-foreground disabled:opacity-50">
+                            <Button disabled variant="outline" size="sm" className="rounded-full">
                                 Previous
-                            </button>
-                            <button className="rounded border border-border-subtle bg-surface-main px-3 py-1 text-sm text-foreground transition-colors hover:bg-surface-subtle">
+                            </Button>
+                            <Button variant="outline" size="sm" className="rounded-full">
                                 Next
-                            </button>
+                            </Button>
                         </div>
                     </div>
-                </section>
+                </Card>
             </main>
         </div>
     );
@@ -164,7 +167,7 @@ function FilterSelect({ placeholder, options }: { placeholder: string; options: 
     const uniqueOptions = Array.from(new Set(options)).filter(Boolean);
 
     return (
-        <select defaultValue="" className="h-10 cursor-pointer rounded-md border border-border-subtle bg-surface-main px-3 text-sm text-foreground hover:bg-surface-subtle/50 focus:border-brand focus:ring-1 focus:ring-brand focus:outline-none">
+        <select defaultValue="" className="h-10 cursor-pointer rounded-full border border-input bg-background px-3 text-sm text-foreground shadow-sm hover:bg-muted/60 focus:border-ring focus:ring-2 focus:ring-ring/30 focus:outline-none">
             <option value="" disabled hidden>
                 {placeholder}
             </option>

@@ -5,6 +5,9 @@ import { useSearchParams } from "next/navigation";
 import { Save, UploadCloud, AlertTriangle, MessageCircle, Mail, Phone, Plus, Trash2, ShieldAlert } from "lucide-react";
 import { PageHeader } from "@/components/ui/page-header";
 
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+
 type Tab = "institution" | "templates" | "users" | "danger";
 
 export default function SettingsPage() {
@@ -18,14 +21,14 @@ export default function SettingsPage() {
             <PageHeader
                 title="Settings"
                 action={
-                    <button
+                    <Button
                         disabled={!hasChanges}
                         onClick={() => setHasChanges(false)}
-                        className="inline-flex items-center gap-2 rounded-md bg-brand px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-brand-hover transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="inline-flex items-center gap-2 rounded-full disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         <Save className="h-4 w-4" />
                         Save Changes
-                    </button>
+                    </Button>
                 }
             />
 
@@ -33,14 +36,14 @@ export default function SettingsPage() {
                 <div className="flex flex-col lg:flex-row gap-8 items-start dashboard-section">
 
                     {/* Vertical Tabs */}
-                    <div className="w-full lg:w-64 shrink-0 rounded-xl border border-border-subtle bg-surface-main shadow-sm hidden lg:block overflow-hidden">
+                    <Card className="w-full lg:w-64 shrink-0 rounded-xl shadow-sm hidden lg:block overflow-hidden">
                         <nav className="flex flex-col">
                             <SidebarTab id="institution" label="Institution" active={activeTab === "institution"} onClick={() => setActiveTab("institution")} />
                             <SidebarTab id="templates" label="Notification Templates" active={activeTab === "templates"} onClick={() => setActiveTab("templates")} />
                             <SidebarTab id="users" label="Users & Roles" active={activeTab === "users"} onClick={() => setActiveTab("users")} />
                             <SidebarTab id="danger" label="Danger Zone" active={activeTab === "danger"} onClick={() => setActiveTab("danger")} isDanger />
                         </nav>
-                    </div>
+                    </Card>
 
                     {/* Mobile Tabs */}
                     <div className="w-full lg:hidden flex overflow-x-auto border-b border-border-subtle no-scrollbar">
@@ -68,7 +71,7 @@ export default function SettingsPage() {
 
 function InstitutionTab({ onChange }: { onChange: () => void }) {
     return (
-        <div className="rounded-xl border border-border-subtle bg-surface-main shadow-sm page-transition-enter">
+        <Card className="rounded-xl shadow-sm page-transition-enter">
             <div className="p-6 border-b border-border-subtle">
                 <h2 className="text-lg font-serif text-foreground">Institution Identity</h2>
                 <p className="text-sm text-text-muted mt-1">Configure your branding and academic format settings.</p>
@@ -107,7 +110,7 @@ function InstitutionTab({ onChange }: { onChange: () => void }) {
                     </div>
                 </div>
             </div>
-        </div>
+        </Card>
     )
 }
 
@@ -121,20 +124,20 @@ function TemplatesTab({ onChange }: { onChange: () => void }) {
     };
 
     return (
-        <div className="rounded-xl border border-border-subtle bg-surface-main shadow-sm overflow-hidden page-transition-enter">
+        <Card className="rounded-xl shadow-sm overflow-hidden page-transition-enter">
             <div className="p-6 border-b border-border-subtle">
                 <h2 className="text-lg font-serif text-foreground">Notification Templates</h2>
                 <p className="text-sm text-text-muted mt-1">Customize the messages sent to parents. Use brackets for dynamic data.</p>
             </div>
 
             <div className="flex border-b border-border-subtle bg-surface-subtle/30">
-                <button onClick={() => setSubTab("whatsapp")} className={`flex-1 flex justify-center items-center gap-2 py-3 text-sm font-medium border-b-2 transition-colors ${subTab === 'whatsapp' ? 'border-brand text-foreground bg-white' : 'border-transparent text-text-muted hover:text-foreground'}`}>
+                <button onClick={() => setSubTab("whatsapp")} className={`flex-1 flex justify-center items-center gap-2 py-3 text-sm font-medium border-b-2 transition-colors ${subTab === 'whatsapp' ? 'border-brand text-foreground bg-background' : 'border-transparent text-text-muted hover:text-foreground'}`}>
                     <MessageCircle className="h-4 w-4" /> WhatsApp
                 </button>
-                <button onClick={() => setSubTab("email")} className={`flex-1 flex justify-center items-center gap-2 py-3 text-sm font-medium border-b-2 transition-colors ${subTab === 'email' ? 'border-brand text-foreground bg-white' : 'border-transparent text-text-muted hover:text-foreground'}`}>
+                <button onClick={() => setSubTab("email")} className={`flex-1 flex justify-center items-center gap-2 py-3 text-sm font-medium border-b-2 transition-colors ${subTab === 'email' ? 'border-brand text-foreground bg-background' : 'border-transparent text-text-muted hover:text-foreground'}`}>
                     <Mail className="h-4 w-4" /> Email
                 </button>
-                <button onClick={() => setSubTab("sms")} className={`flex-1 flex justify-center items-center gap-2 py-3 text-sm font-medium border-b-2 transition-colors ${subTab === 'sms' ? 'border-brand text-foreground bg-white' : 'border-transparent text-text-muted hover:text-foreground'}`}>
+                <button onClick={() => setSubTab("sms")} className={`flex-1 flex justify-center items-center gap-2 py-3 text-sm font-medium border-b-2 transition-colors ${subTab === 'sms' ? 'border-brand text-foreground bg-background' : 'border-transparent text-text-muted hover:text-foreground'}`}>
                     <Phone className="h-4 w-4" /> SMS
                 </button>
             </div>
@@ -185,21 +188,21 @@ function TemplatesTab({ onChange }: { onChange: () => void }) {
                     </div>
                 </div>
             </div>
-        </div>
+        </Card>
     )
 }
 
 function UsersTab() {
     return (
-        <div className="rounded-xl border border-border-subtle bg-surface-main shadow-sm overflow-hidden page-transition-enter">
+        <Card className="rounded-xl shadow-sm overflow-hidden page-transition-enter">
             <div className="p-6 border-b border-border-subtle flex items-center justify-between">
                 <div>
                     <h2 className="text-lg font-serif text-foreground">System Users</h2>
                     <p className="text-sm text-text-muted mt-1">Manage who has access to the admin dashboard.</p>
                 </div>
-                <button className="inline-flex items-center gap-2 rounded-md bg-brand px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-brand-hover transition-colors">
+                <Button className="inline-flex items-center gap-2 rounded-full">
                     <Plus className="h-4 w-4" /> Add User
-                </button>
+                </Button>
             </div>
 
             <table className="min-w-full divide-y divide-border-subtle">
@@ -241,13 +244,13 @@ function UsersTab() {
                     </tr>
                 </tbody>
             </table>
-        </div>
+        </Card>
     )
 }
 
 function DangerTab() {
     return (
-        <div className="rounded-xl border border-status-danger/50 bg-surface-main shadow-sm overflow-hidden page-transition-enter">
+        <Card className="rounded-xl border border-status-danger/50 shadow-sm overflow-hidden page-transition-enter">
             <div className="p-6 border-b border-status-danger/20 bg-status-danger/5">
                 <h2 className="text-lg font-serif text-status-danger flex items-center gap-2"><ShieldAlert className="h-5 w-5" /> Danger Zone</h2>
                 <p className="text-sm text-status-danger/80 mt-1">Destructive actions and system-wide resets.</p>
@@ -259,7 +262,7 @@ function DangerTab() {
                         <div className="font-medium text-foreground">Export completely</div>
                         <div className="text-sm text-text-muted mt-1">Download a unified CSV of all uploaded results, approvals, and logs across the system.</div>
                     </div>
-                    <button className="shrink-0 rounded px-4 py-2 border border-border-subtle text-sm font-medium hover:bg-surface-subtle">Export All Data</button>
+                    <Button variant="outline" className="shrink-0 rounded-full px-4 py-2 text-sm font-medium">Export All Data</Button>
                 </div>
 
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 py-4">
@@ -267,12 +270,12 @@ function DangerTab() {
                         <div className="font-medium text-status-danger">Reset notification logs</div>
                         <div className="text-sm text-text-muted mt-1">Permanently delete all delivery logs. Student results and contacts are not affected.</div>
                     </div>
-                    <button className="shrink-0 rounded px-4 py-2 bg-status-danger text-white text-sm font-medium hover:bg-red-800 transition-colors flex items-center gap-2">
+                    <Button variant="destructive" className="shrink-0 rounded-full px-4 py-2 text-sm font-medium flex items-center gap-2">
                         <Trash2 className="h-4 w-4" /> Reset Logs
-                    </button>
+                    </Button>
                 </div>
             </div>
-        </div>
+        </Card>
     )
 }
 

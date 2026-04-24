@@ -54,7 +54,7 @@ const navItems: Array<{ section: string; items: NavItem[] }> = [
         section: "Admin",
         items: [
             { label: "Students", href: "/admin/students", icon: Users },
-            { label: "Upload Contacts", href: "/admin/students/contacts", icon: Upload },
+            { label: "Parent Contacts", href: "/admin/students/contacts", icon: Upload },
             { label: "Audit Log", href: "/admin/audit", icon: BookOpen },
             { label: "Settings", href: "/admin/settings", icon: Settings },
         ],

@@ -2,6 +2,8 @@ import Link from "next/link";
 
 import type { DispatchQueueEntry, DispatchStatus } from "@/lib/dashboard-data";
 
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { SectionFrame } from "./section-frame";
 
 const statusTone: Record<DispatchStatus, string> = {
@@ -31,12 +33,9 @@ export function DispatchQueuePanel({ queue }: { queue: DispatchQueueEntry[] }) {
             title="Dispatch Queue"
             description="QStash jobs processing approved result batches"
             action={
-                <Link
-                    href="/admin/delivery"
-                    className="rounded-lg border border-(--border-subtle) px-3 py-2 text-xs font-medium text-(--text-secondary) transition hover:border-(--border-strong) hover:text-foreground"
-                >
-                    Open Delivery Logs
-                </Link>
+                <Button asChild variant="outline" size="sm" className="rounded-full">
+                    <Link href="/admin/delivery">Open Delivery Logs</Link>
+                </Button>
             }
         >
             <div className="space-y-4">
@@ -55,11 +54,12 @@ export function DispatchQueuePanel({ queue }: { queue: DispatchQueueEntry[] }) {
                                     </p>
                                     <p className="mt-1 text-xs text-(--text-muted)">{entry.id}</p>
                                 </div>
-                                <span
+                                <Badge
+                                    variant="outline"
                                     className={`rounded-full px-2.5 py-1 text-xs font-semibold capitalize ${statusTone[entry.status]}`}
                                 >
                                     {statusLabel(entry.status)}
-                                </span>
+                                </Badge>
                             </div>
 
                             <div className="mt-3 h-2.5 rounded-full bg-(--surface-muted)">

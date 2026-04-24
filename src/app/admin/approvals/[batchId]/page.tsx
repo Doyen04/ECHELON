@@ -4,6 +4,10 @@ import { PageHeader } from "@/components/ui/page-header";
 import { StatusBadge } from "@/components/ui/badges";
 import { ArrowRight, ChevronDown, CheckSquare, Clock } from "lucide-react";
 
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+
 export default function ApprovalsPage() {
     return (
         <div className="flex flex-col h-full overflow-y-auto w-full bg-background dashboard-root">
@@ -13,7 +17,7 @@ export default function ApprovalsPage() {
             />
 
             <div className="p-6 md:p-8 space-y-8 max-w-5xl w-full mx-auto">
-                <div className="space-y-4">
+                <Card className="space-y-4 p-6 shadow-sm">
                     <h2 className="text-sm font-semibold uppercase tracking-widest text-text-muted border-b border-border-subtle pb-2 flex items-center gap-2">
                         <Clock className="h-4 w-4" /> Action Required (4)
                     </h2>
@@ -52,10 +56,10 @@ export default function ApprovalsPage() {
                             source="API"
                         />
                     </div>
-                </div>
+                </Card>
 
-                <div className="pt-8 dashboard-section" style={{ animationDelay: '150ms' }}>
-                    <details className="group rounded-xl border border-border-subtle bg-surface-main shadow-sm overflow-hidden">
+                <Card className="pt-8 p-0 dashboard-section shadow-sm" style={{ animationDelay: '150ms' }}>
+                    <details className="group rounded-xl border border-border-subtle bg-surface-main overflow-hidden">
                         <summary className="flex cursor-pointer items-center justify-between p-5 list-none [&::-webkit-details-marker]:hidden bg-surface-subtle/30 hover:bg-surface-subtle/60 transition-colors">
                             <div className="flex items-center gap-2">
                                 <CheckSquare className="h-5 w-5 text-status-success" />
@@ -96,7 +100,7 @@ export default function ApprovalsPage() {
                             </div>
                         </div>
                     </details>
-                </div>
+                </Card>
             </div>
         </div>
     );
@@ -104,7 +108,7 @@ export default function ApprovalsPage() {
 
 function PendingCard({ id, title, uploader, time, students, source }: any) {
     return (
-        <div className="rounded-xl border-l-4 border-status-warning bg-surface-main p-6 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-6 dashboard-card">
+        <Card className="rounded-xl border-l-4 border-status-warning bg-surface-main p-6 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-6 dashboard-card">
             <div className="space-y-3 flex-1">
                 <div>
                     <h3 className="font-serif text-[1.1rem] text-foreground mb-1">{title}</h3>
@@ -114,24 +118,23 @@ function PendingCard({ id, title, uploader, time, students, source }: any) {
                 </div>
 
                 <div className="flex items-center gap-3">
-                    <span className="inline-flex items-center rounded-full bg-surface-subtle px-2.5 py-0.5 text-xs font-medium text-text-muted">
+                    <Badge variant="outline" className="rounded-full px-2.5 py-0.5 text-xs font-medium text-text-muted">
                         {students} students
-                    </span>
-                    <span className="inline-flex items-center rounded-full bg-surface-subtle px-2.5 py-0.5 text-xs font-medium text-text-muted uppercase">
+                    </Badge>
+                    <Badge variant="outline" className="rounded-full px-2.5 py-0.5 text-xs font-medium text-text-muted uppercase">
                         {source} source
-                    </span>
+                    </Badge>
                     <StatusBadge status="pending" />
                 </div>
             </div>
 
             <div className="shrink-0 flex items-center self-start md:self-auto w-full md:w-auto">
-                <Link
-                    href={`/admin/batches/${id}`}
-                    className="flex w-full md:w-auto items-center justify-center gap-2 rounded-md border border-brand bg-white px-5 py-2.5 text-sm font-medium text-brand shadow-sm hover:bg-brand/5 hover:border-brand-hover transition-colors group"
-                >
-                    Begin Review <ArrowRight className="h-4 w-4 group-hover:translate-x-0.5 transition-transform" />
-                </Link>
+                <Button asChild variant="outline" className="flex w-full md:w-auto items-center justify-center gap-2 rounded-full border-brand text-brand shadow-sm hover:bg-brand/5 hover:border-brand-hover transition-colors group">
+                    <Link href={`/admin/batches/${id}`}>
+                        Begin Review <ArrowRight className="h-4 w-4 group-hover:translate-x-0.5 transition-transform" />
+                    </Link>
+                </Button>
             </div>
-        </div>
+        </Card>
     )
 }

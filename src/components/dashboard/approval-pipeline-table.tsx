@@ -2,6 +2,8 @@ import Link from "next/link";
 
 import type { ApprovalBatch } from "@/lib/dashboard-data";
 
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { EmptyState } from "./empty-state";
 import { SectionFrame } from "./section-frame";
 
@@ -21,12 +23,9 @@ export function ApprovalPipelineTable({ batches }: { batches: ApprovalBatch[] })
             title="Result Approval Pipeline"
             description="Pending batches by department with contact readiness indicators"
             action={
-                <Link
-                    href="/admin/approvals"
-                    className="rounded-lg border border-(--border-subtle) px-3 py-2 text-xs font-medium text-(--text-secondary) transition hover:border-(--border-strong) hover:text-foreground"
-                >
-                    Open Approvals Queue
-                </Link>
+                <Button asChild variant="outline" size="sm" className="rounded-full">
+                    <Link href="/admin/approvals">Open Approvals Queue</Link>
+                </Button>
             }
         >
             {batches.length === 0 ? (
@@ -57,10 +56,10 @@ export function ApprovalPipelineTable({ batches }: { batches: ApprovalBatch[] })
                                         </p>
                                     </td>
                                     <td className="px-3 py-3 align-top">
-                                        <div className="space-y-1 text-xs text-(--text-secondary)">
-                                            <p>Pending: {batch.pending}</p>
-                                            <p>Approved: {batch.approved}</p>
-                                            <p>Withheld: {batch.withheld}</p>
+                                        <div className="flex flex-wrap gap-1.5 text-xs text-(--text-secondary)">
+                                            <Badge variant="outline" className="rounded-full border-border/70 bg-background px-2 py-0.5">Pending {batch.pending}</Badge>
+                                            <Badge variant="success" className="rounded-full px-2 py-0.5">Approved {batch.approved}</Badge>
+                                            <Badge variant="destructive" className="rounded-full px-2 py-0.5">Withheld {batch.withheld}</Badge>
                                         </div>
                                     </td>
                                     <td className="px-3 py-3 align-top">

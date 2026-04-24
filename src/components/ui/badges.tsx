@@ -1,5 +1,6 @@
 import { Mail, MessageCircle, Phone } from "lucide-react";
-import React from "react";
+
+import { Badge } from "@/components/ui/badge";
 
 export type StatusType =
   | "pending"
@@ -16,43 +17,39 @@ type StatusBadgeProps = {
 };
 
 export function StatusBadge({ status }: StatusBadgeProps) {
-  const configs: Record<StatusType, { bg: string; text: string; label: string }> = {
-    pending: { bg: "bg-amber-100", text: "text-amber-800", label: "Pending" },
-    in_review: { bg: "bg-blue-100", text: "text-blue-800", label: "In Review" },
-    approved: { bg: "bg-green-100", text: "text-green-800", label: "Approved" },
-    dispatched: { bg: "bg-indigo-500", text: "text-white", label: "Dispatched" },
-    withheld: { bg: "bg-red-100", text: "text-red-800", label: "Withheld" },
-    delivered: { bg: "bg-green-100", text: "text-green-800", label: "Delivered" },
-    failed: { bg: "bg-red-100", text: "text-red-800", label: "Failed" },
-    queued: { bg: "bg-slate-100", text: "text-slate-700", label: "Queued" },
+  const configs: Record<StatusType, { variant: "default" | "secondary" | "outline" | "success" | "warning" | "destructive" | "info"; label: string }> = {
+    pending: { variant: "warning", label: "Pending" },
+    in_review: { variant: "info", label: "In Review" },
+    approved: { variant: "success", label: "Approved" },
+    dispatched: { variant: "default", label: "Dispatched" },
+    withheld: { variant: "destructive", label: "Withheld" },
+    delivered: { variant: "success", label: "Delivered" },
+    failed: { variant: "destructive", label: "Failed" },
+    queued: { variant: "secondary", label: "Queued" },
   };
 
   const config = configs[status] || configs.pending;
 
   return (
-    <span
-      className={`inline-flex items-center rounded px-2.5 py-1 text-xs font-medium font-sans ${config.bg} ${config.text}`}
-    >
+    <Badge variant={config.variant} className="rounded-full px-2.5 py-1 font-sans text-[11px] font-medium uppercase tracking-[0.08em]">
       {config.label}
-    </span>
+    </Badge>
   );
 }
 
 export function ChannelBadge({ channel }: { channel: "whatsapp" | "email" | "sms" }) {
   const configs = {
-    whatsapp: { bg: "bg-green-500", text: "text-white", icon: MessageCircle, label: "WhatsApp" },
-    email: { bg: "bg-blue-500", text: "text-white", icon: Mail, label: "Email" },
-    sms: { bg: "bg-slate-500", text: "text-white", icon: Phone, label: "SMS" },
+    whatsapp: { variant: "success" as const, icon: MessageCircle, label: "WhatsApp" },
+    email: { variant: "info" as const, icon: Mail, label: "Email" },
+    sms: { variant: "secondary" as const, icon: Phone, label: "SMS" },
   };
   const config = configs[channel];
   const Icon = config.icon;
   
   return (
-    <span
-      className={`inline-flex items-center gap-1.5 rounded px-2.5 py-1 text-xs font-medium font-sans ${config.bg} ${config.text}`}
-    >
+    <Badge variant={config.variant} className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 font-sans text-[11px] font-medium uppercase tracking-[0.08em]">
       <Icon className="h-3.5 w-3.5" />
       {config.label}
-    </span>
+    </Badge>
   );
 }

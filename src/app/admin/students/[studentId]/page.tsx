@@ -3,6 +3,9 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { UserCog, ChevronDown, ChevronRight, Phone, Mail, Plus } from "lucide-react";
 
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/page-header";
 import { StatusBadge } from "@/components/ui/badges";
 import { prisma } from "@/lib/db";
@@ -66,21 +69,21 @@ export default async function StudentRecordPage({ params }: StudentPageProps) {
                     </div>
                 }
                 action={
-                    <button className="inline-flex items-center gap-2 rounded-md border border-border-subtle bg-surface-main px-4 py-2 text-sm font-medium text-foreground shadow-sm transition-colors hover:bg-surface-subtle">
+                    <Button variant="outline" className="rounded-full">
                         <UserCog className="h-4 w-4" />
                         Edit Contacts
-                    </button>
+                    </Button>
                 }
             />
 
             <main className="mx-auto w-full max-w-7xl space-y-6 px-4 py-6 sm:px-6 lg:px-8 lg:py-8 pb-24">
                 <div className="flex flex-col gap-8 lg:flex-row">
-                    <section className="flex-1 space-y-6 dashboard-section lg:max-w-[65%]">
+                    <Card className="flex-1 space-y-6 p-6 dashboard-section lg:max-w-[65%] shadow-sm">
                         <h2 className="flex items-center justify-between border-b border-border-subtle pb-2 text-sm font-semibold uppercase tracking-widest text-text-muted">
                             Result History
-                            <span className="rounded-full bg-surface-subtle px-2 py-0.5 text-xs font-medium text-text-muted">
+                            <Badge variant="outline" className="rounded-full px-2 py-0.5 text-xs font-medium text-text-muted">
                                 {student.studentResults.length} records
-                            </span>
+                            </Badge>
                         </h2>
 
                         <div className="space-y-4">
@@ -154,14 +157,14 @@ export default async function StudentRecordPage({ params }: StudentPageProps) {
                                 );
                             })}
                         </div>
-                    </section>
+                    </Card>
 
-                    <aside className="space-y-6 lg:min-w-90 xl:w-[35%] dashboard-section" style={{ animationDelay: "150ms" }}>
+                    <Card className="space-y-6 p-6 lg:min-w-90 xl:w-[35%] dashboard-section shadow-sm" style={{ animationDelay: "150ms" }}>
                         <h2 className="flex items-center justify-between border-b border-border-subtle pb-2 text-sm font-semibold uppercase tracking-widest text-text-muted">
                             Guardian Contacts
-                            <span className="rounded-full bg-surface-subtle px-2 py-0.5 text-xs font-medium text-text-muted">
+                            <Badge variant="outline" className="rounded-full px-2 py-0.5 text-xs font-medium text-text-muted">
                                 {student.guardians.length} assigned
-                            </span>
+                            </Badge>
                         </h2>
 
                         <div className="space-y-4">
@@ -203,12 +206,12 @@ export default async function StudentRecordPage({ params }: StudentPageProps) {
                                 </div>
                             ))}
 
-                            <button className="flex w-full items-center justify-center gap-2 rounded border border-dashed border-border-subtle bg-surface-subtle/30 px-4 py-3 text-sm font-medium text-text-muted transition-colors hover:bg-surface-subtle hover:text-foreground">
+                            <Button variant="outline" className="flex w-full items-center justify-center gap-2 rounded-full border-dashed">
                                 <Plus className="h-4 w-4" />
                                 Add Guardian
-                            </button>
+                            </Button>
                         </div>
-                    </aside>
+                    </Card>
                 </div>
             </main>
         </div>

@@ -1,35 +1,40 @@
-import React from 'react';
-import { FileQuestion } from 'lucide-react';
+import { FileQuestion } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./card";
 
 type EmptyStateProps = {
   icon?: React.ReactNode;
   title?: string;
   description?: string;
   action?: React.ReactNode;
+  className?: string;
 };
 
 export function EmptyState({ 
-  icon = <FileQuestion className="h-10 w-10" />,
+  icon = <FileQuestion className="h-12 w-12" />,
   title = "No data found",
   description = "Get started by adding some content.",
-  action
+  action,
+  className
 }: EmptyStateProps) {
   return (
-    <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border-subtle bg-surface-subtle/50 p-12 text-center page-transition-enter">
-      <div className="text-text-muted mb-4">
-        {icon}
-      </div>
-      <h3 className="font-serif text-lg text-foreground mb-1">
-        {title}
-      </h3>
-      <p className="text-sm text-text-muted mb-6 max-w-sm">
-        {description}
-      </p>
-      {action && (
-        <div className="mt-2">
-          {action}
-        </div>
-      )}
-    </div>
+    <section className={cn("flex min-h-[40vh] items-center justify-center p-4 sm:p-6", className)}>
+      <Card className="w-full max-w-md border-dashed">
+        <CardHeader className="text-center">
+          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-muted text-muted-foreground">
+            {icon}
+          </div>
+          <CardTitle className="text-xl sm:text-2xl">{title}</CardTitle>
+          <CardDescription className="mt-2 text-sm sm:text-base">{description}</CardDescription>
+        </CardHeader>
+        {action && (
+          <CardContent className="pt-0">
+            <div className="flex justify-center">
+              {action}
+            </div>
+          </CardContent>
+        )}
+      </Card>
+    </section>
   );
 }
