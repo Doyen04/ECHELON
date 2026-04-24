@@ -99,8 +99,8 @@ export function GuardianContactManager({ guardians }: GuardianContactManagerProp
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({
                         ...editState,
-                        email: editState.email.trim() || null,
-                        phone: editState.phone.trim() || null,
+                        email: (editState.email ?? "").trim() || null,
+                        phone: (editState.phone ?? "").trim() || null,
                     }),
                 });
 
