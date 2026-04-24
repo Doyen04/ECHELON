@@ -229,7 +229,7 @@ export function GuardianContactManager({ guardians }: GuardianContactManagerProp
                             {filteredGuardians.length === 0 ? (
                                 <tr>
                                     <td colSpan={5} className="px-5 py-10 text-center text-sm text-text-muted">
-                                        No parent contacts found.
+                                        No contacts found.
                                     </td>
                                 </tr>
                             ) : null}

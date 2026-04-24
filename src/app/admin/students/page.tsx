@@ -1,14 +1,12 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 
 import { GuardianContactManager } from "@/components/admin/guardian-contact-manager";
-import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { prisma } from "@/lib/db";
 
 export const metadata: Metadata = {
-    title: "Parent Contacts",
-    description: "Manage parent and guardian contact records.",
+    title: "Contacts",
+    description: "Manage student parent and guardian contact records.",
 };
 
 export default async function StudentsPage() {
@@ -38,16 +36,11 @@ export default async function StudentsPage() {
                     Contact Management
                 </p>
                 <h1 className="mt-2 text-3xl font-semibold tracking-tight text-foreground">
-                    Parent Contacts
+                    Contacts
                 </h1>
                 <p className="mt-3 text-sm text-(--text-secondary)">
                     Edit, search, and delete parent contact records linked to students.
                 </p>
-                <div className="mt-4">
-                    <Button asChild size="sm" className="rounded-full">
-                        <Link href="/admin/students/contacts">Upload Parent Contacts</Link>
-                    </Button>
-                </div>
 
                 <div className="mt-6 space-y-3">
                     {guardians.length > 0 ? (
@@ -68,7 +61,7 @@ export default async function StudentsPage() {
                         />
                     ) : (
                         <div className="rounded-2xl border border-dashed border-(--border-subtle) p-8 text-sm text-(--text-secondary)">
-                            No parent contacts found.
+                            No contacts found.
                         </div>
                     )}
                 </div>

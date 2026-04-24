@@ -201,7 +201,7 @@ export default async function StudentRecordPage({ params }: StudentPageProps) {
                                     </div>
 
                                     <div className="border-t border-border-subtle pt-3 text-sm text-text-muted">
-                                        Contact details are managed from the parent contacts page.
+                                        Contact details are managed from the contacts page.
                                     </div>
                                 </div>
                             ))}
