@@ -14,7 +14,7 @@ CREATE TYPE "DispatchStatus" AS ENUM ('QUEUED', 'PROCESSING', 'COMPLETE', 'PARTI
 CREATE TYPE "NotificationChannel" AS ENUM ('WHATSAPP', 'EMAIL', 'SMS');
 
 -- CreateEnum
-CREATE TYPE "NotificationStatus" AS ENUM ('QUEUED', 'SENT', 'DELIVERED', 'FAILED');
+CREATE TYPE "NotificationStatus" AS ENUM ('QUEUED', 'SENT', 'FAILED');
 
 -- CreateTable
 CREATE TABLE "Institution" (
@@ -62,8 +62,6 @@ CREATE TABLE "Guardian" (
     "relationship" TEXT NOT NULL,
     "email" TEXT,
     "phone" TEXT,
-    "preferredChannel" "NotificationChannel" NOT NULL DEFAULT 'WHATSAPP',
-    "ndprConsent" BOOLEAN NOT NULL DEFAULT false,
     "consentDate" TIMESTAMP(3),
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
@@ -180,6 +178,9 @@ CREATE INDEX "Guardian_studentId_idx" ON "Guardian"("studentId");
 
 -- CreateIndex
 CREATE INDEX "ResultBatch_institutionId_status_idx" ON "ResultBatch"("institutionId", "status");
+
+-- CreateIndex
+CREATE INDEX "ResultBatch_uploadedAt_idx" ON "ResultBatch"("uploadedAt");
 
 -- CreateIndex
 CREATE INDEX "ResultBatch_session_semester_department_idx" ON "ResultBatch"("session", "semester", "department");

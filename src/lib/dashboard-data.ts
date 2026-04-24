@@ -10,17 +10,7 @@ export type SummaryMetric = {
 
 export type Semester = "first" | "second" | "third";
 
-export type ApprovalBatch = {
-    id: string;
-    department: string;
-    session: string;
-    semester: Semester;
-    pending: number;
-    approved: number;
-    withheld: number;
-    contactCoverage: number;
-    lastActionAt: string;
-};
+
 
 export type DispatchStatus = "queued" | "processing" | "complete" | "partial_failure";
 
@@ -82,52 +72,7 @@ export const summaryMetrics: SummaryMetric[] = [
     },
 ];
 
-export const approvalBatches: ApprovalBatch[] = [
-    {
-        id: "BCH-2404-CS",
-        department: "Computer Science",
-        session: "2024/2025",
-        semester: "first",
-        pending: 132,
-        approved: 489,
-        withheld: 6,
-        contactCoverage: 97,
-        lastActionAt: "11 mins ago",
-    },
-    {
-        id: "BCH-2404-EE",
-        department: "Electrical Engineering",
-        session: "2024/2025",
-        semester: "first",
-        pending: 84,
-        approved: 406,
-        withheld: 3,
-        contactCoverage: 93,
-        lastActionAt: "27 mins ago",
-    },
-    {
-        id: "BCH-2404-ACC",
-        department: "Accounting",
-        session: "2024/2025",
-        semester: "first",
-        pending: 61,
-        approved: 342,
-        withheld: 9,
-        contactCoverage: 89,
-        lastActionAt: "43 mins ago",
-    },
-    {
-        id: "BCH-2404-BIO",
-        department: "Biochemistry",
-        session: "2024/2025",
-        semester: "first",
-        pending: 151,
-        approved: 218,
-        withheld: 4,
-        contactCoverage: 95,
-        lastActionAt: "1 hr ago",
-    },
-];
+
 
 export const dispatchQueue: DispatchQueueEntry[] = [
     {

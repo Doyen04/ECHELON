@@ -1,4 +1,3 @@
-export { ApprovalPipelineTable } from "./approval-pipeline-table";
 export { DeliveryChannels } from "./delivery-channels";
 export { DispatchQueuePanel } from "./dispatch-queue-panel";
 export { EmptyState } from "./empty-state";

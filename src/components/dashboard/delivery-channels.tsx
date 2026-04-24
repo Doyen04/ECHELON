@@ -39,7 +39,7 @@ function totalFailed(channels: ChannelDelivery[]) {
     return channels.reduce((sum, channel) => sum + channel.failed, 0);
 }
 
-function totalMessages(channels: ChannelDelivery[]) {
+function totalMessages(channels: ChannelDelivery[]): number {
     return channels.reduce((sum, channel) => sum + channel.sent + channel.failed, 0);
 }
 

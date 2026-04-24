@@ -1,6 +1,5 @@
 import {
     type ActivityLog,
-    type ApprovalBatch,
     type ChannelDelivery,
     type DashboardNotification,
     type DispatchQueueEntry,
@@ -13,7 +12,6 @@ import { prisma } from "@/lib/db";
 
 export type DashboardViewData = {
     summaryMetrics: SummaryMetric[];
-    approvalBatches: ApprovalBatch[];
     dispatchQueue: DispatchQueueEntry[];
     channelDelivery: ChannelDelivery[];
     recentActivity: ActivityLog[];
@@ -113,7 +111,6 @@ function emptySummaryMetrics(): SummaryMetric[] {
 function fallbackDashboardData(): DashboardViewData {
     return {
         summaryMetrics: emptySummaryMetrics(),
-        approvalBatches: [],
         dispatchQueue: [],
         channelDelivery: [],
         recentActivity: [],
@@ -131,7 +128,6 @@ export async function getDashboardViewData(): Promise<DashboardViewData> {
             approvedResultCount,
             sentCount,
             failedCount,
-            batchRows,
             dispatchRows,
             notificationRows,
             activityRows,
@@ -149,19 +145,6 @@ export async function getDashboardViewData(): Promise<DashboardViewData> {
                 where: {
                     attemptedAt: { gte: sevenDaysAgo },
                     status: "FAILED",
-                },
-            }),
-            db.resultBatch.findMany({
-                take: 4,
-                orderBy: { uploadedAt: "desc" },
-                include: {
-                    studentResults: {
-                        include: {
-                            student: {
-                                include: { guardians: true },
-                            },
-                        },
-                    },
                 },
             }),
             db.notificationDispatch.findMany({
@@ -235,50 +218,7 @@ export async function getDashboardViewData(): Promise<DashboardViewData> {
             },
         ];
 
-        const approvalRows: ApprovalBatch[] = batchRows.map((batch: any) => {
-            const pending = batch.studentResults.filter(
-                (result: any) => result.status === "PENDING",
-            ).length;
-            const approved = batch.studentResults.filter(
-                (result: any) => result.status === "APPROVED",
-            ).length;
-            const withheld = batch.studentResults.filter(
-                (result: any) => result.status === "WITHHELD",
-            ).length;
 
-            const studentIds = new Set<string>();
-            const coveredStudentIds = new Set<string>();
-
-            batch.studentResults.forEach((result: any) => {
-                studentIds.add(result.studentId);
-
-                const hasValidContact = result.student.guardians.some(
-                    (guardian: any) => guardian.phone || guardian.email,
-                );
-
-                if (hasValidContact) {
-                    coveredStudentIds.add(result.studentId);
-                }
-            });
-
-            const totalStudents = studentIds.size;
-            const contactCoverage =
-                totalStudents === 0
-                    ? 0
-                    : Math.round((coveredStudentIds.size / totalStudents) * 100);
-
-            return {
-                id: batch.id,
-                department: batch.department,
-                session: batch.session,
-                semester: toSemester(batch.semester),
-                pending,
-                approved,
-                withheld,
-                contactCoverage,
-                lastActionAt: relativeTimeFromNow(batch.approvedAt ?? batch.uploadedAt),
-            } satisfies ApprovalBatch;
-        });
 
         const dispatchRowsMapped: DispatchQueueEntry[] = dispatchRows.map(
             (dispatch: any) => {
@@ -388,7 +328,6 @@ export async function getDashboardViewData(): Promise<DashboardViewData> {
 
         return {
             summaryMetrics: metrics,
-            approvalBatches: approvalRows,
             dispatchQueue: dispatchRowsMapped,
             channelDelivery: Object.values(channelMap),
             recentActivity: activities,

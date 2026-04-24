@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { AlertTriangle, ArrowRight } from "lucide-react";
 
-import { ApprovalPipelineTable, DeliveryChannels, DispatchQueuePanel, RecentActivity, SummaryMetrics } from "@/components/dashboard";
+import { DeliveryChannels, DispatchQueuePanel, RecentActivity, SummaryMetrics } from "@/components/dashboard";
 import { NotificationPanelTrigger } from "@/components/dashboard/notification-panel-trigger";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -67,8 +67,6 @@ export default async function DashboardPage() {
                         </AlertDescription>
                     </Alert>
                 ) : null}
-
-                <ApprovalPipelineTable batches={data.approvalBatches} />
 
                 <div className="grid gap-8 xl:grid-cols-[1fr_1fr]">
                     <DispatchQueuePanel queue={data.dispatchQueue} />
