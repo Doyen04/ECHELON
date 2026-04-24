@@ -10,7 +10,7 @@ type PageHeaderProps = {
 
 export function PageHeader({ title, breadcrumbs, action }: PageHeaderProps) {
     return (
-        <header className="sticky top-0 z-40 border-b border-border/70 bg-background/90 backdrop-blur supports-backdrop-filter:bg-background/80 page-transition-enter">
+        <header className="sticky top-0 z-40 border-b border-border/70 bg-background/90 backdrop-blur supports-backdrop-filter:bg-background/80 page-transition-enter transition-colors duration-200">
             <div className="flex h-18 items-center justify-between px-6">
                 <div className="flex flex-col justify-center">
                     {breadcrumbs && (

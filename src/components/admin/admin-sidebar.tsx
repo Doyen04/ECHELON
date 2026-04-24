@@ -90,11 +90,11 @@ export function AdminSidebar({ email, name, role }: AdminSidebarProps) {
                 <button
                     type="button"
                     onClick={toggleSidebar}
-                    className="absolute -right-3 top-8 hidden h-6 w-6 items-center justify-center rounded-full border border-white/20 bg-brand text-white shadow-md hover:bg-white/10 hover:text-white transition-all duration-300 md:flex z-50 ring-2 ring-background"
+                    className="absolute left-full top-16 hidden h-6 w-6 items-center justify-center rounded-none bg-brand text-white opacity-100 shadow-lg transition-colors duration-150 hover:bg-brand md:flex z-50"
                     aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
                     title={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
                 >
-                    <ChevronRight className={`h-3 w-3 transition-transform duration-300 ${isCollapsed ? "" : "rotate-180"}`} />
+                    <ChevronRight className={`h-2.5 w-2.5 transition-transform duration-300 ${isCollapsed ? "" : "rotate-180"}`} />
                 </button>
 
                 <div className={`flex gap-3 px-2 transition-all duration-300 group ${isCollapsed ? "flex-col items-center py-2" : "h-16 items-center justify-start"}`}>
@@ -172,21 +172,21 @@ export function AdminSidebar({ email, name, role }: AdminSidebarProps) {
                     })()}
                 </div>
 
-                <div className="mt-auto pt-4 px-1 pb-1">
-                    <div className={`rounded-4xl border border-white/15 bg-white/10 p-2.5 text-white/90 shadow-[0_8px_32px_-12px_rgba(0,0,0,0.5)] backdrop-blur-md transition-all duration-300 ${isCollapsed ? "items-center" : ""}`}>
+                <div className="mt-auto shrink-0 px-1 pb-1">
+                    <div className={`text-white/90 transition-all duration-300 ${isCollapsed ? "p-1" : "p-2"}`}>
                         <div
-                            className={`flex ${isCollapsed ? "flex-col items-center gap-3 pt-1" : "items-center gap-3.5"
+                            className={`flex ${isCollapsed ? "flex-col items-center gap-2" : "items-center gap-3.5"
                                 }`}
                         >
                             <div className="relative flex shrink-0 items-center justify-center">
-                                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-white/20 bg-white/20 text-[12px] font-bold text-white shadow-inner">
+                                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/15 text-[12px] font-bold text-white shadow-inner">
                                     {userInitials}
                                 </div>
                                 <div className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-brand bg-emerald-500 shadow-sm" />
                             </div>
 
                             <div
-                                className={`min-w-0 flex-1 transition-all duration-300 ${isCollapsed ? "h-0 w-0 opacity-0 pointer-events-none overflow-hidden" : "opacity-100"
+                                className={`transition-all duration-300 ${isCollapsed ? "h-0 w-0 flex-none opacity-0 pointer-events-none overflow-hidden" : "min-w-0 flex-1 opacity-100"
                                     }`}
                             >
                                 <p className="truncate text-sm font-semibold tracking-tight text-white leading-tight">{name ?? "User"}</p>
@@ -197,15 +197,14 @@ export function AdminSidebar({ email, name, role }: AdminSidebarProps) {
                                 </div>
                             </div>
 
-                            <div className={`${isCollapsed ? "w-full flex justify-center border-t border-white/10 pt-2 pb-1" : ""}`}>
-                                <SignOutButton
-                                    className={`flex items-center justify-center rounded-full transition-all duration-200 hover:bg-white/15 hover:scale-105 active:scale-95 text-white/70 hover:text-white ${isCollapsed ? "h-9 w-9 bg-white/5" : "h-9 w-9"
-                                        }`}
-                                    title="Log out"
-                                >
-                                    <LogOut className="h-4.5 w-4.5" />
-                                </SignOutButton>
-                            </div>
+                            <SignOutButton
+                                compact
+                                className={`flex items-center justify-center rounded-full text-white/75 transition-all duration-200 hover:bg-white/10 hover:text-white active:scale-95 ${isCollapsed ? "h-9 w-9" : "ml-auto h-9 w-9"
+                                    }`}
+                                title="Log out"
+                            >
+                                <LogOut className="h-4.5 w-4.5" />
+                            </SignOutButton>
                         </div>
                     </div>
                 </div>
