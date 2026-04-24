@@ -23,10 +23,12 @@ type GuardianContactManagerProps = {
     guardians: GuardianRow[];
 };
 
-type EditableGuardian = Pick<
-    GuardianRow,
-    "name" | "relationship" | "email" | "phone"
->;
+type EditableGuardian = {
+    name: string;
+    relationship: string;
+    email: string;
+    phone: string;
+};
 
 const emptyEditState: EditableGuardian = {
     name: "",
