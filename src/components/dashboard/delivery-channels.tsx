@@ -23,7 +23,8 @@ const channelLabels: Record<ChannelDelivery["channel"], string> = {
 function buildChartData(channels: ChannelDelivery[]) {
     return channels.map((channel) => ({
         name: channelLabels[channel.channel],
-        value: channel.sent,
+        value: channel.sent + channel.failed,
+        sent: channel.sent,
         failed: channel.failed,
         queued: channel.queued,
         color: channelColors[channel.channel],
@@ -38,16 +39,20 @@ function totalFailed(channels: ChannelDelivery[]) {
     return channels.reduce((sum, channel) => sum + channel.failed, 0);
 }
 
+function totalMessages(channels: ChannelDelivery[]) {
+    return channels.reduce((sum, channel) => sum + channel.sent + channel.failed, 0);
+}
+
 export function DeliveryChannels({ channels }: { channels: ChannelDelivery[] }) {
     const data = buildChartData(channels);
     const sent = totalSent(channels);
     const failed = totalFailed(channels);
-    const total = sent > 0 ? sent : 1;
+    const total = totalMessages(channels) > 0 ? totalMessages(channels) : 1;
 
     return (
         <SectionFrame
             title="Upload Distribution"
-            description="Sent uploads by channel"
+            description="Message volume by channel"
         >
             {channels.length === 0 ? (
                 <EmptyState
@@ -75,14 +80,14 @@ export function DeliveryChannels({ channels }: { channels: ChannelDelivery[] }) 
                                     </Pie>
                                     <Tooltip
                                         formatter={(value: number, name: string) => [
-                                            `${value} sent`,
+                                            `${value} messages`,
                                             name,
                                         ]}
                                     />
                                 </PieChart>
                             </ResponsiveContainer>
                             <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-                                <p className="text-[11px] uppercase tracking-widest text-muted-foreground">Sent</p>
+                                <p className="text-[11px] uppercase tracking-widest text-muted-foreground">Total</p>
                                 <p className="text-2xl font-semibold text-foreground">{total}</p>
                             </div>
                         </div>

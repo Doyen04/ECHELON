@@ -93,15 +93,15 @@ model Student {
 }
 
 model Guardian {
-    id               String              @id @default(cuid())
+    id               String            @id @default(cuid())
     studentId        String
-    student          Student             @relation(fields: [studentId], references: [id], onDelete: Cascade)
+    student          Student           @relation(fields: [studentId], references: [id], onDelete: Cascade)
     name             String
     relationship     String
     email            String?
     phone            String?
     consentDate      DateTime?
-    createdAt        DateTime            @default(now())
+    createdAt        DateTime          @default(now())
     notificationLogs NotificationLog[]
 
     @@index([studentId])
