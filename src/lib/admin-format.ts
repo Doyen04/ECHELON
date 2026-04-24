@@ -57,7 +57,6 @@ export function toBadgeStatus(value: string) {
         | "approved"
         | "dispatched"
         | "withheld"
-        | "delivered"
         | "failed"
         | "queued";
 }

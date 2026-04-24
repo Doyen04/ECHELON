@@ -4,6 +4,7 @@ import type { DispatchQueueEntry, DispatchStatus } from "@/lib/dashboard-data";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { EmptyState } from "./empty-state";
 import { SectionFrame } from "./section-frame";
 
 const statusTone: Record<DispatchStatus, string> = {
@@ -38,6 +39,14 @@ export function DispatchQueuePanel({ queue }: { queue: DispatchQueueEntry[] }) {
                 </Button>
             }
         >
+            {queue.length === 0 ? (
+                <EmptyState
+                    title="No dispatches yet"
+                    description="Approved batches will appear here when dispatch jobs are triggered."
+                    ctaLabel="Upload batch"
+                    ctaHref="/admin/batches/upload"
+                />
+            ) : (
             <div className="space-y-4">
                 {queue.map((entry) => {
                     const completion = progress(entry);
@@ -80,6 +89,7 @@ export function DispatchQueuePanel({ queue }: { queue: DispatchQueueEntry[] }) {
                     );
                 })}
             </div>
+            )}
         </SectionFrame>
     );
 }

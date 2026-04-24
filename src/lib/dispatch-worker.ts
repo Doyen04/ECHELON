@@ -98,7 +98,6 @@ async function sendNotification(
                 subject: `[Result Notification] ${payload.studentName} - ${payload.semester}`,
                 text: `Hello ${payload.parentName}, the results for ${payload.studentName} (${payload.matricNumber}) are ready. View full details: ${payload.portalLink}`,
             });
-            console.log(`Email sent successfully: ${response}, ${resend}`);
             return {
                 ok: true,
                 providerMessageId: response?.data?.id ?? `resend-${Date.now()}`,

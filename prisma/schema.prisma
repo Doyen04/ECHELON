@@ -42,7 +42,6 @@ enum NotificationChannel {
 enum NotificationStatus {
     QUEUED
     SENT
-    DELIVERED
     FAILED
 }
 
@@ -101,8 +100,6 @@ model Guardian {
     relationship     String
     email            String?
     phone            String?
-    preferredChannel NotificationChannel @default(WHATSAPP)
-    ndprConsent      Boolean             @default(false)
     consentDate      DateTime?
     createdAt        DateTime            @default(now())
     notificationLogs NotificationLog[]

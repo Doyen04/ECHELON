@@ -4,6 +4,7 @@ import type { ActivityLog } from "@/lib/dashboard-data";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { EmptyState } from "./empty-state";
 import { SectionFrame } from "./section-frame";
 
 export function RecentActivity({ events }: { events: ActivityLog[] }) {
@@ -17,7 +18,15 @@ export function RecentActivity({ events }: { events: ActivityLog[] }) {
                 </Button>
             }
         >
-            <ol className="space-y-3">
+            {events.length === 0 ? (
+                <EmptyState
+                    title="No recent activity"
+                    description="Audit events will appear here after approvals, dispatches, and updates are recorded."
+                    ctaLabel="Open audit log"
+                    ctaHref="/admin/audit"
+                />
+            ) : (
+                <ol className="space-y-3">
                 {events.map((event) => (
                     <li
                         key={event.id}
@@ -39,6 +48,7 @@ export function RecentActivity({ events }: { events: ActivityLog[] }) {
                     </li>
                 ))}
             </ol>
+            )}
         </SectionFrame>
     );
 }

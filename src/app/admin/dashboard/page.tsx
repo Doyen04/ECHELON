@@ -6,6 +6,7 @@ import { ApprovalPipelineTable, DeliveryChannels, DispatchQueuePanel, RecentActi
 import { NotificationPanelTrigger } from "@/components/dashboard/notification-panel-trigger";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/page-header";
 import { getDashboardViewData } from "@/lib/dashboard-queries";
 
@@ -32,13 +33,26 @@ export default async function DashboardPage() {
             />
 
             <div className="mx-auto w-full max-w-7xl space-y-8 px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
-                <div className="flex justify-end">
-                    <Button asChild className="rounded-full shadow-sm">
-                        <Link href="/admin/batches/upload" className="inline-flex items-center gap-2">
-                            Upload Batch
-                            <ArrowRight className="h-4 w-4" />
-                        </Link>
-                    </Button>
+                <SummaryMetrics metrics={data.summaryMetrics} />
+
+                <div className="grid gap-8 xl:grid-cols-[0.9fr_1.1fr]">
+                    <DeliveryChannels channels={data.channelDelivery} />
+
+                    <Card className="dashboard-section border border-border/70 p-6">
+                        <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Upload Section</p>
+                        <h2 className="mt-2 text-2xl font-semibold text-foreground">Upload New Batch</h2>
+                        <p className="mt-2 text-sm text-muted-foreground">
+                            Start a new upload and trigger dispatch after validation.
+                        </p>
+                        <div className="mt-5">
+                            <Button asChild className="rounded-full shadow-sm">
+                                <Link href="/admin/batches/upload" className="inline-flex items-center gap-2">
+                                    Upload Batch
+                                    <ArrowRight className="h-4 w-4" />
+                                </Link>
+                            </Button>
+                        </div>
+                    </Card>
                 </div>
 
                 {data.notifications.length > 0 ? (
@@ -54,12 +68,7 @@ export default async function DashboardPage() {
                     </Alert>
                 ) : null}
 
-                <SummaryMetrics metrics={data.summaryMetrics} />
-
-                <div className="grid gap-8 xl:grid-cols-[1.3fr_.7fr]">
-                    <ApprovalPipelineTable batches={data.approvalBatches} />
-                    <DeliveryChannels channels={data.channelDelivery} />
-                </div>
+                <ApprovalPipelineTable batches={data.approvalBatches} />
 
                 <div className="grid gap-8 xl:grid-cols-[1fr_1fr]">
                     <DispatchQueuePanel queue={data.dispatchQueue} />

@@ -8,7 +8,6 @@ export type StatusType =
     | "approved"
     | "dispatched"
     | "withheld"
-    | "delivered"
     | "failed"
     | "queued";
 
@@ -23,7 +22,6 @@ export function StatusBadge({ status }: StatusBadgeProps) {
         approved: { variant: "success", label: "Approved" },
         dispatched: { variant: "default", label: "Dispatched" },
         withheld: { variant: "destructive", label: "Withheld" },
-        delivered: { variant: "success", label: "Delivered" },
         failed: { variant: "destructive", label: "Failed" },
         queued: { variant: "secondary", label: "Queued" },
     };

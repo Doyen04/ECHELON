@@ -69,11 +69,10 @@ export default async function DeliveryLogPage({ params }: DeliveryPageProps) {
     }
 
     const total = dispatch.notificationLogs.length;
-    const delivered = dispatch.notificationLogs.filter((log: any) => log.status === "DELIVERED").length;
     const sent = dispatch.notificationLogs.filter((log: any) => log.status === "SENT").length;
     const failed = dispatch.notificationLogs.filter((log: any) => log.status === "FAILED").length;
     const queued = dispatch.notificationLogs.filter((log: any) => log.status === "QUEUED").length;
-    const successRate = total === 0 ? 0 : Math.round(((delivered + sent) / total) * 100);
+    const successRate = total === 0 ? 0 : Math.round((sent / total) * 100);
 
     return (
         <div className="dashboard-root min-h-screen bg-background">
@@ -121,7 +120,7 @@ export default async function DeliveryLogPage({ params }: DeliveryPageProps) {
 
                     <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
                         <SummaryCard title="Total Logs" value={String(total)} />
-                        <SummaryCard title="Delivered / Sent" value={`${delivered + sent}`} subvalue={`${successRate}%`} color="text-[var(--color-success)]" />
+                        <SummaryCard title="Sent" value={`${sent}`} subvalue={`${successRate}%`} color="text-[var(--color-success)]" />
                         <SummaryCard title="Failed" value={String(failed)} color="text-[var(--color-danger)]" />
                         <SummaryCard title="Queued" value={String(queued)} />
                     </div>
@@ -129,13 +128,12 @@ export default async function DeliveryLogPage({ params }: DeliveryPageProps) {
                     <div className="mt-6 rounded-2xl border border-(--border-subtle) bg-(--surface-soft) p-5">
                         <div className="flex items-center justify-between gap-3 text-sm font-medium">
                             <span className="text-foreground">Dispatch Progress</span>
-                            <span className="text-(--text-secondary)">{delivered + sent + failed + queued} processed</span>
+                            <span className="text-(--text-secondary)">{sent + failed + queued} processed</span>
                         </div>
                         <div className="mt-3 h-3 w-full overflow-hidden rounded-full bg-(--surface-muted)">
-                            <div className="h-full bg-emerald-500" style={{ width: `${total === 0 ? 0 : ((delivered + sent) / total) * 100}%` }} />
+                            <div className="h-full bg-emerald-500" style={{ width: `${total === 0 ? 0 : (sent / total) * 100}%` }} />
                         </div>
                         <div className="mt-4 flex flex-wrap gap-4 text-xs font-medium">
-                            <span className="text-(--text-secondary)">Delivered: {delivered}</span>
                             <span className="text-(--text-secondary)">Sent: {sent}</span>
                             <span className="text-(--text-secondary)">Failed: {failed}</span>
                             <span className="text-(--text-secondary)">Queued: {queued}</span>

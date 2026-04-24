@@ -1,9 +1,4 @@
 import {
-    approvalBatches,
-    channelDelivery,
-    dispatchQueue,
-    recentActivity,
-    summaryMetrics,
     type ActivityLog,
     type ApprovalBatch,
     type ChannelDelivery,
@@ -89,13 +84,39 @@ function metricTrend(value: number, threshold: number): TrendDirection {
     return "steady";
 }
 
+function emptySummaryMetrics(): SummaryMetric[] {
+    return [
+        {
+            label: "Pending Result Reviews",
+            value: "0",
+            change: "Live",
+            trend: "steady",
+            helper: "Across active batches",
+        },
+        {
+            label: "Approved For Dispatch",
+            value: "0",
+            change: "Live",
+            trend: "steady",
+            helper: "Ready for notification queue",
+        },
+        {
+            label: "Delivery Success Rate",
+            value: "0%",
+            change: "7 days",
+            trend: "steady",
+            helper: "From attempted notifications",
+        },
+    ];
+}
+
 function fallbackDashboardData(): DashboardViewData {
     return {
-        summaryMetrics,
-        approvalBatches,
-        dispatchQueue,
-        channelDelivery,
-        recentActivity,
+        summaryMetrics: emptySummaryMetrics(),
+        approvalBatches: [],
+        dispatchQueue: [],
+        channelDelivery: [],
+        recentActivity: [],
         notifications: [],
     };
 }
@@ -108,8 +129,8 @@ export async function getDashboardViewData(): Promise<DashboardViewData> {
         const [
             pendingReviewCount,
             approvedResultCount,
-            attemptedDeliveries,
-            deliveredCount,
+            sentCount,
+            failedCount,
             batchRows,
             dispatchRows,
             notificationRows,
@@ -121,13 +142,13 @@ export async function getDashboardViewData(): Promise<DashboardViewData> {
             db.notificationLog.count({
                 where: {
                     attemptedAt: { gte: sevenDaysAgo },
-                    status: { in: ["SENT", "FAILED"] },
+                    status: "SENT",
                 },
             }),
             db.notificationLog.count({
                 where: {
                     attemptedAt: { gte: sevenDaysAgo },
-                    status: "SENT",
+                    status: "FAILED",
                 },
             }),
             db.resultBatch.findMany({
@@ -183,10 +204,12 @@ export async function getDashboardViewData(): Promise<DashboardViewData> {
             }),
         ]);
 
+        const totalAttempted = sentCount + failedCount;
         const deliveryRate =
-            attemptedDeliveries === 0
+            totalAttempted === 0
                 ? 0
-                : Number(((deliveredCount / attemptedDeliveries) * 100).toFixed(1));
+                : Number(((sentCount / totalAttempted) * 100).toFixed(1));
+
 
         const metrics: SummaryMetric[] = [
             {
@@ -295,21 +318,18 @@ export async function getDashboardViewData(): Promise<DashboardViewData> {
                 channel: "whatsapp",
                 queued: 0,
                 sent: 0,
-                delivered: 0,
                 failed: 0,
             },
             email: {
                 channel: "email",
                 queued: 0,
                 sent: 0,
-                delivered: 0,
                 failed: 0,
             },
             sms: {
                 channel: "sms",
                 queued: 0,
                 sent: 0,
-                delivered: 0,
                 failed: 0,
             },
         };
@@ -322,8 +342,6 @@ export async function getDashboardViewData(): Promise<DashboardViewData> {
                 channelMap[channel].queued += 1;
             } else if (status === "sent") {
                 channelMap[channel].sent += 1;
-            } else if (status === "delivered") {
-                channelMap[channel].delivered += 1;
             } else if (status === "failed") {
                 channelMap[channel].failed += 1;
             }
@@ -370,10 +388,10 @@ export async function getDashboardViewData(): Promise<DashboardViewData> {
 
         return {
             summaryMetrics: metrics,
-            approvalBatches: approvalRows.length > 0 ? approvalRows : approvalBatches,
-            dispatchQueue: dispatchRowsMapped.length > 0 ? dispatchRowsMapped : dispatchQueue,
+            approvalBatches: approvalRows,
+            dispatchQueue: dispatchRowsMapped,
             channelDelivery: Object.values(channelMap),
-            recentActivity: activities.length > 0 ? activities : recentActivity,
+            recentActivity: activities,
             notifications,
         };
     } catch {

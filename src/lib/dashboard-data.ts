@@ -38,7 +38,6 @@ export type ChannelDelivery = {
     channel: "whatsapp" | "email" | "sms";
     queued: number;
     sent: number;
-    delivered: number;
     failed: number;
 };
 
