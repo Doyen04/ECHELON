@@ -21,6 +21,22 @@ export type StudentImportRow = {
     }>;
 };
 
+const GRADE_POINTS: Record<string, number> = {
+    "A": 5,
+    "A-": 4.5,
+    "B+": 4,
+    "B": 3.5,
+    "B-": 3,
+    "C+": 2.5,
+    "C": 2,
+    "C-": 1.5,
+    "D": 1,
+    "E": 0.5,
+    "F": 0,
+    "P": 0,
+    "N/A": 0,
+};
+
 export type ParentContactImportRow = {
     matricNumber: string;
     parentName: string;
@@ -46,6 +62,54 @@ function parseNullableNumber(value: string | undefined): number | null {
 
     const parsed = Number(raw);
     return Number.isFinite(parsed) ? parsed : null;
+}
+
+function gradeFromScore(score: number | null): string {
+    if (score === null) {
+        return "N/A";
+    }
+
+    if (score >= 70) {
+        return "A";
+    }
+    if (score >= 60) {
+        return "B";
+    }
+    if (score >= 50) {
+        return "C";
+    }
+    if (score >= 45) {
+        return "D";
+    }
+    if (score >= 40) {
+        return "E";
+    }
+    return "F";
+}
+
+function normalizeGrade(grade: string | undefined, score: number | null): string {
+    const normalized = (grade ?? "").trim().toUpperCase();
+    if (!normalized || normalized === "-" || normalized === "NIL") {
+        return gradeFromScore(score);
+    }
+
+    return GRADE_POINTS[normalized] !== undefined ? normalized : gradeFromScore(score);
+}
+
+export function calculateGpaFromCourses(courses: Array<{ unit: number; grade: string }>): number | null {
+    const validCourses = courses.filter((course) => Number.isFinite(course.unit) && course.unit > 0);
+    const totalUnits = validCourses.reduce((sum, course) => sum + course.unit, 0);
+
+    if (totalUnits === 0) {
+        return null;
+    }
+
+    const totalPoints = validCourses.reduce((sum, course) => {
+        const gradePoint = GRADE_POINTS[course.grade.toUpperCase()] ?? 0;
+        return sum + (gradePoint * course.unit);
+    }, 0);
+
+    return Number((totalPoints / totalUnits).toFixed(2));
 }
 
 function parseCsvLine(line: string): string[] {
@@ -134,6 +198,9 @@ function mapStudentCsvRow(raw: Record<string, string>, fallbackDepartment: strin
         return null;
     }
 
+    const score = parseNullableNumber(raw.score ?? raw.total_score);
+    const grade = normalizeGrade(raw.grade, score);
+
     return {
         matricNumber,
         studentName,
@@ -144,9 +211,9 @@ function mapStudentCsvRow(raw: Record<string, string>, fallbackDepartment: strin
         cgpa: parseNullableNumber(raw.cgpa),
         courseCode: (raw.course_code ?? "GEN101").trim() || "GEN101",
         courseTitle: (raw.course_title ?? "General Studies").trim() || "General Studies",
-        unit: parseNumber(raw.unit, 0),
-        grade: (raw.grade ?? "").trim() || "N/A",
-        score: parseNullableNumber(raw.score),
+        unit: parseNumber(raw.unit ?? raw.course_unit ?? raw.credit_unit, 0),
+        grade,
+        score,
         parentName: (raw.parent_name ?? raw.guardian_name ?? "").trim() || null,
         parentEmail: (raw.parent_email ?? raw.email ?? "").trim() || null,
         parentPhone: (raw.parent_phone ?? raw.phone ?? "").trim() || null,
@@ -194,7 +261,15 @@ function aggregateStudentRows(rows: FlatStudentCsvRow[]): StudentImportRow[] {
         }
     }
 
-    return Array.from(grouped.values());
+    const students = Array.from(grouped.values());
+    for (const student of students) {
+        const calculatedGpa = calculateGpaFromCourses(student.courses);
+        if (calculatedGpa !== null) {
+            student.gpa = calculatedGpa;
+        }
+    }
+
+    return students;
 }
 
 export function parseStudentRowsFromCsv(csvText: string, fallbackDepartment: string): StudentImportRow[] {

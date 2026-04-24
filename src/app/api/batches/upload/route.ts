@@ -2,10 +2,20 @@ import { NextResponse } from "next/server";
 
 import { prisma } from "@/lib/db";
 import { DispatchTriggerError, triggerDispatchForBatch } from "@/lib/dispatch-service";
-import { parseStudentRowsFromCsv, parseStudentRowsFromPdf, type StudentImportRow } from "@/lib/result-import";
+import {
+    calculateGpaFromCourses,
+    parseStudentRowsFromCsv,
+    parseStudentRowsFromPdf,
+    type StudentImportRow,
+} from "@/lib/result-import";
 import { getSuperAdminSession } from "@/lib/super-admin-session";
 
 const SEMESTER_VALUES = new Set(["FIRST", "SECOND", "THIRD"]);
+
+function isComputerScienceDepartment(department: string): boolean {
+    const normalized = department.trim().toLowerCase();
+    return normalized === "cs" || normalized.includes("computer science");
+}
 
 function parseBoolean(value: string | undefined): boolean {
     const normalized = (value ?? "").trim().toLowerCase();
@@ -101,6 +111,12 @@ export async function POST(request: Request) {
         });
 
         for (const studentRow of groupedStudents) {
+            const computedGpa = calculateGpaFromCourses(studentRow.courses);
+            const effectiveGpa =
+                isComputerScienceDepartment(studentRow.department) && computedGpa !== null
+                    ? computedGpa
+                    : studentRow.gpa;
+
             const student = await tx.student.upsert({
                 where: { matricNumber: studentRow.matricNumber },
                 update: {
@@ -158,7 +174,7 @@ export async function POST(request: Request) {
                     batchId: createdBatch.id,
                     studentId: student.id,
                     courses: studentRow.courses,
-                    gpa: studentRow.gpa,
+                    gpa: effectiveGpa,
                     cgpa: studentRow.cgpa,
                     status: autoDispatch ? "APPROVED" : "PENDING",
                 },

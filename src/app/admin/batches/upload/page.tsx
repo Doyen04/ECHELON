@@ -18,6 +18,7 @@ type ParsedRow = {
     studentName: string;
     department: string;
     courseCode: string;
+    courseUnit: string;
     grade: string;
     score: string;
 };
@@ -116,11 +117,15 @@ function validateAndBuildPreview(text: string): ValidationState {
 
     const headers = parseCsvLine(lines[0]).map(normalizeHeader);
     const missingHeaders = REQUIRED_HEADERS.filter((required) => !headers.includes(required));
+    const hasCourseUnitHeader = headers.includes("unit") || headers.includes("course_unit") || headers.includes("credit_unit");
     const parsedRows = parseCsv(text);
 
     const errors: string[] = [];
     if (missingHeaders.length > 0) {
         errors.push(`Missing required columns: ${missingHeaders.join(", ")}`);
+    }
+    if (!hasCourseUnitHeader) {
+        errors.push("Missing required course unit column: include one of unit, course_unit, or credit_unit.");
     }
 
     parsedRows.forEach((row, index) => {
@@ -137,6 +142,9 @@ function validateAndBuildPreview(text: string): ValidationState {
         if (!(row.grade ?? "").trim()) {
             errors.push(`Row ${rowNumber}: grade is required.`);
         }
+        if (!((row.unit ?? row.course_unit ?? row.credit_unit ?? "").trim())) {
+            errors.push(`Row ${rowNumber}: unit (or course_unit / credit_unit) is required.`);
+        }
     });
 
     const previewRows: ParsedRow[] = parsedRows.slice(0, 5).map((row) => ({
@@ -144,6 +152,7 @@ function validateAndBuildPreview(text: string): ValidationState {
         studentName: (row.student_name ?? "").trim(),
         department: (row.department ?? "").trim(),
         courseCode: (row.course_code ?? "").trim(),
+        courseUnit: (row.unit ?? row.course_unit ?? row.credit_unit ?? "").trim(),
         grade: (row.grade ?? "").trim(),
         score: (row.score ?? "").trim(),
     }));
@@ -511,6 +520,7 @@ export default function BatchUploadPage() {
                                                     <th className="px-3 py-2 text-left text-xs font-medium text-text-muted">Student Name</th>
                                                     <th className="px-3 py-2 text-left text-xs font-medium text-text-muted">Department</th>
                                                     <th className="px-3 py-2 text-left text-xs font-medium text-text-muted">Course</th>
+                                                    <th className="px-3 py-2 text-left text-xs font-medium text-text-muted">Unit</th>
                                                     <th className="px-3 py-2 text-left text-xs font-medium text-text-muted">Grade</th>
                                                 </tr>
                                             </thead>
@@ -522,12 +532,13 @@ export default function BatchUploadPage() {
                                                             <td className="px-3 py-2 text-sm text-foreground">{row.studentName || "-"}</td>
                                                             <td className="px-3 py-2 text-sm text-foreground">{row.department || "-"}</td>
                                                             <td className="px-3 py-2 text-sm text-foreground">{row.courseCode || "-"}</td>
+                                                            <td className="px-3 py-2 text-sm text-foreground">{row.courseUnit || "-"}</td>
                                                             <td className="px-3 py-2 text-sm text-foreground">{row.grade || "-"}</td>
                                                         </tr>
                                                     ))
                                                 ) : (
                                                     <tr>
-                                                        <td className="px-3 py-4 text-sm text-text-muted" colSpan={5}>
+                                                        <td className="px-3 py-4 text-sm text-text-muted" colSpan={6}>
                                                             No preview rows found.
                                                         </td>
                                                     </tr>
@@ -608,6 +619,7 @@ export default function BatchUploadPage() {
                                         <li>student_name</li>
                                         <li>department</li>
                                         <li>course_code</li>
+                                        <li>unit (or course_unit / credit_unit)</li>
                                         <li>grade</li>
                                     </ul>
                                 </div>

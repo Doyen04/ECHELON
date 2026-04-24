@@ -1,60 +1,60 @@
-matric_number,student_name,department,course_code,grade,parent_phone,parent_email,score
-CSE001,John Doe,Computer Science,CSE101,A,08010000001,solaopeyemi93@gmail.com,85
-CSE001,John Doe,Computer Science,CSE102,B,08010000001,solaopeyemi93@gmail.com,78
-CSE001,John Doe,Computer Science,CSE103,A,08010000001,solaopeyemi93@gmail.com,90
-CSE001,John Doe,Computer Science,CSE104,C,08010000001,solaopeyemi93@gmail.com,65
-CSE001,John Doe,Computer Science,CSE105,B,08010000001,solaopeyemi93@gmail.com,74
+matric_number,student_name,department,course_code,grade,parent_phone,parent_email,course_unit,score
+CSE001,John Doe,Computer Science,CSE101,A,08010000001,solaopeyemi93@gmail.com,3,85
+CSE001,John Doe,Computer Science,CSE102,B,08010000001,solaopeyemi93@gmail.com,3,78
+CSE001,John Doe,Computer Science,CSE103,A,08010000001,solaopeyemi93@gmail.com,3,90
+CSE001,John Doe,Computer Science,CSE104,C,08010000001,solaopeyemi93@gmail.com,3,65
+CSE001,John Doe,Computer Science,CSE105,B,08010000001,solaopeyemi93@gmail.com,3,74
 
-CSE002,Jane Smith,Computer Science,CSE101,B,08010000002,solaopeyemi93@gmail.com,75
-CSE002,Jane Smith,Computer Science,CSE102,A,08010000002,solaopeyemi93@gmail.com,88
-CSE002,Jane Smith,Computer Science,CSE103,B,08010000002,solaopeyemi93@gmail.com,79
-CSE002,Jane Smith,Computer Science,CSE104,A,08010000002,solaopeyemi93@gmail.com,91
-CSE002,Jane Smith,Computer Science,CSE105,C,08010000002,solaopeyemi93@gmail.com,66
+CSE002,Jane Smith,Computer Science,CSE101,B,08010000002,solaopeyemi93@gmail.com,3,75
+CSE002,Jane Smith,Computer Science,CSE102,A,08010000002,solaopeyemi93@gmail.com,3,88
+CSE002,Jane Smith,Computer Science,CSE103,B,08010000002,solaopeyemi93@gmail.com,3,79
+CSE002,Jane Smith,Computer Science,CSE104,A,08010000002,solaopeyemi93@gmail.com,3,91
+CSE002,Jane Smith,Computer Science,CSE105,C,08010000002,solaopeyemi93@gmail.com,3,66
 
-CSE003,Michael Johnson,Software Engineering,CSE201,A,08010000003,solaopeyemi93@gmail.com,92
-CSE003,Michael Johnson,Software Engineering,CSE202,B,08010000003,solaopeyemi93@gmail.com,80
-CSE003,Michael Johnson,Software Engineering,CSE203,A,08010000003,solaopeyemi93@gmail.com,87
-CSE003,Michael Johnson,Software Engineering,CSE204,B,08010000003,solaopeyemi93@gmail.com,76
-CSE003,Michael Johnson,Software Engineering,CSE205,A,08010000003,solaopeyemi93@gmail.com,89
+CSE003,Michael Johnson,Software Engineering,CSE201,A,08010000003,solaopeyemi93@gmail.com,3,92
+CSE003,Michael Johnson,Software Engineering,CSE202,B,08010000003,solaopeyemi93@gmail.com,3,80
+CSE003,Michael Johnson,Software Engineering,CSE203,A,08010000003,solaopeyemi93@gmail.com,3,87
+CSE003,Michael Johnson,Software Engineering,CSE204,B,08010000003,solaopeyemi93@gmail.com,3,76
+CSE003,Michael Johnson,Software Engineering,CSE205,A,08010000003,solaopeyemi93@gmail.com,3,89
 
-CSE004,Emily Davis,Information Technology,ITE101,C,08010000004,solaopeyemi93@gmail.com,65
-CSE004,Emily Davis,Information Technology,ITE102,B,08010000004,solaopeyemi93@gmail.com,72
-CSE004,Emily Davis,Information Technology,ITE103,B,08010000004,solaopeyemi93@gmail.com,70
-CSE004,Emily Davis,Information Technology,ITE104,A,08010000004,solaopeyemi93@gmail.com,85
-CSE004,Emily Davis,Information Technology,ITE105,A,08010000004,solaopeyemi93@gmail.com,88
+CSE004,Emily Davis,Information Technology,ITE101,C,08010000004,solaopeyemi93@gmail.com,3,65
+CSE004,Emily Davis,Information Technology,ITE102,B,08010000004,solaopeyemi93@gmail.com,3,72
+CSE004,Emily Davis,Information Technology,ITE103,B,08010000004,solaopeyemi93@gmail.com,3,70
+CSE004,Emily Davis,Information Technology,ITE104,A,08010000004,solaopeyemi93@gmail.com,3,85
+CSE004,Emily Davis,Information Technology,ITE105,A,08010000004,solaopeyemi93@gmail.com,3,88
 
-CSE005,David Wilson,Computer Science,CSE202,B,08010000005,solaopeyemi93@gmail.com,74
-CSE005,David Wilson,Computer Science,CSE203,C,08010000005,solaopeyemi93@gmail.com,69
-CSE005,David Wilson,Computer Science,CSE204,B,08010000005,solaopeyemi93@gmail.com,77
-CSE005,David Wilson,Computer Science,CSE205,A,08010000005,solaopeyemi93@gmail.com,90
-CSE005,David Wilson,Computer Science,CSE206,A,08010000005,solaopeyemi93@gmail.com,86
+CSE005,David Wilson,Computer Science,CSE202,B,08010000005,solaopeyemi93@gmail.com,3,74
+CSE005,David Wilson,Computer Science,CSE203,C,08010000005,solaopeyemi93@gmail.com,3,69
+CSE005,David Wilson,Computer Science,CSE204,B,08010000005,solaopeyemi93@gmail.com,3,77
+CSE005,David Wilson,Computer Science,CSE205,A,08010000005,solaopeyemi93@gmail.com,3,90
+CSE005,David Wilson,Computer Science,CSE206,A,08010000005,solaopeyemi93@gmail.com,3,86
 
-CSE006,Olivia Brown,Software Engineering,CSE201,A,08010000006,solaopeyemi93@gmail.com,88
-CSE006,Olivia Brown,Software Engineering,CSE202,A,08010000006,solaopeyemi93@gmail.com,91
-CSE006,Olivia Brown,Software Engineering,CSE203,B,08010000006,solaopeyemi93@gmail.com,79
-CSE006,Olivia Brown,Software Engineering,CSE204,B,08010000006,solaopeyemi93@gmail.com,75
-CSE006,Olivia Brown,Software Engineering,CSE205,A,08010000006,solaopeyemi93@gmail.com,87
+CSE006,Olivia Brown,Software Engineering,CSE201,A,08010000006,solaopeyemi93@gmail.com,3,88
+CSE006,Olivia Brown,Software Engineering,CSE202,A,08010000006,solaopeyemi93@gmail.com,3,91
+CSE006,Olivia Brown,Software Engineering,CSE203,B,08010000006,solaopeyemi93@gmail.com,3,79
+CSE006,Olivia Brown,Software Engineering,CSE204,B,08010000006,solaopeyemi93@gmail.com,3,75
+CSE006,Olivia Brown,Software Engineering,CSE205,A,08010000006,solaopeyemi93@gmail.com,3,87
 
-CSE007,Daniel Lee,Information Technology,ITE101,B,08010000007,solaopeyemi93@gmail.com,73
-CSE007,Daniel Lee,Information Technology,ITE102,C,08010000007,solaopeyemi93@gmail.com,68
-CSE007,Daniel Lee,Information Technology,ITE103,B,08010000007,solaopeyemi93@gmail.com,71
-CSE007,Daniel Lee,Information Technology,ITE104,A,08010000007,solaopeyemi93@gmail.com,84
-CSE007,Daniel Lee,Information Technology,ITE105,A,08010000007,solaopeyemi93@gmail.com,86
+CSE007,Daniel Lee,Information Technology,ITE101,B,08010000007,solaopeyemi93@gmail.com,3,73
+CSE007,Daniel Lee,Information Technology,ITE102,C,08010000007,solaopeyemi93@gmail.com,3,68
+CSE007,Daniel Lee,Information Technology,ITE103,B,08010000007,solaopeyemi93@gmail.com,3,71
+CSE007,Daniel Lee,Information Technology,ITE104,A,08010000007,solaopeyemi93@gmail.com,3,84
+CSE007,Daniel Lee,Information Technology,ITE105,A,08010000007,solaopeyemi93@gmail.com,3,86
 
-CSE008,Sophia Martinez,Computer Science,CSE101,A,08010000008,solaopeyemi93@gmail.com,93
-CSE008,Sophia Martinez,Computer Science,CSE102,A,08010000008,solaopeyemi93@gmail.com,89
-CSE008,Sophia Martinez,Computer Science,CSE103,B,08010000008,solaopeyemi93@gmail.com,78
-CSE008,Sophia Martinez,Computer Science,CSE104,A,08010000008,solaopeyemi93@gmail.com,90
-CSE008,Sophia Martinez,Computer Science,CSE105,B,08010000008,solaopeyemi93@gmail.com,76
+CSE008,Sophia Martinez,Computer Science,CSE101,A,08010000008,solaopeyemi93@gmail.com,3,93
+CSE008,Sophia Martinez,Computer Science,CSE102,A,08010000008,solaopeyemi93@gmail.com,3,89
+CSE008,Sophia Martinez,Computer Science,CSE103,B,08010000008,solaopeyemi93@gmail.com,3,78
+CSE008,Sophia Martinez,Computer Science,CSE104,A,08010000008,solaopeyemi93@gmail.com,3,90
+CSE008,Sophia Martinez,Computer Science,CSE105,B,08010000008,solaopeyemi93@gmail.com,3,76
 
-CSE009,James Anderson,Software Engineering,CSE201,B,08010000009,solaopeyemi93@gmail.com,80
-CSE009,James Anderson,Software Engineering,CSE202,C,08010000009,solaopeyemi93@gmail.com,67
-CSE009,James Anderson,Software Engineering,CSE203,B,08010000009,solaopeyemi93@gmail.com,74
-CSE009,James Anderson,Software Engineering,CSE204,A,08010000009,solaopeyemi93@gmail.com,88
-CSE009,James Anderson,Software Engineering,CSE205,A,08010000009,solaopeyemi93@gmail.com,91
+CSE009,James Anderson,Software Engineering,CSE201,B,08010000009,solaopeyemi93@gmail.com,3,80
+CSE009,James Anderson,Software Engineering,CSE202,C,08010000009,solaopeyemi93@gmail.com,3,67
+CSE009,James Anderson,Software Engineering,CSE203,B,08010000009,solaopeyemi93@gmail.com,3,74
+CSE009,James Anderson,Software Engineering,CSE204,A,08010000009,solaopeyemi93@gmail.com,3,88
+CSE009,James Anderson,Software Engineering,CSE205,A,08010000009,solaopeyemi93@gmail.com,3,91
 
-CSE010,Ava Thompson,Information Technology,ITE101,A,08010000010,solaopeyemi93@gmail.com,87
-CSE010,Ava Thompson,Information Technology,ITE102,B,08010000010,solaopeyemi93@gmail.com,75
-CSE010,Ava Thompson,Information Technology,ITE103,A,08010000010,solaopeyemi93@gmail.com,89
-CSE010,Ava Thompson,Information Technology,ITE104,B,08010000010,solaopeyemi93@gmail.com,77
-CSE010,Ava Thompson,Information Technology,ITE105,A,08010000010,solaopeyemi93@gmail.com,90
+CSE010,Ava Thompson,Information Technology,ITE101,A,08010000010,solaopeyemi93@gmail.com,3,87
+CSE010,Ava Thompson,Information Technology,ITE102,B,08010000010,solaopeyemi93@gmail.com,3,75
+CSE010,Ava Thompson,Information Technology,ITE103,A,08010000010,solaopeyemi93@gmail.com,3,89
+CSE010,Ava Thompson,Information Technology,ITE104,B,08010000010,solaopeyemi93@gmail.com,3,77
+CSE010,Ava Thompson,Information Technology,ITE105,A,08010000010,solaopeyemi93@gmail.com,3,90

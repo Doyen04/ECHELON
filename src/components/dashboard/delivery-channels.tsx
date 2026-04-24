@@ -52,7 +52,7 @@ export function DeliveryChannels({ channels }: { channels: ChannelDelivery[] }) 
     return (
         <SectionFrame
             title="Upload Distribution"
-            description="Message volume by channel"
+            description="Student delivery volume by channel"
         >
             {channels.length === 0 ? (
                 <EmptyState
@@ -80,7 +80,7 @@ export function DeliveryChannels({ channels }: { channels: ChannelDelivery[] }) 
                                     </Pie>
                                     <Tooltip
                                         formatter={(value: number, name: string) => [
-                                            `${value} messages`,
+                                            `${value} students`,
                                             name,
                                         ]}
                                     />

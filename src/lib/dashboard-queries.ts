@@ -161,7 +161,7 @@ export async function getDashboardViewData(): Promise<DashboardViewData> {
             }),
             db.notificationLog.findMany({
                 where: { attemptedAt: { gte: sevenDaysAgo } },
-                select: { channel: true, status: true },
+                select: { studentResultId: true, channel: true, status: true },
             }),
             db.auditLog.findMany({
                 take: 4,
@@ -274,16 +274,61 @@ export async function getDashboardViewData(): Promise<DashboardViewData> {
             },
         };
 
+        const channelPriority: Record<"email" | "whatsapp" | "sms", number> = {
+            email: 3,
+            whatsapp: 2,
+            sms: 1,
+        };
+
+        const studentOutcomeMap = new Map<string, {
+            sentChannel: "whatsapp" | "email" | "sms" | null;
+            failedChannel: "whatsapp" | "email" | "sms" | null;
+            hasQueued: boolean;
+        }>();
+
         notificationRows.forEach((row: any) => {
+            const key = String(row.studentResultId ?? "");
             const channel = row.channel.toLowerCase() as "whatsapp" | "email" | "sms";
             const status = row.status.toLowerCase();
 
+            if (!key) {
+                return;
+            }
+
+            const current = studentOutcomeMap.get(key) ?? {
+                sentChannel: null,
+                failedChannel: null,
+                hasQueued: false,
+            };
+
             if (status === "queued") {
-                channelMap[channel].queued += 1;
+                current.hasQueued = true;
             } else if (status === "sent") {
-                channelMap[channel].sent += 1;
+                if (!current.sentChannel || channelPriority[channel] > channelPriority[current.sentChannel]) {
+                    current.sentChannel = channel;
+                }
             } else if (status === "failed") {
-                channelMap[channel].failed += 1;
+                if (!current.failedChannel || channelPriority[channel] > channelPriority[current.failedChannel]) {
+                    current.failedChannel = channel;
+                }
+            }
+
+            studentOutcomeMap.set(key, current);
+        });
+
+        studentOutcomeMap.forEach((outcome) => {
+            if (outcome.sentChannel) {
+                channelMap[outcome.sentChannel].sent += 1;
+                return;
+            }
+
+            if (outcome.failedChannel) {
+                channelMap[outcome.failedChannel].failed += 1;
+                return;
+            }
+
+            if (outcome.hasQueued) {
+                channelMap.email.queued += 1;
             }
         });
 
