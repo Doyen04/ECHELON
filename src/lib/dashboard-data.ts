@@ -51,6 +51,14 @@ export type ActivityLog = {
     time: string;
 };
 
+export type DashboardNotification = {
+    id: string;
+    title: string;
+    detail: string;
+    time: string;
+    level: "warning" | "error" | "info";
+};
+
 export const summaryMetrics: SummaryMetric[] = [
     {
         label: "Pending Result Reviews",

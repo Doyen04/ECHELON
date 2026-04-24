@@ -7,6 +7,7 @@ import {
     type ActivityLog,
     type ApprovalBatch,
     type ChannelDelivery,
+    type DashboardNotification,
     type DispatchQueueEntry,
     type DispatchStatus,
     type Semester,
@@ -21,6 +22,7 @@ export type DashboardViewData = {
     dispatchQueue: DispatchQueueEntry[];
     channelDelivery: ChannelDelivery[];
     recentActivity: ActivityLog[];
+    notifications: DashboardNotification[];
 };
 
 function toSemester(value: string): Semester {
@@ -94,6 +96,7 @@ function fallbackDashboardData(): DashboardViewData {
         dispatchQueue,
         channelDelivery,
         recentActivity,
+        notifications: [],
     };
 }
 
@@ -111,6 +114,7 @@ export async function getDashboardViewData(): Promise<DashboardViewData> {
             dispatchRows,
             notificationRows,
             activityRows,
+            dispatchFailureRows,
         ] = await Promise.all([
             db.studentResult.count({ where: { status: "PENDING" } }),
             db.studentResult.count({ where: { status: "APPROVED" } }),
@@ -161,6 +165,19 @@ export async function getDashboardViewData(): Promise<DashboardViewData> {
                 include: {
                     actor: {
                         select: { name: true },
+                    },
+                },
+            }),
+            db.notificationDispatch.findMany({
+                take: 8,
+                orderBy: { triggeredAt: "desc" },
+                include: {
+                    batch: {
+                        select: { department: true, session: true, semester: true },
+                    },
+                    notificationLogs: {
+                        where: { channel: "EMAIL" },
+                        select: { status: true },
                     },
                 },
             }),
@@ -324,12 +341,40 @@ export async function getDashboardViewData(): Promise<DashboardViewData> {
             }),
         }));
 
+        const notifications: DashboardNotification[] = dispatchFailureRows
+            .map((dispatch: any) => {
+                const emailLogs = dispatch.notificationLogs as Array<{ status: string }>;
+                const attempts = emailLogs.filter((log) => log.status !== "QUEUED").length;
+                const failed = emailLogs.filter((log) => log.status === "FAILED").length;
+
+                if (attempts === 0 || failed === 0) {
+                    return null;
+                }
+
+                const allFailed = failed === attempts;
+                const batchLabel = `${dispatch.batch.department} | ${dispatch.batch.session} | ${dispatch.batch.semester}`;
+
+                return {
+                    id: `dispatch-${dispatch.id}`,
+                    title: allFailed
+                        ? "All email deliveries failed"
+                        : "Some email deliveries failed",
+                    detail: allFailed
+                        ? `${failed}/${attempts} email attempts failed for ${batchLabel}.`
+                        : `${failed}/${attempts} email attempts failed for ${batchLabel}.`,
+                    time: relativeTimeFromNow(dispatch.triggeredAt),
+                    level: allFailed ? "error" : "warning",
+                } satisfies DashboardNotification;
+            })
+            .filter((item: DashboardNotification | null): item is DashboardNotification => Boolean(item));
+
         return {
             summaryMetrics: metrics,
             approvalBatches: approvalRows.length > 0 ? approvalRows : approvalBatches,
             dispatchQueue: dispatchRowsMapped.length > 0 ? dispatchRowsMapped : dispatchQueue,
             channelDelivery: Object.values(channelMap),
             recentActivity: activities.length > 0 ? activities : recentActivity,
+            notifications,
         };
     } catch {
         return fallbackDashboardData();

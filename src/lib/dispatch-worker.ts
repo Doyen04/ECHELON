@@ -11,6 +11,13 @@ type DispatchWorkerResult = {
     channel?: "WHATSAPP" | "EMAIL" | "SMS";
 };
 
+type ProviderSendResult = {
+    ok: boolean;
+    providerMessageId: string | null;
+    status: "SENT" | "DELIVERED" | "FAILED";
+    failureReason?: string;
+};
+
 type ChannelSelection = {
     channel: "WHATSAPP" | "EMAIL" | "SMS";
     destination: string;
@@ -79,30 +86,49 @@ async function sendNotification(
             ok: true,
             providerMessageId: `mock-${Date.now()}`,
             status: "DELIVERED" as const,
-        };
+        } satisfies ProviderSendResult;
     }
 
-    if (channelSelection.channel === "EMAIL" && process.env.RESEND_API_KEY) {
-        const resend = new Resend(process.env.RESEND_API_KEY);
-        await resend.emails.send({
-            from: process.env.RESEND_FROM_EMAIL ?? "Results <noreply@example.edu>",
-            to: channelSelection.destination,
-            subject: `[Result Notification] ${payload.studentName} - ${payload.semester}`,
-            text: `Hello ${payload.parentName}, the results for ${payload.studentName} (${payload.matricNumber}) are ready. View full details: ${payload.portalLink}`,
-        });
+    if (channelSelection.channel === "EMAIL") {
+        if (!process.env.RESEND_API_KEY) {
+            return {
+                ok: false,
+                providerMessageId: null,
+                status: "FAILED",
+                failureReason: "RESEND_API_KEY is not configured.",
+            } satisfies ProviderSendResult;
+        }
 
-        return {
-            ok: true,
-            providerMessageId: `resend-${Date.now()}`,
-            status: "SENT" as const,
-        };
+        try {
+            const resend = new Resend(process.env.RESEND_API_KEY);
+            const response = await resend.emails.send({
+                from: process.env.RESEND_FROM_EMAIL ?? "Results <noreply@example.edu>",
+                to: channelSelection.destination,
+                subject: `[Result Notification] ${payload.studentName} - ${payload.semester}`,
+                text: `Hello ${payload.parentName}, the results for ${payload.studentName} (${payload.matricNumber}) are ready. View full details: ${payload.portalLink}`,
+            });
+
+            return {
+                ok: true,
+                providerMessageId: response?.data?.id ?? `resend-${Date.now()}`,
+                status: "SENT",
+            } satisfies ProviderSendResult;
+        } catch (error) {
+            const message = error instanceof Error ? error.message : "Unknown email provider error.";
+            return {
+                ok: false,
+                providerMessageId: null,
+                status: "FAILED",
+                failureReason: `Email send failed: ${message}`,
+            } satisfies ProviderSendResult;
+        }
     }
 
     return {
         ok: true,
         providerMessageId: `${channelSelection.channel.toLowerCase()}-${Date.now()}`,
         status: "SENT" as const,
-    };
+    } satisfies ProviderSendResult;
 }
 
 async function sendGuardianNotifications(
@@ -153,7 +179,7 @@ async function sendGuardianNotifications(
                 channel: channelSelection.channel,
                 status: sendResult.ok ? sendResult.status : "FAILED",
                 providerMessageId: sendResult.providerMessageId,
-                failureReason: sendResult.ok ? null : "Provider rejected message.",
+                failureReason: sendResult.ok ? null : (sendResult.failureReason ?? "Provider rejected message."),
                 deliveredAt: sendResult.status === "DELIVERED" ? new Date() : null,
             },
         });
@@ -202,68 +228,77 @@ async function markDispatchProgress(dispatchId: string, ok: boolean) {
 export async function processNotifyJob(payload: NotifyJobPayload): Promise<DispatchWorkerResult> {
     const db = prisma as any;
 
-    const studentResult = await db.studentResult.findUnique({
-        where: { id: payload.studentResultId },
-        include: {
-            student: {
-                include: {
-                    guardians: true,
+    try {
+        const studentResult = await db.studentResult.findUnique({
+            where: { id: payload.studentResultId },
+            include: {
+                student: {
+                    include: {
+                        guardians: true,
+                    },
                 },
-            },
-            batch: true,
-        },
-    });
-
-    if (!studentResult) {
-        await markDispatchProgress(payload.dispatchId, false);
-        return { ok: false, message: "Student result not found." };
-    }
-
-    if (studentResult.status !== "APPROVED") {
-        await markDispatchProgress(payload.dispatchId, false);
-        return { ok: false, message: "Result is not approved for dispatch." };
-    }
-
-    const guardians = studentResult.student.guardians as any[];
-
-    if (guardians.length === 0) {
-        await db.notificationLog.create({
-            data: {
-                dispatchId: payload.dispatchId,
-                studentResultId: studentResult.id,
-                studentId: studentResult.studentId,
-                channel: "EMAIL",
-                status: "FAILED",
-                failureReason: "No guardian contact records available.",
+                batch: true,
             },
         });
 
+        if (!studentResult) {
+            await markDispatchProgress(payload.dispatchId, false);
+            return { ok: false, message: "Student result not found." };
+        }
+
+        if (studentResult.status !== "APPROVED") {
+            await markDispatchProgress(payload.dispatchId, false);
+            return { ok: false, message: "Result is not approved for dispatch." };
+        }
+
+        const guardians = studentResult.student.guardians as any[];
+
+        if (guardians.length === 0) {
+            await db.notificationLog.create({
+                data: {
+                    dispatchId: payload.dispatchId,
+                    studentResultId: studentResult.id,
+                    studentId: studentResult.studentId,
+                    channel: "EMAIL",
+                    status: "FAILED",
+                    failureReason: "No guardian contact records available.",
+                },
+            });
+
+            await markDispatchProgress(payload.dispatchId, false);
+            return { ok: false, message: "No guardian contact records available." };
+        }
+
+        const token = await getOrCreatePortalToken(studentResult.id);
+        const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+        const portalLink = `${appUrl}/results/view?token=${token}`;
+
+        let sentCount = 0;
+        let failedCount = 0;
+
+        for (const guardian of guardians) {
+            const result = await sendGuardianNotifications(guardian, {
+                ...studentResult,
+                dispatchId: payload.dispatchId,
+            }, portalLink);
+
+            sentCount += result.sentCount;
+            failedCount += result.failedCount;
+        }
+
+        await markDispatchProgress(payload.dispatchId, sentCount > 0);
+
+        return {
+            ok: sentCount > 0,
+            message: sentCount > 0 ? "Notification processed." : "Notification failed.",
+            channel: sentCount > 0 ? "EMAIL" : undefined,
+        };
+    } catch (error) {
+        const message = error instanceof Error ? error.message : "Unknown dispatch worker error.";
         await markDispatchProgress(payload.dispatchId, false);
-        return { ok: false, message: "No guardian contact records available." };
+        return {
+            ok: false,
+            message: `Dispatch worker failed: ${message}`,
+        };
     }
-
-    const token = await getOrCreatePortalToken(studentResult.id);
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
-    const portalLink = `${appUrl}/results/view?token=${token}`;
-
-    let sentCount = 0;
-    let failedCount = 0;
-
-    for (const guardian of guardians) {
-        const result = await sendGuardianNotifications(guardian, {
-            ...studentResult,
-            dispatchId: payload.dispatchId,
-        }, portalLink);
-
-        sentCount += result.sentCount;
-        failedCount += result.failedCount;
-    }
-
-    await markDispatchProgress(payload.dispatchId, sentCount > 0);
-
-    return {
-        ok: sentCount > 0,
-        message: sentCount > 0 ? "Notification processed." : "Notification failed.",
-        channel: sentCount > 0 ? "EMAIL" : undefined,
-    };
 }

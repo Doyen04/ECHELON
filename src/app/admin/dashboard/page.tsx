@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
+import { AlertTriangle, ArrowRight } from "lucide-react";
 
 import { ApprovalPipelineTable, DeliveryChannels, DispatchQueuePanel, RecentActivity, SummaryMetrics } from "@/components/dashboard";
+import { NotificationPanelTrigger } from "@/components/dashboard/notification-panel-trigger";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/ui/page-header";
 import { getDashboardViewData } from "@/lib/dashboard-queries";
@@ -26,17 +28,32 @@ export default async function DashboardPage() {
                         <span className="text-(--text-muted)">First Semester</span>
                     </div>
                 }
-                action={
+                action={<NotificationPanelTrigger notifications={data.notifications} />}
+            />
+
+            <div className="mx-auto w-full max-w-7xl space-y-8 px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
+                <div className="flex justify-end">
                     <Button asChild className="rounded-full shadow-sm">
                         <Link href="/admin/batches/upload" className="inline-flex items-center gap-2">
                             Upload Batch
                             <ArrowRight className="h-4 w-4" />
                         </Link>
                     </Button>
-                }
-            />
+                </div>
 
-            <div className="mx-auto w-full max-w-7xl space-y-8 px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
+                {data.notifications.length > 0 ? (
+                    <Alert variant="destructive" className="dashboard-section">
+                        <AlertTriangle className="h-4 w-4" />
+                        <AlertTitle>Email delivery attention required</AlertTitle>
+                        <AlertDescription>
+                            <p>{data.notifications[0].detail}</p>
+                            {data.notifications.length > 1 ? (
+                                <p className="mt-1">+{data.notifications.length - 1} more alert{data.notifications.length - 1 > 1 ? "s" : ""} in notifications panel.</p>
+                            ) : null}
+                        </AlertDescription>
+                    </Alert>
+                ) : null}
+
                 <SummaryMetrics metrics={data.summaryMetrics} />
 
                 <div className="grid gap-8 xl:grid-cols-[1.3fr_.7fr]">
