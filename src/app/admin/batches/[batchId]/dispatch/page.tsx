@@ -129,7 +129,7 @@ export default async function BatchDispatchPage({ params }: BatchDispatchPagePro
                     {batch.dispatches.length > 0 ? (
                         <div className="space-y-3 p-6 sm:p-8">
                             {batch.dispatches.map((dispatch: any) => {
-                                const sentCount = dispatch.notificationLogs.filter((log: any) => log.status === "SENT" || log.status === "DELIVERED").length;
+                                const sentCount = dispatch.notificationLogs.filter((log: any) => log.status === "SENT" ).length;
                                 const failedCount = dispatch.notificationLogs.filter((log: any) => log.status === "FAILED").length;
 
                                 return (

@@ -1,8 +1,7 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import {
     UploadCloud,
     FileType,
@@ -165,7 +164,6 @@ function validateAndBuildPreview(text: string): ValidationState {
 }
 
 export default function BatchUploadPage() {
-    const router = useRouter();
     const [file, setFile] = useState<File | null>(null);
     const [isDragOver, setIsDragOver] = useState(false);
     const [showPreview, setShowPreview] = useState(false);
@@ -201,22 +199,6 @@ export default function BatchUploadPage() {
     const hasValidationErrors = useMemo(() => {
         return Boolean(validation && validation.errors.length > 0);
     }, [validation]);
-
-    useEffect(() => {
-        if (!submitSuccess?.autoDispatched) {
-            return;
-        }
-
-        const destination = submitSuccess.dispatchId
-            ? `/admin/delivery/${submitSuccess.dispatchId}`
-            : `/admin/batches/${submitSuccess.batchId}`;
-
-        const timeoutId = window.setTimeout(() => {
-            router.push(destination);
-        }, 1200);
-
-        return () => window.clearTimeout(timeoutId);
-    }, [router, submitSuccess]);
 
     const resetUploadState = () => {
         setFile(null);
@@ -565,10 +547,30 @@ export default function BatchUploadPage() {
 
                         {submitSuccess ? (
                             <div className="rounded-lg border border-status-success/40 bg-status-success/10 p-4 text-sm text-status-success">
-                                Upload complete for {submitSuccess.students} students. Batch ID: {submitSuccess.batchId}
-                                {submitSuccess.autoDispatched && submitSuccess.dispatchId
-                                    ? ` | Dispatch ID: ${submitSuccess.dispatchId}`
-                                    : " | Dispatch not started (batch is pending review)."}
+                                <p>
+                                    Upload complete for {submitSuccess.students} students. Batch ID: {submitSuccess.batchId}
+                                </p>
+                                <p className="mt-1">
+                                    {submitSuccess.autoDispatched && submitSuccess.dispatchId
+                                        ? `Dispatch ID: ${submitSuccess.dispatchId}. Email delivery status is now tracked on the dashboard notifications panel.`
+                                        : "Dispatch not started (batch is pending review)."}
+                                </p>
+                                <div className="mt-3 flex flex-wrap gap-2">
+                                    <Link
+                                        href="/admin/dashboard"
+                                        className="inline-flex items-center rounded-md border border-status-success/40 px-3 py-1.5 text-xs font-medium text-status-success hover:bg-status-success/10"
+                                    >
+                                        View Dashboard Notifications
+                                    </Link>
+                                    {submitSuccess.dispatchId ? (
+                                        <Link
+                                            href={`/admin/delivery/${submitSuccess.dispatchId}`}
+                                            className="inline-flex items-center rounded-md border border-status-success/40 px-3 py-1.5 text-xs font-medium text-status-success hover:bg-status-success/10"
+                                        >
+                                            Open Dispatch
+                                        </Link>
+                                    ) : null}
+                                </div>
                             </div>
                         ) : null}
 
@@ -586,7 +588,7 @@ export default function BatchUploadPage() {
                                 }
                                 className="inline-flex items-center gap-2 rounded-md bg-brand px-5 py-2.5 text-sm font-medium text-white shadow-sm hover:bg-brand-hover transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                             >
-                                {isSubmitting ? "Uploading..." : "Confirm Upload"} <ArrowRight className="h-4 w-4" />
+                                {isSubmitting ? "Uploading..." : "Upload"} <ArrowRight className="h-4 w-4" />
                             </button>
                         </div>
                     </div>

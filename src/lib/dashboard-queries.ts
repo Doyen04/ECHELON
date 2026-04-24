@@ -121,13 +121,13 @@ export async function getDashboardViewData(): Promise<DashboardViewData> {
             db.notificationLog.count({
                 where: {
                     attemptedAt: { gte: sevenDaysAgo },
-                    status: { in: ["SENT", "DELIVERED", "FAILED"] },
+                    status: { in: ["SENT", "FAILED"] },
                 },
             }),
             db.notificationLog.count({
                 where: {
                     attemptedAt: { gte: sevenDaysAgo },
-                    status: "DELIVERED",
+                    status: "SENT",
                 },
             }),
             db.resultBatch.findMany({
@@ -263,7 +263,7 @@ export async function getDashboardViewData(): Promise<DashboardViewData> {
                     (log: any) => log.status !== "QUEUED",
                 ).length;
                 const successful = dispatch.notificationLogs.filter(
-                    (log: any) => log.status === "SENT" || log.status === "DELIVERED",
+                    (log: any) => log.status === "SENT",
                 ).length;
                 const successRate =
                     attempted === 0

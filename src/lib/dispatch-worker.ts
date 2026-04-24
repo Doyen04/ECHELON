@@ -14,7 +14,7 @@ type DispatchWorkerResult = {
 type ProviderSendResult = {
     ok: boolean;
     providerMessageId: string | null;
-    status: "SENT" | "DELIVERED" | "FAILED";
+    status: "SENT" | "FAILED";
     failureReason?: string;
 };
 
@@ -79,16 +79,7 @@ async function sendNotification(
         portalLink: string;
     },
 ) {
-    const notificationMode = process.env.NOTIFICATION_ENV ?? "mock";
-
-    if (notificationMode === "mock") {
-        return {
-            ok: true,
-            providerMessageId: `mock-${Date.now()}`,
-            status: "DELIVERED" as const,
-        } satisfies ProviderSendResult;
-    }
-
+    
     if (channelSelection.channel === "EMAIL") {
         if (!process.env.RESEND_API_KEY) {
             return {
@@ -107,7 +98,7 @@ async function sendNotification(
                 subject: `[Result Notification] ${payload.studentName} - ${payload.semester}`,
                 text: `Hello ${payload.parentName}, the results for ${payload.studentName} (${payload.matricNumber}) are ready. View full details: ${payload.portalLink}`,
             });
-
+            console.log(`Email sent successfully: ${response}, ${resend}`);
             return {
                 ok: true,
                 providerMessageId: response?.data?.id ?? `resend-${Date.now()}`,
@@ -180,7 +171,7 @@ async function sendGuardianNotifications(
                 status: sendResult.ok ? sendResult.status : "FAILED",
                 providerMessageId: sendResult.providerMessageId,
                 failureReason: sendResult.ok ? null : (sendResult.failureReason ?? "Provider rejected message."),
-                deliveredAt: sendResult.status === "DELIVERED" ? new Date() : null,
+                deliveredAt: sendResult.status === "SENT" ? new Date() : null,
             },
         });
     }
