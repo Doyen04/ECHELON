@@ -24,7 +24,7 @@ export async function sendWhatsApp(input: WhatsAppSendInput): Promise<WhatsAppSe
     }
 
     const templateName = input.templateName || process.env.WHATSAPP_TEMPLATE_NAME || "result_notification";
-    const languageCode = input.languageCode || process.env.WHATSAPP_TEMPLATE_LANG || "en";
+    const languageCode = input.languageCode || process.env.WHATSAPP_TEMPLATE_LANG || "en_US";
 
     // Format phone number: remove non-digits, ensure it starts with country code (assuming +234 or similar, but for API it should just be digits like 234...)
     let formattedTo = input.to.replace(/\D/g, "");
@@ -57,7 +57,7 @@ export async function sendWhatsApp(input: WhatsAppSendInput): Promise<WhatsAppSe
     }
 
     try {
-        const url = `https://graph.facebook.com/v19.0/${phoneNumberId}/messages`;
+        const url = `https://graph.facebook.com/v25.0/${phoneNumberId}/messages`;
         const response = await fetch(url, {
             method: "POST",
             headers: {
@@ -70,6 +70,7 @@ export async function sendWhatsApp(input: WhatsAppSendInput): Promise<WhatsAppSe
         const data = await response.json();
 
         if (!response.ok) {
+            console.error("[WhatsAppProvider] API Error:", JSON.stringify(data, null, 2));
             return {
                 ok: false,
                 providerMessageId: null,
@@ -82,6 +83,7 @@ export async function sendWhatsApp(input: WhatsAppSendInput): Promise<WhatsAppSe
             providerMessageId: data.messages?.[0]?.id || `wa-${Date.now()}`,
         };
     } catch (error) {
+        console.error("[WhatsAppProvider] Network/Unknown Error:", error);
         const message = error instanceof Error ? error.message : "Unknown network error.";
         return {
             ok: false,

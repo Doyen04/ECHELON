@@ -1,0 +1,30 @@
+matric_number,student_name,department,course_code,grade,parent_phone,parent_email,course_unit,score
+22010306001,Olawumi Samuel,Computer Science,CSE101,A,07068090383,samuelolawumi65@gmail.com,3,85
+22010306001,Olawumi Samuel,Computer Science,CSE102,B,07068090383,samuelolawumi65@gmail.com,3,78
+22010306001,Olawumi Samuel,Computer Science,CSE103,A,07068090383,samuelolawumi65@gmail.com,3,90
+22010306001,Olawumi Samuel,Computer Science,CSE104,C,07068090383,samuelolawumi65@gmail.com,3,65
+22010306001,Olawumi Samuel,Computer Science,CSE105,B,07068090383,samuelolawumi65@gmail.com,3,74
+
+22010306002,Opayemi Temilade,Information Technology,CSE101,B,07068090383,samuelolawumi65@gmail.com,3,75
+22010306002,Opayemi Temilade,Information Technology,CSE102,A,07068090383,samuelolawumi65@gmail.com,3,88
+22010306002,Opayemi Temilade,Information Technology,CSE103,B,07068090383,samuelolawumi65@gmail.com,3,79
+22010306002,Opayemi Temilade,Information Technology,CSE104,A,07068090383,samuelolawumi65@gmail.com,3,91
+22010306002,Opayemi Temilade,Information Technology,CSE105,C,07068090383,samuelolawumi65@gmail.com,3,66
+
+22010306003,Opeyemi Tope,Software Engineering,CSE201,A,07068090383,samuelolawumi65@gmail.com,3,92
+22010306003,Opeyemi Tope,Software Engineering,CSE202,B,07068090383,samuelolawumi65@gmail.com,3,80
+22010306003,Opeyemi Tope,Software Engineering,CSE203,A,07068090383,samuelolawumi65@gmail.com,3,87
+22010306003,Opeyemi Tope,Software Engineering,CSE204,B,07068090383,samuelolawumi65@gmail.com,3,76
+22010306003,Opeyemi Tope,Software Engineering,CSE205,A,07068090383,samuelolawumi65@gmail.com,3,89
+
+22010306004,Fasuyi Olayinka,Computer Science,CSE101,C,07068090383,samuelolawumi65@gmail.com,3,65
+22010306004,Fasuyi Olayinka,Computer Science,CSE102,B,07068090383,samuelolawumi65@gmail.com,3,72
+22010306004,Fasuyi Olayinka,Computer Science,CSE103,B,07068090383,samuelolawumi65@gmail.com,3,70
+22010306004,Fasuyi Olayinka,Computer Science,CSE104,A,07068090383,samuelolawumi65@gmail.com,3,85
+22010306004,Fasuyi Olayinka,Computer Science,CSE105,A,07068090383,samuelolawumi65@gmail.com,3,88
+
+22010306005,Adebayo Faith,Information Technology,CSE202,B,07068090383,samuelolawumi65@gmail.com,3,74
+22010306005,Adebayo Faith,Information Technology,CSE203,C,07068090383,samuelolawumi65@gmail.com,3,69
+22010306005,Adebayo Faith,Information Technology,CSE204,B,07068090383,samuelolawumi65@gmail.com,3,77
+22010306005,Adebayo Faith,Information Technology,CSE205,A,07068090383,samuelolawumi65@gmail.com,3,90
+22010306005,Adebayo Faith,Information Technology,CSE206,A,07068090383,samuelolawumi65@gmail.com,3,86

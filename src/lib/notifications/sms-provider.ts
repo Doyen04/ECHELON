@@ -47,6 +47,7 @@ async function sendViaSendChamp(input: SmsSendInput): Promise<SmsSendResult> {
         const data = await response.json();
 
         if (!response.ok || data.status !== "success") {
+            console.error("[SendChamp] API Error:", JSON.stringify(data, null, 2));
             return {
                 ok: false,
                 providerMessageId: null,
@@ -61,6 +62,7 @@ async function sendViaSendChamp(input: SmsSendInput): Promise<SmsSendResult> {
             usedProvider: "SendChamp",
         };
     } catch (error) {
+        console.error("[SendChamp] Network/Unknown Error:", error);
         const message = error instanceof Error ? error.message : "Unknown network error.";
         return {
             ok: false,
@@ -116,6 +118,7 @@ async function sendViaTwilio(input: SmsSendInput): Promise<SmsSendResult> {
         const data = await response.json();
 
         if (!response.ok) {
+            console.error("[Twilio] API Error:", JSON.stringify(data, null, 2));
             return {
                 ok: false,
                 providerMessageId: null,
@@ -130,6 +133,7 @@ async function sendViaTwilio(input: SmsSendInput): Promise<SmsSendResult> {
             usedProvider: "Twilio",
         };
     } catch (error) {
+        console.error("[Twilio] Network/Unknown Error:", error);
         const message = error instanceof Error ? error.message : "Unknown network error.";
         return {
             ok: false,

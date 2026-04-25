@@ -49,6 +49,9 @@ function getTransporter(): nodemailer.Transporter {
         port,
         secure,
         auth,
+        tls: {
+            rejectUnauthorized: false,
+        },
     });
 
     return cachedTransporter;
@@ -71,6 +74,7 @@ export async function sendEmail(input: EmailSendInput): Promise<EmailSendResult>
             providerMessageId: info.messageId ?? `smtp-${Date.now()}`,
         };
     } catch (error) {
+        console.error("[EmailProvider] Failed to send email:", error);
         const message = error instanceof Error ? error.message : "Unknown SMTP provider error.";
         return {
             ok: false,
