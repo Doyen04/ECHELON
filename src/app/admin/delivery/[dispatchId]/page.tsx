@@ -83,8 +83,12 @@ export default async function DeliveryLogPage({ params }: DeliveryPageProps) {
             : [],
     ]);
 
-    const studentById = new Map(students.map((student: any) => [student.id, student]));
-    const guardianById = new Map(guardians.map((guardian: any) => [guardian.id, guardian]));
+    const studentById = new Map<string, { id: string; fullName: string; matricNumber: string }>(
+        students.map((student: any) => [student.id, student])
+    );
+    const guardianById = new Map<string, { id: string; name: string }>(
+        guardians.map((guardian: any) => [guardian.id, guardian])
+    );
 
     const total = dispatch.totalCount ?? notificationLogs.length;
     const sent = dispatch.sentCount ?? 0;

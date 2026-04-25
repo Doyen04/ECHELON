@@ -280,6 +280,12 @@ export function parseStudentRowsFromCsv(csvText: string, fallbackDepartment: str
     return aggregateStudentRows(parsedRows);
 }
 
+/** Returns true when a string looks like a Nigerian university matric number. */
+function isLikelyMatric(s: string): boolean {
+    if (/^\d{8,14}$/.test(s)) return true;
+    return /^[A-Z0-9]{1,8}(\/[A-Z0-9]{1,8}){1,5}$/i.test(s);
+}
+
 function parseStudentHeaderLine(line: string, fallbackDepartment: string) {
     const matricMatch = line.match(/(?:matric(?:ulation)?\s*(?:no|number)?\s*[:\-]?\s*|^)([A-Z0-9./-]{5,})/i);
     const nameMatch = line.match(/(?:name|student)\s*[:\-]\s*([A-Za-z][A-Za-z .'-]{2,})/i);
@@ -360,37 +366,54 @@ function extractCourseCodesFromTable(lines: string[]): string[] {
 }
 
 function parseStudentRowsFromTabularPdf(lines: string[], fallbackDepartment: string): StudentImportRow[] {
-    const departmentLine = lines.find((line) => /^DEPARTMENT\s*:/i.test(line));
-    const collegeLine = lines.find((line) => /^COLLEGE\s+OF\s+/i.test(line));
-    const levelLine = lines.find((line) => /^LEVEL\s*:/i.test(line));
+    const departmentLine = lines.find((l) => /^(?:DEPARTMENT|DEPT)\s*:/i.test(l));
+    const collegeLine = lines.find((l) => /^(?:COLLEGE|FACULTY|SCHOOL)\s+OF\s+/i.test(l) || /^(?:FACULTY|SCHOOL)\s*:/i.test(l));
+    const levelLine = lines.find((l) => /^LEVEL\s*:/i.test(l));
     const courseCodes = extractCourseCodesFromTable(lines);
 
-    const department = (departmentLine?.replace(/^DEPARTMENT\s*:/i, "").trim() ?? fallbackDepartment) || fallbackDepartment;
+    const department = (departmentLine?.replace(/^(?:DEPARTMENT|DEPT)\s*:/i, "").trim() ?? fallbackDepartment) || fallbackDepartment;
     const faculty = (collegeLine?.trim() ?? "General") || "General";
     const level = Number((levelLine?.replace(/^LEVEL\s*:/i, "").trim() ?? "100")) || 100;
 
     const students: StudentImportRow[] = [];
 
+    // Pattern A: <serial#>  <matric>  <name…>  (serial is 1-4 digits)
+    const ROW_A = /^(\d{1,4})\s+([A-Z0-9][A-Z0-9.\/\-]{3,})\s+([A-Za-z].+)$/i;
+    // Pattern B: <matric>  <name>  (no leading serial)
+    const ROW_B = /^([A-Z0-9][A-Z0-9.\/\-]{4,})\s+([A-Za-z][A-Za-z .',\-]{5,})$/i;
+
+    const isNextStudent = (l: string) =>
+        ROW_A.test(l) || (ROW_B.test(l) && isLikelyMatric(l.split(/\s+/)[0]));
+
     for (let index = 0; index < lines.length; index += 1) {
         const line = lines[index];
-        const headMatch = line.match(/^(\d+)\s+(\d{8,})\s+(.+)$/);
-        if (!headMatch) {
-            continue;
+
+        let matricNumber: string | null = null;
+        let initialName = "";
+
+        const matchA = line.match(ROW_A);
+        if (matchA && isLikelyMatric(matchA[2])) {
+            matricNumber = matchA[2].trim().toUpperCase();
+            initialName = matchA[3].trim();
+        } else {
+            const matchB = line.match(ROW_B);
+            if (matchB && isLikelyMatric(matchB[1])) {
+                matricNumber = matchB[1].trim().toUpperCase();
+                initialName = matchB[2].trim();
+            }
         }
 
-        const matricNumber = headMatch[2].trim();
-        const initialName = headMatch[3].trim();
+        if (!matricNumber) continue;
 
         const segmentLines = [line];
         for (let cursor = index + 1; cursor < lines.length; cursor += 1) {
             const nextLine = lines[cursor];
-            if (/^(\d+)\s+(\d{8,})\s+/.test(nextLine)) {
-                break;
-            }
-            if (/^page\s+\d+/i.test(nextLine) || /^system\s+date/i.test(nextLine) || /^--\s*\d+\s+of\s+\d+\s*--$/i.test(nextLine)) {
-                break;
-            }
-
+            if (isNextStudent(nextLine)) break;
+            if (
+                /^page\s+\d+/i.test(nextLine) ||
+                /^system\s+date/i.test(nextLine) ||
+                /^--\s*\d+\s+of\s+\d+\s*--$/i.test(nextLine)
+            ) break;
             segmentLines.push(nextLine);
         }
 
@@ -400,14 +423,13 @@ function parseStudentRowsFromTabularPdf(lines: string[], fallbackDepartment: str
         const continuationName = segmentLines[1]?.match(/^([A-Za-z][A-Za-z .'-]{1,})\s+\d/)?.[1]?.trim();
         const studentName = continuationName ? `${initialName} ${continuationName}` : initialName;
 
-        const scoreGradePairs = Array.from(merged.matchAll(/\b(\d{2,3})\s+([A-FP])\b/g)).map((match) => ({
-            grade: match[2].toUpperCase(),
-            score: Number(match[1]),
+        const scoreGradePairs = Array.from(merged.matchAll(/\b(\d{2,3})\s+([A-FP])\b/g)).map((m) => ({
+            grade: m[2].toUpperCase(),
+            score: Number(m[1]),
         }));
-
-        const gradeScorePairs = Array.from(merged.matchAll(/\b([A-FP])\s+(\d{2,3})\b/g)).map((match) => ({
-            grade: match[1].toUpperCase(),
-            score: Number(match[2]),
+        const gradeScorePairs = Array.from(merged.matchAll(/\b([A-FP])\s+(\d{2,3})\b/g)).map((m) => ({
+            grade: m[1].toUpperCase(),
+            score: Number(m[2]),
         }));
 
         const orderedPairs =
@@ -416,19 +438,17 @@ function parseStudentRowsFromTabularPdf(lines: string[], fallbackDepartment: str
                 : gradeScorePairs;
 
         const limitedPairs = courseCodes.length > 0 ? orderedPairs.slice(0, courseCodes.length) : orderedPairs;
-        const courses = (courseCodes.length > 0 ? courseCodes : limitedPairs.map((_, i) => `CRS${String(i + 1).padStart(3, "0")}`)).map((code, idx) => {
+        const courses = (
+            courseCodes.length > 0
+                ? courseCodes
+                : limitedPairs.map((_, i) => `CRS${String(i + 1).padStart(3, "0")}`)
+        ).map((code, idx) => {
             const pair = limitedPairs[idx];
-            return {
-                code,
-                title: "Imported From PDF",
-                unit: 0,
-                grade: pair?.grade ?? "N/A",
-                score: pair?.score ?? null,
-            };
+            return { code, title: "Imported From PDF", unit: 0, grade: pair?.grade ?? "N/A", score: pair?.score ?? null };
         });
 
-        const gpaValues = (merged.match(/\b\d\.\d{1,2}\b/g) ?? []).map((value) => Number(value));
-        const gpa = gpaValues.length >= 2 ? gpaValues[gpaValues.length - 2] : gpaValues[0] ?? 0;
+        const gpaValues = (merged.match(/\b\d\.\d{1,2}\b/g) ?? []).map(Number);
+        const gpa = gpaValues.length >= 2 ? gpaValues[gpaValues.length - 2] : (gpaValues[0] ?? 0);
         const cgpa = gpaValues.length > 0 ? gpaValues[gpaValues.length - 1] : null;
 
         students.push({
@@ -445,38 +465,147 @@ function parseStudentRowsFromTabularPdf(lines: string[], fallbackDepartment: str
             relationship: "Parent",
             courses: courses.length > 0
                 ? courses
-                : [
-                    {
-                        code: "GEN101",
-                        title: "Imported From PDF",
-                        unit: 0,
-                        grade: "N/A",
-                        score: null,
-                    },
-                ],
+                : [{ code: "GEN101", title: "Imported From PDF", unit: 0, grade: "N/A", score: null }],
         });
     }
 
     return students;
 }
 
+/**
+ * Handles PDFs where each student's data is presented as key-value pairs on
+ * separate lines (e.g. "Matric No: 2019/CS/001", "Name: John Doe", …).
+ * Also handles a bare matric token on one line followed by the name on the next.
+ */
+function parseStudentRowsFromKeyValuePdf(lines: string[], fallbackDepartment: string): StudentImportRow[] {
+    const students: StudentImportRow[] = [];
+
+    let matric: string | null = null;
+    let name: string | null = null;
+    let dept = fallbackDepartment;
+    let fac = "General";
+    let lvl = 100;
+    let gpa = 0;
+    let cgpa: number | null = null;
+    let courses: Array<{ code: string; title: string; unit: number; grade: string; score: number | null }> = [];
+
+    const commit = () => {
+        if (!matric || !name) return;
+        const computedGpa = calculateGpaFromCourses(courses);
+        students.push({
+            matricNumber: matric,
+            studentName: name,
+            department: dept,
+            faculty: fac,
+            level: lvl,
+            gpa: computedGpa ?? gpa,
+            cgpa,
+            parentName: null,
+            parentEmail: null,
+            parentPhone: null,
+            relationship: "Parent",
+            courses: courses.length > 0
+                ? courses
+                : [{ code: "GEN101", title: "Imported From PDF", unit: 0, grade: "N/A", score: null }],
+        });
+        matric = null; name = null;
+        dept = fallbackDepartment; fac = "General"; lvl = 100; gpa = 0; cgpa = null; courses = [];
+    };
+
+    for (let i = 0; i < lines.length; i += 1) {
+        const line = lines[i];
+
+        // "Matric No: ..." / "Matric Number: ..."
+        const matricKV = line.match(/^matric(?:ulation)?\s*(?:no|num(?:ber)?)?\s*[:\-]\s*(.+)$/i);
+        if (matricKV) { commit(); matric = matricKV[1].trim().toUpperCase(); continue; }
+
+        // "Name: ..." / "Student Name: ..." / "Full Name: ..."
+        const nameKV = line.match(/^(?:(?:student|full)\s+)?name\s*[:\-]\s*(.+)$/i);
+        if (nameKV) { name = nameKV[1].trim(); continue; }
+
+        // "Department: ..." / "Dept: ..."
+        const deptKV = line.match(/^(?:department|dept)\s*[:\-]\s*(.+)$/i);
+        if (deptKV) { dept = deptKV[1].trim() || fallbackDepartment; continue; }
+
+        // "Faculty: ..." / "School: ..." / "College: ..."
+        const facKV = line.match(/^(?:faculty|school|college)(?:\s+of\s+.+)?\s*[:\-]\s*(.+)$/i);
+        if (facKV) { fac = facKV[1].trim() || "General"; continue; }
+
+        // "Level: 300"
+        const levelKV = line.match(/^(?:level|yr|year)\s*[:\-]?\s*(\d{2,3})/i);
+        if (levelKV) { lvl = Number(levelKV[1]) || 100; continue; }
+
+        // CGPA (must come before GPA check to avoid partial match)
+        const cgpaKV = line.match(/\bC\.?GPA\s*[:\-]?\s*(\d(?:\.\d{1,2})?)\b/i);
+        if (cgpaKV) { cgpa = Number(cgpaKV[1]); }
+
+        if (!line.toUpperCase().includes("CGPA") && !line.toUpperCase().includes("C.GPA")) {
+            const gpaKV = line.match(/\bGPA\s*[:\-]?\s*(\d(?:\.\d{1,2})?)\b/i);
+            if (gpaKV) { gpa = Number(gpaKV[1]); }
+        }
+
+        // Bare matric token on its own line → peek at next line for the name
+        const bare = line.match(/^([A-Z0-9][A-Z0-9.\/\-]{4,}[A-Z0-9])$/i);
+        if (bare && isLikelyMatric(bare[1])) {
+            commit();
+            matric = bare[1].toUpperCase();
+            const nextLine = lines[i + 1] ?? "";
+            if (/^[A-Za-z][A-Za-z .',\-]{5,}$/.test(nextLine)) { name = nextLine.trim(); i += 1; }
+            continue;
+        }
+
+        // Matric + name on the same line with no keyword
+        const combo = line.match(/^([A-Z0-9][A-Z0-9.\/\-]{4,})\s+([A-Za-z][A-Za-z .',\-]{5,})$/i);
+        if (combo && isLikelyMatric(combo[1])) {
+            commit();
+            matric = combo[1].toUpperCase();
+            name = combo[2].trim();
+            continue;
+        }
+
+        // If we have a pending matric but no name yet, see if this line IS the name
+        if (matric && !name && /^[A-Za-z][A-Za-z .',\-]{5,}$/.test(line)) {
+            name = line.trim();
+            continue;
+        }
+
+        // Course line (only once a student record is open)
+        if (matric) {
+            const course = parseCourseLine(line);
+            if (course) { courses.push(course); }
+        }
+    }
+
+    commit();
+    return students;
+}
+
 export async function parseStudentRowsFromPdf(pdfBuffer: Buffer, fallbackDepartment: string): Promise<StudentImportRow[]> {
-    const pdfParseModule = await import("pdf-parse");
-    const ParserClass = pdfParseModule.PDFParse;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const pdfParseModule: any = await import("pdf-parse");
+    // Handle both direct named export and webpack default-wrapping
+    const ParserClass = pdfParseModule.PDFParse ?? pdfParseModule.default?.PDFParse;
+    if (!ParserClass) {
+        throw new Error("pdf-parse module did not expose PDFParse class");
+    }
     const parser = new ParserClass({ data: Buffer.from(pdfBuffer) });
     const parsed = await parser.getText();
     await parser.destroy();
 
-    const lines = parsed.text
+    const lines = String(parsed.text)
         .split(/\r?\n/)
-        .map((line) => line.trim())
-        .filter((line) => line.length > 0);
+        .map((line: string) => line.trim())
+        .filter((line: string) => line.length > 0);
 
+    // Strategy 1: class result sheet / tabular layout
     const tableStudents = parseStudentRowsFromTabularPdf(lines, fallbackDepartment);
-    if (tableStudents.length > 0) {
-        return tableStudents;
-    }
+    if (tableStudents.length > 0) return tableStudents;
 
+    // Strategy 2: key-value per-student pages ("Matric No: ...", "Name: ...", …)
+    const kvStudents = parseStudentRowsFromKeyValuePdf(lines, fallbackDepartment);
+    if (kvStudents.length > 0) return kvStudents;
+
+    // Strategy 3: original single-line header parser (last resort)
     const students: StudentImportRow[] = [];
     let current: StudentImportRow | null = null;
 
@@ -484,46 +613,22 @@ export async function parseStudentRowsFromPdf(pdfBuffer: Buffer, fallbackDepartm
         const header = parseStudentHeaderLine(line, fallbackDepartment);
         if (header) {
             if (current && current.courses.length === 0) {
-                current.courses.push({
-                    code: "GEN101",
-                    title: "Imported From PDF",
-                    unit: 0,
-                    grade: "N/A",
-                    score: null,
-                });
+                current.courses.push({ code: "GEN101", title: "Imported From PDF", unit: 0, grade: "N/A", score: null });
             }
-
-            current = {
-                ...header,
-                parentName: null,
-                parentEmail: null,
-                parentPhone: null,
-                relationship: "Parent",
-                courses: [],
-            };
+            current = { ...header, parentName: null, parentEmail: null, parentPhone: null, relationship: "Parent", courses: [] };
             students.push(current);
             continue;
         }
 
-        if (!current) {
-            continue;
-        }
+        if (!current) continue;
 
         const course = parseCourseLine(line);
-        if (course) {
-            current.courses.push(course);
-        }
+        if (course) current.courses.push(course);
     }
 
     for (const student of students) {
         if (student.courses.length === 0) {
-            student.courses.push({
-                code: "GEN101",
-                title: "Imported From PDF",
-                unit: 0,
-                grade: "N/A",
-                score: null,
-            });
+            student.courses.push({ code: "GEN101", title: "Imported From PDF", unit: 0, grade: "N/A", score: null });
         }
     }
 

@@ -72,7 +72,10 @@ export async function POST(request: Request) {
         );
     }
 
-    const groupedStudents = await parseStudentRowsFromFile(file, department).catch(() => []);
+    const groupedStudents = await parseStudentRowsFromFile(file, department).catch((err: unknown) => {
+        console.error("[upload] File parse error:", err);
+        return [] as StudentImportRow[];
+    });
 
     if (groupedStudents.length === 0) {
         return NextResponse.json(
