@@ -181,7 +181,6 @@ export async function getDashboardViewData(): Promise<DashboardViewData> {
                         select: { department: true, session: true, semester: true },
                     },
                     notificationLogs: {
-                        where: { channel: "EMAIL" },
                         select: { status: true },
                     },
                 },
@@ -310,9 +309,9 @@ export async function getDashboardViewData(): Promise<DashboardViewData> {
 
         const notifications: DashboardNotification[] = dispatchFailureRows
             .map((dispatch: any) => {
-                const emailLogs = dispatch.notificationLogs as Array<{ status: string }>;
-                const attempts = emailLogs.filter((log) => log.status !== "QUEUED").length;
-                const failed = emailLogs.filter((log) => log.status === "FAILED").length;
+                const logs = dispatch.notificationLogs as Array<{ status: string }>;
+                const attempts = logs.filter((log) => log.status !== "QUEUED").length;
+                const failed = logs.filter((log) => log.status === "FAILED").length;
 
                 if (attempts === 0 || failed === 0) {
                     return null;
@@ -324,11 +323,11 @@ export async function getDashboardViewData(): Promise<DashboardViewData> {
                 return {
                     id: `dispatch-${dispatch.id}`,
                     title: allFailed
-                        ? "All email deliveries failed"
-                        : "Some email deliveries failed",
+                        ? "All deliveries failed"
+                        : "Some deliveries failed",
                     detail: allFailed
-                        ? `${failed}/${attempts} email attempts failed for ${batchLabel}.`
-                        : `${failed}/${attempts} email attempts failed for ${batchLabel}.`,
+                        ? `${failed}/${attempts} attempts failed for ${batchLabel}.`
+                        : `${failed}/${attempts} attempts failed for ${batchLabel}.`,
                     time: relativeTimeFromNow(dispatch.triggeredAt),
                     level: allFailed ? "error" : "warning",
                 } satisfies DashboardNotification;

@@ -2,7 +2,8 @@ import { randomUUID } from "node:crypto";
 
 import { prisma } from "@/lib/db";
 import { sendEmail } from "@/lib/notifications/email-provider";
-
+import { sendWhatsApp } from "@/lib/notifications/whatsapp-provider";
+import { sendSms } from "@/lib/notifications/sms-provider";
 type RetryContact = {
     id: string;
     name: string;
@@ -144,7 +145,6 @@ export async function getFailedSendPreview(dispatchId: string): Promise<FailedSe
         where: {
             dispatchId,
             status: "FAILED",
-            channel: "EMAIL",
         },
         orderBy: { attemptedAt: "desc" },
         select: {
@@ -228,7 +228,7 @@ export async function retryFailedDispatchSends(dispatchId: string): Promise<Retr
     const preview = await getFailedSendPreview(dispatchId);
 
     if (!preview.canRetry) {
-        throw new Error("No failed sends have a resolvable parent email contact for retry.");
+        throw new Error("No failed sends have a resolvable contact for retry.");
     }
 
     const dispatch = await db.notificationDispatch.findUnique({
@@ -251,35 +251,75 @@ export async function retryFailedDispatchSends(dispatchId: string): Promise<Retr
     const retriedLogs: string[] = [];
 
     for (const item of preview.items) {
-        if (!item.guardianEmail || !item.guardianName) {
+        if (!item.guardianName || (!item.guardianEmail && !item.guardianPhone)) {
             continue;
         }
-
         const portalToken = await getOrCreatePortalToken(item.studentResultId);
         const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
         const portalLink = `${appUrl}/results/view?token=${portalToken}`;
 
-        const providerMessageId = await sendRetryEmail({
-            guardianName: item.guardianName,
-            guardianEmail: item.guardianEmail,
-            studentName: item.studentName,
-            matricNumber: item.matricNumber,
-            semesterLabel,
-            portalLink,
-        });
+        let successChannel: "EMAIL" | "WHATSAPP" | "SMS" | null = null;
+        let providerMessageId: string | null = null;
 
-        await db.notificationLog.update({
-            where: { id: item.id },
-            data: {
-                status: "SENT",
-                providerMessageId,
-                failureReason: null,
-                deliveredAt: new Date(),
-                attemptedAt: new Date(),
-            },
-        });
+        // Try Email
+        if (item.guardianEmail && !successChannel) {
+            const emailRes = await sendEmail({
+                to: item.guardianEmail,
+                subject: `[Result Notification] ${item.studentName} - ${semesterLabel}`,
+                text: `Hello ${item.guardianName}, the results for ${item.studentName} (${item.matricNumber}) are ready. View full details: ${portalLink}`,
+            });
+            if (emailRes.ok) {
+                successChannel = "EMAIL";
+                providerMessageId = emailRes.providerMessageId;
+            }
+        }
 
-        retriedLogs.push(item.id);
+        // Try WhatsApp
+        if (item.guardianPhone && !successChannel) {
+            const waRes = await sendWhatsApp({
+                to: item.guardianPhone,
+                templateParams: [item.guardianName, semesterLabel, item.studentName, item.matricNumber, "-", portalLink]
+            });
+            if (waRes.ok) {
+                successChannel = "WHATSAPP";
+                providerMessageId = waRes.providerMessageId;
+            }
+        }
+
+        // Try SMS
+        if (item.guardianPhone && !successChannel) {
+            const smsRes = await sendSms({
+                to: item.guardianPhone,
+                text: `Hello ${item.guardianName}, the ${semesterLabel} results for ${item.studentName} (${item.matricNumber}) are ready. View here: ${portalLink}`,
+            });
+            if (smsRes.ok) {
+                successChannel = "SMS";
+                providerMessageId = smsRes.providerMessageId;
+            }
+        }
+
+        if (successChannel) {
+            await db.notificationLog.update({
+                where: { id: item.id },
+                data: {
+                    status: "SENT",
+                    channel: successChannel,
+                    providerMessageId,
+                    failureReason: null,
+                    deliveredAt: new Date(),
+                    attemptedAt: new Date(),
+                },
+            });
+            retriedLogs.push(item.id);
+        } else {
+            await db.notificationLog.update({
+                where: { id: item.id },
+                data: {
+                    attemptedAt: new Date(),
+                    failureReason: "Retry failed across all available channels.",
+                },
+            });
+        }
     }
 
     // Recalculate the dispatch counters based on current log statuses

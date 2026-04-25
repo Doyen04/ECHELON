@@ -2,6 +2,8 @@ import { randomBytes } from "node:crypto";
 
 import { prisma } from "@/lib/db";
 import { sendEmail } from "@/lib/notifications/email-provider";
+import { sendWhatsApp } from "@/lib/notifications/whatsapp-provider";
+import { sendSms } from "@/lib/notifications/sms-provider";
 import type { NotifyJobPayload } from "@/lib/queue";
 
 type DispatchWorkerResult = {
@@ -27,6 +29,11 @@ function selectChannels(guardian: any): ChannelSelection[] {
 
     if (guardian.email) {
         channels.push({ channel: "EMAIL", destination: guardian.email });
+    }
+
+    if (guardian.phone) {
+        channels.push({ channel: "WHATSAPP", destination: guardian.phone });
+        channels.push({ channel: "SMS", destination: guardian.phone });
     }
 
     return channels;
@@ -72,6 +79,7 @@ async function sendNotification(
         matricNumber: string;
         semester: string;
         portalLink: string;
+        gpa: string;
     },
 ) {
     if (channelSelection.channel === "EMAIL") {
@@ -107,6 +115,71 @@ async function sendNotification(
         }
     }
 
+    if (channelSelection.channel === "WHATSAPP") {
+        try {
+            const response = await sendWhatsApp({
+                to: channelSelection.destination,
+                templateParams: [payload.parentName, payload.semester, payload.studentName, payload.matricNumber, payload.gpa, payload.portalLink]
+            });
+
+            if (!response.ok) {
+                return {
+                    ok: false,
+                    providerMessageId: null,
+                    status: "FAILED",
+                    failureReason: response.failureReason ?? "WhatsApp provider rejected message.",
+                } satisfies ProviderSendResult;
+            }
+
+            return {
+                ok: true,
+                providerMessageId: response.providerMessageId,
+                status: "SENT",
+            } satisfies ProviderSendResult;
+        } catch (error) {
+            const message = error instanceof Error ? error.message : "Unknown WhatsApp provider error.";
+            return {
+                ok: false,
+                providerMessageId: null,
+                status: "FAILED",
+                failureReason: `WhatsApp send failed: ${message}`,
+            } satisfies ProviderSendResult;
+        }
+    }
+
+    if (channelSelection.channel === "SMS") {
+        try {
+            const text = `Hello ${payload.parentName}, the ${payload.semester} results for ${payload.studentName} (${payload.matricNumber}) are ready. View here: ${payload.portalLink}`;
+            const response = await sendSms({
+                to: channelSelection.destination,
+                text,
+            });
+
+            if (!response.ok) {
+                return {
+                    ok: false,
+                    providerMessageId: null,
+                    status: "FAILED",
+                    failureReason: response.failureReason ?? "SMS provider rejected message.",
+                } satisfies ProviderSendResult;
+            }
+
+            return {
+                ok: true,
+                providerMessageId: response.providerMessageId,
+                status: "SENT",
+            } satisfies ProviderSendResult;
+        } catch (error) {
+            const message = error instanceof Error ? error.message : "Unknown SMS provider error.";
+            return {
+                ok: false,
+                providerMessageId: null,
+                status: "FAILED",
+                failureReason: `SMS send failed: ${message}`,
+            } satisfies ProviderSendResult;
+        }
+    }
+
     return {
         ok: false,
         providerMessageId: null,
@@ -122,6 +195,7 @@ async function sendGuardianNotifications(
 ) {
     const db = prisma as any;
     const channelSelections = selectChannels(guardian);
+    
     if (channelSelections.length === 0) {
         await db.notificationLog.create({
             data: {
@@ -144,9 +218,8 @@ async function sendGuardianNotifications(
         };
     }
 
-    let sentCount = 0;
-    let failedCount = 0;
-    let primaryChannel: ChannelSelection | null = null;
+    let finalSendResult: ProviderSendResult | null = null;
+    let successChannel: "EMAIL" | "WHATSAPP" | "SMS" | null = null;
 
     for (const channelSelection of channelSelections) {
         const sendResult = await sendNotification(channelSelection, {
@@ -155,19 +228,10 @@ async function sendGuardianNotifications(
             matricNumber: studentResult.student.matricNumber,
             semester: `${studentResult.batch.session} ${studentResult.batch.semester}`,
             portalLink,
+            gpa: String(studentResult.gpa),
         });
 
-        if (!primaryChannel) {
-            primaryChannel = channelSelection;
-        }
-
-        if (sendResult.ok) {
-            sentCount += 1;
-        } else {
-            failedCount += 1;
-        }
-
-        await prisma.notificationLog.create({
+        await db.notificationLog.create({
             data: {
                 dispatchId: studentResult.dispatchId,
                 studentResultId: studentResult.id,
@@ -180,14 +244,20 @@ async function sendGuardianNotifications(
                 deliveredAt: sendResult.status === "SENT" ? new Date() : null,
             },
         });
+
+        if (sendResult.ok) {
+            finalSendResult = sendResult;
+            successChannel = channelSelection.channel;
+            break; // Stop at the first successful channel
+        }
     }
 
     return {
-        ok: failedCount === 0,
-        channel: primaryChannel,
-        sentCount,
-        failedCount,
-        failureReason: null,
+        ok: !!finalSendResult,
+        channel: successChannel,
+        sentCount: finalSendResult ? 1 : 0,
+        failedCount: finalSendResult ? 0 : 1,
+        failureReason: finalSendResult ? null : "All attempted channels failed.",
     };
 }
 
