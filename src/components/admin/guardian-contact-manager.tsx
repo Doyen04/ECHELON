@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState, useTransition } from "react";
-import { Edit3, Trash2, Search, Save, X } from "lucide-react";
+import { AlertTriangle, Edit3, Trash2, Search, Save, Upload, X, CheckCircle2 } from "lucide-react";
 
 import { Modal, ConfirmModal } from "@/components/ui/modal";
 
@@ -30,6 +30,14 @@ type EditableGuardian = {
     phone: string;
 };
 
+type UploadResult = {
+    totalRows: number;
+    matched: number;
+    created: number;
+    updated: number;
+    unmatched: string[];
+};
+
 const emptyEditState: EditableGuardian = {
     name: "",
     relationship: "Parent",
@@ -42,6 +50,11 @@ export function GuardianContactManager({ guardians }: GuardianContactManagerProp
     const [selectedGuardian, setSelectedGuardian] = useState<GuardianRow | null>(null);
     const [editState, setEditState] = useState<EditableGuardian>(emptyEditState);
     const [deleteTarget, setDeleteTarget] = useState<GuardianRow | null>(null);
+    const [isUploadOpen, setIsUploadOpen] = useState(false);
+    const [uploadFile, setUploadFile] = useState<File | null>(null);
+    const [uploadResult, setUploadResult] = useState<UploadResult | null>(null);
+    const [uploadError, setUploadError] = useState<string | null>(null);
+    const [isUploading, setIsUploading] = useState(false);
     const [isSaving, startSaving] = useTransition();
     const [message, setMessage] = useState<string | null>(null);
     const [isError, setIsError] = useState(false);
@@ -84,6 +97,59 @@ export function GuardianContactManager({ guardians }: GuardianContactManagerProp
         setSelectedGuardian(null);
         setMessage(null);
         setIsError(false);
+    };
+
+    const openUploadModal = () => {
+        setUploadFile(null);
+        setUploadResult(null);
+        setUploadError(null);
+        setIsUploadOpen(true);
+    };
+
+    const closeUploadModal = () => {
+        if (isUploading) {
+            return;
+        }
+
+        setIsUploadOpen(false);
+        setUploadFile(null);
+        setUploadResult(null);
+        setUploadError(null);
+    };
+
+    const handleUploadContacts = async () => {
+        if (!uploadFile || isUploading) {
+            return;
+        }
+
+        setIsUploading(true);
+        setUploadError(null);
+        setUploadResult(null);
+
+        try {
+            const formData = new FormData();
+            formData.append("file", uploadFile);
+
+            const response = await fetch("/api/students/contacts/upload", {
+                method: "POST",
+                body: formData,
+            });
+
+            const payload = await response.json().catch(() => null);
+            if (!response.ok) {
+                setUploadError(payload?.error ?? "Failed to upload contacts CSV.");
+                return;
+            }
+
+            setUploadResult(payload as UploadResult);
+            setIsUploadOpen(false);
+            setUploadFile(null);
+            window.location.reload();
+        } catch {
+            setUploadError("Network error while uploading contacts CSV.");
+        } finally {
+            setIsUploading(false);
+        }
     };
 
     const saveGuardian = () => {
@@ -165,6 +231,14 @@ export function GuardianContactManager({ guardians }: GuardianContactManagerProp
                 <div className="text-sm text-text-muted">
                     Showing <span className="font-medium text-foreground">{filteredGuardians.length}</span> contact(s)
                 </div>
+                <button
+                    type="button"
+                    onClick={openUploadModal}
+                    className="inline-flex items-center gap-2 rounded-full bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover"
+                >
+                    <Upload className="h-4 w-4" />
+                    Upload Contacts
+                </button>
             </div>
 
             {message ? (
@@ -318,6 +392,73 @@ export function GuardianContactManager({ guardians }: GuardianContactManagerProp
                 requiredWord="SEND"
                 isDestructive
             />
+
+            <Modal
+                isOpen={isUploadOpen}
+                onClose={closeUploadModal}
+                title="Upload Contacts"
+                icon={<Upload className="h-5 w-5" />}
+            >
+                <div className="space-y-5">
+                    <div className="space-y-2 text-sm text-text-muted">
+                        <p>Upload a CSV to add or update parent contacts by matric number.</p>
+                        <p>Required columns: matric_number, parent_name, and at least one of parent_email or parent_phone.</p>
+                    </div>
+
+                    <label className="block space-y-2 text-sm">
+                        <span className="font-medium text-foreground">CSV file</span>
+                        <input
+                            type="file"
+                            accept=".csv,text/csv"
+                            onChange={(event) => setUploadFile(event.target.files?.[0] ?? null)}
+                            className="w-full rounded-lg border border-border-subtle bg-surface-main px-3 py-2 text-sm text-foreground outline-none focus:border-brand focus:ring-1 focus:ring-brand"
+                        />
+                    </label>
+
+                    {uploadError ? (
+                        <div className="rounded-xl border border-status-danger/30 bg-status-danger/10 px-4 py-3 text-sm text-status-danger flex items-start gap-2">
+                            <AlertTriangle className="mt-0.5 h-4 w-4" />
+                            <span>{uploadError}</span>
+                        </div>
+                    ) : null}
+
+                    {uploadResult ? (
+                        <div className="rounded-xl border border-status-success/30 bg-status-success/10 px-4 py-3 text-sm text-status-success space-y-2">
+                            <div className="flex items-center gap-2 font-medium">
+                                <CheckCircle2 className="h-4 w-4" />
+                                Upload complete
+                            </div>
+                            <p>Total rows: {uploadResult.totalRows}</p>
+                            <p>Matched students: {uploadResult.matched}</p>
+                            <p>Created contacts: {uploadResult.created}</p>
+                            <p>Updated contacts: {uploadResult.updated}</p>
+                            {uploadResult.unmatched.length > 0 ? (
+                                <p>Unmatched matric numbers: {uploadResult.unmatched.join(", ")}</p>
+                            ) : null}
+                        </div>
+                    ) : null}
+
+                    <div className="flex items-center justify-end gap-3 pt-2">
+                        <button
+                            type="button"
+                            onClick={closeUploadModal}
+                            className="inline-flex items-center gap-2 rounded-md border border-border-subtle bg-surface-main px-4 py-2 text-sm font-medium text-foreground hover:bg-surface-subtle"
+                        >
+                            <X className="h-4 w-4" />
+                            Cancel
+                        </button>
+                        <button
+                            type="button"
+                            onClick={handleUploadContacts}
+                            disabled={!uploadFile || isUploading}
+                            className="inline-flex items-center gap-2 rounded-md bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover disabled:cursor-not-allowed disabled:opacity-70"
+                        >
+                            <Upload className="h-4 w-4" />
+                            {isUploading ? "Uploading..." : "Upload Contacts"}
+                        </button>
+                    </div>
+                </div>
+            </Modal>
         </div>
     );
 }

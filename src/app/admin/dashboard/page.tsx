@@ -1,10 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { AlertTriangle, ArrowRight } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 
 import { DeliveryChannels, DispatchQueuePanel, RecentActivity, SummaryMetrics } from "@/components/dashboard";
 import { NotificationPanelTrigger } from "@/components/dashboard/notification-panel-trigger";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/page-header";
@@ -54,19 +53,6 @@ export default async function DashboardPage() {
                         </div>
                     </Card>
                 </div>
-
-                {data.notifications.length > 0 ? (
-                    <Alert variant="destructive" className="dashboard-section">
-                        <AlertTriangle className="h-4 w-4" />
-                        <AlertTitle>Email delivery attention required</AlertTitle>
-                        <AlertDescription>
-                            <p>{data.notifications[0].detail}</p>
-                            {data.notifications.length > 1 ? (
-                                <p className="mt-1">+{data.notifications.length - 1} more alert{data.notifications.length - 1 > 1 ? "s" : ""} in notifications panel.</p>
-                            ) : null}
-                        </AlertDescription>
-                    </Alert>
-                ) : null}
 
                 <div className="grid gap-8 xl:grid-cols-[1fr_1fr]">
                     <DispatchQueuePanel queue={data.dispatchQueue} />

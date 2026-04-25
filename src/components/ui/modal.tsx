@@ -2,6 +2,7 @@
 
 import { AlertTriangle, X } from "lucide-react";
 import React, { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 
 type ModalProps = {
   isOpen: boolean;
@@ -12,29 +13,58 @@ type ModalProps = {
 };
 
 export function Modal({ isOpen, onClose, title, children, icon }: ModalProps) {
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
   useEffect(() => {
     if (isOpen) {
+      const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
+      const previousOverflow = document.body.style.overflow;
+      const previousPaddingRight = document.body.style.paddingRight;
+
       document.body.style.overflow = "hidden";
+      if (scrollbarWidth > 0) {
+        document.body.style.paddingRight = `${scrollbarWidth}px`;
+      }
+
+      const onKeyDown = (event: KeyboardEvent) => {
+        if (event.key === "Escape") {
+          onClose();
+        }
+      };
+
+      window.addEventListener("keydown", onKeyDown);
+
+      return () => {
+        document.body.style.overflow = previousOverflow;
+        document.body.style.paddingRight = previousPaddingRight;
+        window.removeEventListener("keydown", onKeyDown);
+      };
     } else {
       document.body.style.overflow = "unset";
     }
-    return () => {
-      document.body.style.overflow = "unset";
-    };
   }, [isOpen]);
 
-  if (!isOpen) return null;
+  if (!isOpen || !isMounted) return null;
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center font-sans">
-      {/* Backdrop */}
-      <div 
+  return createPortal(
+    <div className="fixed inset-0 z-50 grid place-items-center overflow-hidden p-4 font-sans sm:p-6">
+      <button
+        type="button"
         className="absolute inset-0 bg-black/50 backdrop-blur-sm transition-opacity page-transition-enter"
         onClick={onClose}
+        aria-label="Close modal backdrop"
       />
-      
-      {/* Modal panel */}
-      <div className="relative z-10 w-full max-w-md overflow-hidden rounded-xl bg-surface-main shadow-2xl modal-enter">
+
+      <div
+        className="relative z-10 w-full max-w-md overflow-y-auto rounded-xl bg-surface-main shadow-2xl modal-enter max-h-[calc(100vh-2rem)] sm:max-h-[calc(100vh-3rem)]"
+        role="dialog"
+        aria-modal="true"
+        aria-label={title}
+      >
         <div className="flex items-center justify-between border-b border-border-subtle px-6 py-4">
           <div className="flex items-center gap-3">
             {icon && <div className="text-brand">{icon}</div>}
@@ -42,19 +72,21 @@ export function Modal({ isOpen, onClose, title, children, icon }: ModalProps) {
               {title}
             </h2>
           </div>
-          <button 
+          <button
             onClick={onClose}
-            className="rounded p-1 text-text-muted hover:bg-surface-subtle hover:text-foreground transition-colors"
+            className="rounded p-1 text-text-muted transition-colors hover:bg-surface-subtle hover:text-foreground"
+            aria-label="Close modal"
           >
             <X className="h-5 w-5" />
           </button>
         </div>
-        
+
         <div className="px-6 py-5">
           {children}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
 

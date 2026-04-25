@@ -1,0 +1,13 @@
+matric_number,student_name,department,course_code,grade,course_unit,score
+CSE001,John Doe,Computer Science,CSE101,A,3,85
+CSE001,John Doe,Computer Science,CSE102,B,3,78
+CSE001,John Doe,Computer Science,CSE103,A,3,90
+CSE002,Jane Smith,Computer Science,CSE101,B,3,75
+CSE002,Jane Smith,Computer Science,CSE102,A,3,88
+CSE002,Jane Smith,Computer Science,CSE103,B,3,79
+CSE011,Liam Okoro,Computer Science,CSE106,A,3,92
+CSE011,Liam Okoro,Computer Science,CSE107,B,3,81
+CSE011,Liam Okoro,Computer Science,CSE108,A,3,89
+CSE012,Zara Bello,Computer Science,CSE106,B,3,76
+CSE012,Zara Bello,Computer Science,CSE107,A,3,90
+CSE012,Zara Bello,Computer Science,CSE108,B,3,84
