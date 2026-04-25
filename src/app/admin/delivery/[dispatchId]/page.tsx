@@ -52,6 +52,7 @@ export default async function DeliveryLogPage({ params }: DeliveryPageProps) {
             },
             notificationLogs: {
                 orderBy: { attemptedAt: "desc" },
+                where: { channel: "EMAIL" },
                 include: {
                     student: {
                         select: { fullName: true, matricNumber: true },

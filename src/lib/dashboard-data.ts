@@ -109,21 +109,18 @@ export const channelDelivery: ChannelDelivery[] = [
         channel: "whatsapp",
         queued: 362,
         sent: 356,
-        delivered: 344,
         failed: 12,
     },
     {
         channel: "email",
         queued: 281,
         sent: 281,
-        delivered: 273,
         failed: 8,
     },
     {
         channel: "sms",
         queued: 94,
         sent: 93,
-        delivered: 88,
         failed: 5,
     },
 ];

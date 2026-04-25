@@ -8,8 +8,12 @@ export type StatusType =
     | "approved"
     | "dispatched"
     | "withheld"
+    | "sent"
     | "failed"
-    | "queued";
+    | "queued"
+    | "processing"
+    | "complete"
+    | "partial_failure";
 
 type StatusBadgeProps = {
     status: StatusType;
@@ -22,8 +26,12 @@ export function StatusBadge({ status }: StatusBadgeProps) {
         approved: { variant: "success", label: "Approved" },
         dispatched: { variant: "default", label: "Dispatched" },
         withheld: { variant: "destructive", label: "Withheld" },
+        sent: { variant: "success", label: "Sent" },
         failed: { variant: "destructive", label: "Failed" },
         queued: { variant: "secondary", label: "Queued" },
+        processing: { variant: "info", label: "Processing" },
+        complete: { variant: "success", label: "Complete" },
+        partial_failure: { variant: "warning", label: "Partial Failure" },
     };
 
     const config = configs[status] || configs.pending;

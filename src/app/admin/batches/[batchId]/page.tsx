@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { ArrowRight, Download, Send } from "lucide-react";
+import { ArrowRight, Download } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -37,7 +37,7 @@ export default async function BatchDetailPage({ params }: BatchPageProps) {
             uploadedBy: { select: { name: true } },
             approvedBy: { select: { name: true } },
             studentResults: {
-                orderBy: { createdAt: "desc" },
+                orderBy: { id: "desc" },
                 include: {
                     student: { select: { fullName: true, matricNumber: true } },
                     portalTokens: {
@@ -83,11 +83,6 @@ export default async function BatchDetailPage({ params }: BatchPageProps) {
                         {batch.status === "PENDING" || batch.status === "IN_REVIEW" ? (
                             <ApproveDispatchButton batchId={batch.id} />
                         ) : null}
-                        <Button asChild className="rounded-full">
-                            <Link href={`/admin/batches/${batch.id}/dispatch`}>
-                                <Send className="h-4 w-4" /> Dispatch
-                            </Link>
-                        </Button>
                         <Button variant="outline" className="rounded-full">
                             <Download className="h-4 w-4" /> Export
                         </Button>

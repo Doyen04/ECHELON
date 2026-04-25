@@ -35,7 +35,7 @@ export default async function StudentRecordPage({ params }: StudentPageProps) {
         include: {
             guardians: true,
             studentResults: {
-                orderBy: { createdAt: "desc" },
+                orderBy: { id: "desc" },
                 include: {
                     batch: true,
                     portalTokens: {

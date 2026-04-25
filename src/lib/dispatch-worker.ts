@@ -30,10 +30,6 @@ function selectChannels(guardian: any): ChannelSelection[] {
         channels.push({ channel: "EMAIL", destination: guardian.email });
     }
 
-    if (guardian.phone) {
-        channels.push({ channel: "WHATSAPP", destination: guardian.phone });
-    }
-
     return channels;
 }
 
@@ -115,9 +111,10 @@ async function sendNotification(
     }
 
     return {
-        ok: true,
-        providerMessageId: `${channelSelection.channel.toLowerCase()}-${Date.now()}`,
-        status: "SENT" as const,
+        ok: false,
+        providerMessageId: null,
+        status: "FAILED" as const,
+        failureReason: `${channelSelection.channel} delivery is not implemented yet.`,
     } satisfies ProviderSendResult;
 }
 
