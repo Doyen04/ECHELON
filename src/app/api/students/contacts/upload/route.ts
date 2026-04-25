@@ -68,24 +68,12 @@ export async function POST(request: Request) {
             }
 
             matched += 1;
-            const hasContactDetails = Boolean(row.parentEmail || row.parentPhone);
             const existing = await tx.guardian.findFirst({
-                where: hasContactDetails
-                    ? {
-                          studentId: student.id,
-                          OR: [
-                              row.parentEmail ? { email: row.parentEmail } : undefined,
-                              row.parentPhone ? { phone: row.parentPhone } : undefined,
-                          ].filter(Boolean),
-                      }
-                    : {
-                          studentId: student.id,
-                          email: null,
-                          phone: null,
-                      },
+                where: { studentId: student.id },
+                orderBy: { createdAt: "asc" },
             });
 
-            const guardianName = row.parentName ?? "";
+            const guardianName = row.parentName ?? existing?.name ?? `${student.fullName} Guardian`;
             const relationship = row.relationship ?? "Parent";
 
             if (existing) {
@@ -94,8 +82,8 @@ export async function POST(request: Request) {
                     data: {
                         name: guardianName,
                         relationship,
-                        email: row.parentEmail,
-                        phone: row.parentPhone,
+                        email: row.parentEmail ?? existing.email,
+                        phone: row.parentPhone ?? existing.phone,
                     },
                 });
                 updated += 1;

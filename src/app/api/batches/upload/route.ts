@@ -147,8 +147,8 @@ export async function POST(request: Request) {
                     data: {
                         name: guardianName,
                         relationship: studentRow.relationship,
-                        email: studentRow.parentEmail,
-                        phone: studentRow.parentPhone,
+                        email: studentRow.parentEmail ?? guardian.email,
+                        phone: studentRow.parentPhone ?? guardian.phone,
                     },
                 });
             } else {
