@@ -592,10 +592,10 @@ export async function parseStudentRowsFromPdf(pdfBuffer: Buffer, fallbackDepartm
     const parsed = await parser.getText();
     await parser.destroy();
 
-    const lines = parsed.text
+    const lines = String(parsed.text)
         .split(/\r?\n/)
-        .map((line) => line.trim())
-        .filter((line) => line.length > 0);
+        .map((line: string) => line.trim())
+        .filter((line: string) => line.length > 0);
 
     // Strategy 1: class result sheet / tabular layout
     const tableStudents = parseStudentRowsFromTabularPdf(lines, fallbackDepartment);
