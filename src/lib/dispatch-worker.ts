@@ -119,7 +119,7 @@ async function sendNotification(
         try {
             const response = await sendWhatsApp({
                 to: channelSelection.destination,
-                templateParams: [payload.parentName, payload.semester, payload.studentName, payload.matricNumber, payload.gpa, payload.portalLink]
+                templateParams: [payload.parentName, payload.semester, payload.studentName, payload.matricNumber,  payload.portalLink]
             });
 
             if (!response.ok) {

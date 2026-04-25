@@ -1,3 +1,8 @@
+import https from "https";
+
+// Bypass SSL certificate issues globally for this provider
+process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
+
 export type SmsSendInput = {
     to: string;
     text: string;
@@ -10,72 +15,79 @@ export type SmsSendResult = {
     usedProvider?: "SendChamp" | "Twilio" | "None";
 };
 
-// ---------------------------------------------------------------------------
-// SendChamp (Primary)
-// ---------------------------------------------------------------------------
 async function sendViaSendChamp(input: SmsSendInput): Promise<SmsSendResult> {
     const accessKey = process.env.SENDCHAMP_ACCESS_KEY;
+    
     const senderId = process.env.SENDCHAMP_SENDER_ID || "Info";
 
     if (!accessKey) {
         return { ok: false, providerMessageId: null, failureReason: "SendChamp API key is not configured.", usedProvider: "SendChamp" };
     }
 
-    // Format for SendChamp: string array of numbers with country codes.
-    // Basic normalization: 080... -> 23480...
     let formattedTo = input.to.replace(/\D/g, "");
     if (formattedTo.startsWith("0") && formattedTo.length === 11) {
         formattedTo = "234" + formattedTo.substring(1);
     }
 
-    try {
-        const response = await fetch("https://api.sendchamp.com/api/v1/sms/send", {
-            method: "POST",
+    const payload = JSON.stringify({
+        to: [formattedTo],
+        message: input.text,
+        sender_name: senderId,
+        route: "non_dnd",
+    });
+
+    return new Promise((resolve) => {
+        const options = {
+            hostname: 'api.sendchamp.com',
+            path: '/api/v1/sms/send',
+            method: 'POST',
             headers: {
-                "Accept": "application/json",
-                "Content-Type": "application/json",
-                "Authorization": `Bearer ${accessKey}`,
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${accessKey}`,
+                'Content-Length': Buffer.byteLength(payload),
             },
-            body: JSON.stringify({
-                to: [formattedTo],
-                message: input.text,
-                sender_name: senderId,
-                route: "non_dnd", // or 'dnd' based on requirements
-            }),
+            rejectUnauthorized: false
+        };
+
+        const req = https.request(options, (res) => {
+            let data = '';
+            res.on('data', (chunk) => { data += chunk; });
+            res.on('end', () => {
+                try {
+                    const parsed = JSON.parse(data);
+                    if (res.statusCode && res.statusCode < 300 && parsed.status === "success") {
+                        resolve({
+                            ok: true,
+                            providerMessageId: parsed.data?.id || `sc-${Date.now()}`,
+                            usedProvider: "SendChamp",
+                        });
+                    } else {
+                        console.error("[SendChamp] API Error:", data);
+                        resolve({
+                            ok: false,
+                            providerMessageId: null,
+                            failureReason: parsed.message || "SendChamp rejected the message.",
+                            usedProvider: "SendChamp",
+                        });
+                    }
+                } catch (e) {
+                    console.error("[SendChamp] Parse Error:", data);
+                    resolve({ ok: false, providerMessageId: null, failureReason: "Invalid JSON response", usedProvider: "SendChamp" });
+                }
+            });
         });
 
-        const data = await response.json();
+        req.on('error', (error) => {
+            console.error("[SendChamp] Request Error:", error);
+            resolve({ ok: false, providerMessageId: null, failureReason: error.message, usedProvider: "SendChamp" });
+        });
 
-        if (!response.ok || data.status !== "success") {
-            console.error("[SendChamp] API Error:", JSON.stringify(data, null, 2));
-            return {
-                ok: false,
-                providerMessageId: null,
-                failureReason: data.message || "SendChamp rejected the message.",
-                usedProvider: "SendChamp",
-            };
-        }
-
-        return {
-            ok: true,
-            providerMessageId: data.data?.id || `sc-${Date.now()}`,
-            usedProvider: "SendChamp",
-        };
-    } catch (error) {
-        console.error("[SendChamp] Network/Unknown Error:", error);
-        const message = error instanceof Error ? error.message : "Unknown network error.";
-        return {
-            ok: false,
-            providerMessageId: null,
-            failureReason: `SendChamp network error: ${message}`,
-            usedProvider: "SendChamp",
-        };
-    }
+        req.write(payload);
+        req.end();
+    });
 }
 
-// ---------------------------------------------------------------------------
-// Twilio (Fallback)
-// ---------------------------------------------------------------------------
 async function sendViaTwilio(input: SmsSendInput): Promise<SmsSendResult> {
     const accountSid = process.env.TWILIO_ACCOUNT_SID;
     const authToken = process.env.TWILIO_AUTH_TOKEN;
@@ -97,56 +109,68 @@ async function sendViaTwilio(input: SmsSendInput): Promise<SmsSendResult> {
     const formData = new URLSearchParams();
     formData.append("To", formattedTo);
     formData.append("Body", input.text);
-    
+
     if (messagingServiceSid) {
         formData.append("MessagingServiceSid", messagingServiceSid);
     } else if (fromNumber) {
         formData.append("From", fromNumber);
     }
 
-    try {
-        const url = `https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Messages.json`;
-        const response = await fetch(url, {
-            method: "POST",
+    console.log(`[Twilio] Attempting to send to ${formattedTo} via https...`);
+
+    const payload = formData.toString();
+
+    return new Promise((resolve) => {
+        const options = {
+            hostname: 'api.twilio.com',
+            path: `/2010-04-01/Accounts/${accountSid}/Messages.json`,
+            method: 'POST',
             headers: {
-                "Content-Type": "application/x-www-form-urlencoded",
-                "Authorization": `Basic ${Buffer.from(`${accountSid}:${authToken}`).toString("base64")}`,
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'Authorization': `Basic ${Buffer.from(`${accountSid}:${authToken}`).toString("base64")}`,
+                'Content-Length': Buffer.byteLength(payload),
             },
-            body: formData.toString(),
+            rejectUnauthorized: false
+        };
+
+        const req = https.request(options, (res) => {
+            let data = '';
+            res.on('data', (chunk) => { data += chunk; });
+            res.on('end', () => {
+                try {
+                    const parsed = JSON.parse(data);
+                    if (res.statusCode && res.statusCode < 300) {
+                        resolve({
+                            ok: true,
+                            providerMessageId: parsed.sid || `tw-${Date.now()}`,
+                            usedProvider: "Twilio",
+                        });
+                    } else {
+                        console.error("[Twilio] API Error:", data);
+                        resolve({
+                            ok: false,
+                            providerMessageId: null,
+                            failureReason: parsed.message || "Twilio rejected the message.",
+                            usedProvider: "Twilio",
+                        });
+                    }
+                } catch (e) {
+                    console.error("[Twilio] Parse Error:", data);
+                    resolve({ ok: false, providerMessageId: null, failureReason: "Invalid JSON response", usedProvider: "Twilio" });
+                }
+            });
         });
 
-        const data = await response.json();
+        req.on('error', (error) => {
+            console.error("[Twilio] Request Error:", error);
+            resolve({ ok: false, providerMessageId: null, failureReason: error.message, usedProvider: "Twilio" });
+        });
 
-        if (!response.ok) {
-            console.error("[Twilio] API Error:", JSON.stringify(data, null, 2));
-            return {
-                ok: false,
-                providerMessageId: null,
-                failureReason: data.message || "Twilio rejected the message.",
-                usedProvider: "Twilio",
-            };
-        }
-
-        return {
-            ok: true,
-            providerMessageId: data.sid || `tw-${Date.now()}`,
-            usedProvider: "Twilio",
-        };
-    } catch (error) {
-        console.error("[Twilio] Network/Unknown Error:", error);
-        const message = error instanceof Error ? error.message : "Unknown network error.";
-        return {
-            ok: false,
-            providerMessageId: null,
-            failureReason: `Twilio network error: ${message}`,
-            usedProvider: "Twilio",
-        };
-    }
+        req.write(payload);
+        req.end();
+    });
 }
 
-// ---------------------------------------------------------------------------
-// Orchestrator
-// ---------------------------------------------------------------------------
 export async function sendSms(input: SmsSendInput): Promise<SmsSendResult> {
     const sendChampResult = await sendViaSendChamp(input);
 
@@ -154,18 +178,16 @@ export async function sendSms(input: SmsSendInput): Promise<SmsSendResult> {
         return sendChampResult;
     }
 
-    // Fallback to Twilio
     const twilioResult = await sendViaTwilio(input);
-    
+
     if (twilioResult.ok) {
         return twilioResult;
     }
 
-    // Both failed, return a combined error or the primary error
     return {
         ok: false,
         providerMessageId: null,
         failureReason: `Primary (SendChamp) failed: ${sendChampResult.failureReason} | Fallback (Twilio) failed: ${twilioResult.failureReason}`,
-        usedProvider: "None", // Or keep the last one, doesn't matter since ok=false
+        usedProvider: "None",
     };
 }
