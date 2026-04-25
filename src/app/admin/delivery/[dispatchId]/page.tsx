@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 
-import { DeliveryExportButton } from "@/components/admin/delivery-export-button";
+import { ExportButton } from "@/components/admin/export-button";
 import { RetryFailedSendsButton } from "@/components/admin/retry-failed-sends-button";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -122,7 +122,12 @@ export default async function DeliveryLogPage({ params }: DeliveryPageProps) {
             <span className='text-foreground'>{dispatch.id}</span>
           </div>
         }
-        action={<DeliveryExportButton dispatchId={dispatch.id} />}
+        action={
+          <ExportButton 
+            endpoint={`/api/delivery/${dispatch.id}/export`}
+            filename={`delivery-${dispatch.id}.csv`}
+          />
+        }
       />
 
       <main className='mx-auto w-full max-w-6xl px-4 py-6 sm:px-6 lg:px-8 lg:py-8'>
