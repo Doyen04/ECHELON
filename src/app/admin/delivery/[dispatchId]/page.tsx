@@ -10,6 +10,8 @@ import { Card } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/page-header";
 import { StatusBadge, ChannelBadge } from "@/components/ui/badges";
 import { prisma } from "@/lib/db";
+// Ensure this page always fetches fresh data from the database
+export const dynamic = "force-dynamic";
 
 type DeliveryPageProps = {
     params: Promise<{
@@ -51,18 +53,6 @@ export default async function DeliveryLogPage({ params }: DeliveryPageProps) {
             triggeredBy: {
                 select: { name: true },
             },
-            notificationLogs: {
-                orderBy: { attemptedAt: "desc" },
-                where: { channel: "EMAIL" },
-                include: {
-                    student: {
-                        select: { fullName: true, matricNumber: true },
-                    },
-                    guardian: {
-                        select: { name: true },
-                    },
-                },
-            },
         },
     });
 
@@ -70,10 +60,37 @@ export default async function DeliveryLogPage({ params }: DeliveryPageProps) {
         notFound();
     }
 
-    const total = dispatch.notificationLogs.length;
-    const sent = dispatch.notificationLogs.filter((log: any) => log.status === "SENT").length;
-    const failed = dispatch.notificationLogs.filter((log: any) => log.status === "FAILED").length;
-    const queued = dispatch.notificationLogs.filter((log: any) => log.status === "QUEUED").length;
+    const notificationLogs = await db.notificationLog.findMany({
+        where: { dispatchId },
+        orderBy: { attemptedAt: "desc" },
+    });
+
+    const studentIds = [...new Set(notificationLogs.map((log: any) => log.studentId).filter(Boolean))];
+    const guardianIds = [...new Set(notificationLogs.map((log: any) => log.guardianId).filter(Boolean))];
+
+    const [students, guardians] = await Promise.all([
+        studentIds.length > 0
+            ? db.student.findMany({
+                where: { id: { in: studentIds } },
+                select: { id: true, fullName: true, matricNumber: true },
+            })
+            : [],
+        guardianIds.length > 0
+            ? db.guardian.findMany({
+                where: { id: { in: guardianIds } },
+                select: { id: true, name: true },
+            })
+            : [],
+    ]);
+
+    const studentById = new Map(students.map((student: any) => [student.id, student]));
+    const guardianById = new Map(guardians.map((guardian: any) => [guardian.id, guardian]));
+
+    const total = dispatch.totalCount ?? notificationLogs.length;
+    const sent = dispatch.sentCount ?? 0;
+    const failed = dispatch.failedCount ?? 0;
+    const processed = sent + failed;
+    const queued = Math.max(total - processed, 0);
     const successRate = total === 0 ? 0 : Math.round((sent / total) * 100);
 
     return (
@@ -130,7 +147,7 @@ export default async function DeliveryLogPage({ params }: DeliveryPageProps) {
                     <div className="mt-6 rounded-2xl border border-(--border-subtle) bg-(--surface-soft) p-5">
                         <div className="flex items-center justify-between gap-3 text-sm font-medium">
                             <span className="text-foreground">Dispatch Progress</span>
-                            <span className="text-(--text-secondary)">{sent + failed + queued} processed</span>
+                            <span className="text-(--text-secondary)">{processed} processed</span>
                         </div>
                         <div className="mt-3 h-3 w-full overflow-hidden rounded-full bg-(--surface-muted)">
                             <div className="h-full bg-emerald-500" style={{ width: `${total === 0 ? 0 : (sent / total) * 100}%` }} />
@@ -148,15 +165,15 @@ export default async function DeliveryLogPage({ params }: DeliveryPageProps) {
                             <div className="mt-4 space-y-3 text-sm text-(--text-secondary)">
                                 <p><span className="text-foreground font-medium">Batch:</span> {dispatch.batch.department}</p>
                                 <p><span className="text-foreground font-medium">Triggered:</span> {formatDateTime(dispatch.triggeredAt)}</p>
-                                <p><span className="text-foreground font-medium">Total Count:</span> {dispatch.totalCount}</p>
-                                <p><span className="text-foreground font-medium">Processed:</span> {dispatch.sentCount + dispatch.failedCount}</p>
+                                <p><span className="text-foreground font-medium">Total Count:</span> {total}</p>
+                                <p><span className="text-foreground font-medium">Processed:</span> {processed}</p>
                             </div>
                         </article>
 
                         <article className="rounded-2xl border border-(--border-subtle) bg-(--surface-soft) p-5">
                             <p className="text-xs font-semibold uppercase tracking-[0.16em] text-(--text-muted)">Quick Actions</p>
                             <div className="mt-4 flex flex-col gap-3">
-                                <RetryFailedSendsButton dispatchId={dispatch.id} failedCount={failed} />
+                                <RetryFailedSendsButton dispatchId={dispatch.id} failedCount={dispatch.failedCount ?? failed} />
                                 <Button asChild className="rounded-full">
                                     <Link href="/admin/delivery">Back to dispatch list</Link>
                                 </Button>
@@ -173,7 +190,7 @@ export default async function DeliveryLogPage({ params }: DeliveryPageProps) {
                         </p>
                     </div>
 
-                    {dispatch.notificationLogs.length > 0 ? (
+                    {notificationLogs.length > 0 ? (
                         <div className="overflow-x-auto">
                             <table className="min-w-full divide-y divide-border-subtle">
                                 <thead className="bg-surface-subtle/40">
@@ -187,14 +204,18 @@ export default async function DeliveryLogPage({ params }: DeliveryPageProps) {
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-border-subtle bg-surface-main">
-                                    {dispatch.notificationLogs.map((log: any) => (
+                                    {notificationLogs.map((log: any) => {
+                                        const student = studentById.get(log.studentId);
+                                        const guardian = log.guardianId ? guardianById.get(log.guardianId) : null;
+
+                                        return (
                                         <tr key={log.id} className="hover:bg-surface-subtle/30 transition-colors">
                                             <td className="px-6 py-4 text-sm text-foreground">
-                                                <div className="font-medium">{log.student?.fullName ?? "Unknown student"}</div>
-                                                <div className="mt-1 text-xs text-(--text-muted)">{log.student?.matricNumber ?? log.studentId}</div>
+                                                <div className="font-medium">{student?.fullName ?? "Unknown student"}</div>
+                                                <div className="mt-1 text-xs text-(--text-muted)">{student?.matricNumber ?? log.studentId}</div>
                                             </td>
                                             <td className="px-6 py-4 text-sm text-foreground">
-                                                {log.guardian?.name ?? "Unknown guardian"}
+                                                {guardian?.name ?? "Unknown guardian"}
                                             </td>
                                             <td className="px-6 py-4">
                                                 <ChannelBadge channel={String(log.channel).toLowerCase() as any} />
@@ -207,7 +228,8 @@ export default async function DeliveryLogPage({ params }: DeliveryPageProps) {
                                                 {log.failureReason ?? log.providerMessageId ?? "Delivered successfully"}
                                             </td>
                                         </tr>
-                                    ))}
+                                        );
+                                    })}
                                 </tbody>
                             </table>
                         </div>

@@ -123,8 +123,21 @@ async function sendGuardianNotifications(
     studentResult: any,
     portalLink: string,
 ) {
+    const db = prisma as any;
     const channelSelections = selectChannels(guardian);
     if (channelSelections.length === 0) {
+        await db.notificationLog.create({
+            data: {
+                dispatchId: studentResult.dispatchId,
+                studentResultId: studentResult.id,
+                studentId: studentResult.studentId,
+                guardianId: guardian.id,
+                channel: "EMAIL",
+                status: "FAILED",
+                failureReason: "Guardian has no contact details.",
+            },
+        });
+
         return {
             ok: false,
             channel: null as ChannelSelection | null,

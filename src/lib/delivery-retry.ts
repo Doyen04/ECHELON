@@ -221,7 +221,7 @@ export async function getFailedSendPreview(dispatchId: string): Promise<FailedSe
         totalFailed: items.length,
         retryableCount,
         unresolvedCount,
-        canRetry: items.length > 0 && unresolvedCount === 0,
+        canRetry: retryableCount > 0,
         items,
     };
 }
@@ -231,7 +231,7 @@ export async function retryFailedDispatchSends(dispatchId: string): Promise<Retr
     const preview = await getFailedSendPreview(dispatchId);
 
     if (!preview.canRetry) {
-        throw new Error("One or more failed sends do not have a resolvable parent email contact.");
+        throw new Error("No failed sends have a resolvable parent email contact for retry.");
     }
 
     const dispatch = await db.notificationDispatch.findUnique({
@@ -284,6 +284,24 @@ export async function retryFailedDispatchSends(dispatchId: string): Promise<Retr
 
         retriedLogs.push(item.id);
     }
+
+    // Recalculate the dispatch counters based on current log statuses
+    const sentCount = await db.notificationLog.count({
+        where: { dispatchId, status: "SENT" },
+    });
+
+    const failedCount = await db.notificationLog.count({
+        where: { dispatchId, status: "FAILED" },
+    });
+
+    // Update the dispatch with new counters
+    await db.notificationDispatch.update({
+        where: { id: dispatchId },
+        data: {
+            sentCount,
+            failedCount,
+        },
+    });
 
     return {
         dispatchId,

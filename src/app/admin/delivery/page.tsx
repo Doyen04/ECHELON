@@ -11,6 +11,9 @@ export const metadata: Metadata = {
     description: "Notification delivery tracking and retry controls.",
 };
 
+// Ensure this page always fetches fresh data from the database
+export const dynamic = "force-dynamic";
+
 export default async function DeliveryPage() {
     const db = prisma as any;
 
