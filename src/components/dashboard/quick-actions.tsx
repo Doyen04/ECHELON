@@ -25,7 +25,7 @@ const actions: ActionItem[] = [
     {
         title: "Update Guardian Contacts",
         detail: "Correct phone and email data before the next dispatch window.",
-        href: "/admin/students",
+        href: "/admin/contacts",
         cta: "Open contacts",
     },
 ];

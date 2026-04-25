@@ -3,6 +3,7 @@
 import { useMemo, useState, useTransition } from "react";
 import { AlertTriangle, Edit3, Trash2, Search, Save, Upload, X, CheckCircle2 } from "lucide-react";
 
+import { Badge } from "@/components/ui/badge";
 import { Modal, ConfirmModal } from "@/components/ui/modal";
 
 type GuardianRow = {
@@ -21,6 +22,14 @@ type GuardianRow = {
 
 type GuardianContactManagerProps = {
     guardians: GuardianRow[];
+    studentsWithoutContacts: Array<{
+        id: string;
+        fullName: string;
+        matricNumber: string;
+        department: string;
+        faculty: string;
+        level: number;
+    }>;
 };
 
 type EditableGuardian = {
@@ -45,7 +54,7 @@ const emptyEditState: EditableGuardian = {
     phone: "",
 };
 
-export function GuardianContactManager({ guardians }: GuardianContactManagerProps) {
+export function GuardianContactManager({ guardians, studentsWithoutContacts }: GuardianContactManagerProps) {
     const [query, setQuery] = useState("");
     const [selectedGuardian, setSelectedGuardian] = useState<GuardianRow | null>(null);
     const [editState, setEditState] = useState<EditableGuardian>(emptyEditState);
@@ -217,6 +226,46 @@ export function GuardianContactManager({ guardians }: GuardianContactManagerProp
 
     return (
         <div className="space-y-4">
+            <div className="rounded-2xl border border-status-warning/30 bg-status-warning/10 p-4">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                        <h2 className="text-sm font-semibold text-foreground">Students without parent contact</h2>
+                        <p className="mt-1 text-sm text-text-muted">
+                            These students have no guardian record yet and will be skipped during retry checks.
+                        </p>
+                    </div>
+                    <Badge variant="warning" className="rounded-full">
+                        {studentsWithoutContacts.length}
+                    </Badge>
+                </div>
+
+                <div className="mt-3 max-h-60 space-y-2 overflow-y-auto pr-1">
+                    {studentsWithoutContacts.length > 0 ? (
+                        studentsWithoutContacts.map((student) => (
+                            <article
+                                key={student.id}
+                                className="rounded-xl border border-border-subtle bg-surface-main px-4 py-3 shadow-sm"
+                            >
+                                <div className="flex flex-wrap items-start justify-between gap-3">
+                                    <div className="min-w-0">
+                                        <p className="font-medium text-foreground">{student.fullName}</p>
+                                        <p className="text-xs text-text-muted">{student.matricNumber}</p>
+                                    </div>
+                                    <p className="text-xs text-text-muted">Level {student.level}</p>
+                                </div>
+                                <p className="mt-2 text-xs text-text-muted">
+                                    {student.department} · {student.faculty}
+                                </p>
+                            </article>
+                        ))
+                    ) : (
+                        <div className="rounded-xl border border-emerald-200 bg-emerald-50/70 px-4 py-3 text-sm text-emerald-800">
+                            All students currently have at least one parent contact.
+                        </div>
+                    )}
+                </div>
+            </div>
+
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div className="relative w-full max-w-xl">
                     <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-muted" />
@@ -263,7 +312,7 @@ export function GuardianContactManager({ guardians }: GuardianContactManagerProp
                             {filteredGuardians.map((guardian) => (
                                 <tr key={guardian.id} className="hover:bg-surface-subtle/30">
                                     <td className="px-5 py-4 align-top">
-                                        <div className="font-medium text-foreground">{guardian.name}</div>
+                                        <div className="font-medium text-foreground">{guardian.name || "No parent contact"}</div>
                                         <div className="text-xs text-text-muted">{guardian.relationship}</div>
                                     </td>
                                     <td className="px-5 py-4 align-top">
@@ -402,7 +451,7 @@ export function GuardianContactManager({ guardians }: GuardianContactManagerProp
                 <div className="space-y-5">
                     <div className="space-y-2 text-sm text-text-muted">
                         <p>Upload a CSV to add or update parent contacts by matric number.</p>
-                        <p>Required columns: matric_number, parent_name, and at least one of parent_email or parent_phone.</p>
+                        <p>Only matric_number is required. If parent_name, parent_email, or parent_phone are missing, the student is still added with blank contact fields.</p>
                     </div>
 
                     <label className="block space-y-2 text-sm">

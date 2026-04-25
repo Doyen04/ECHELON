@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { Download, RefreshCw } from "lucide-react";
+import { Download } from "lucide-react";
 
+import { RetryFailedSendsButton } from "@/components/admin/retry-failed-sends-button";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -155,9 +156,7 @@ export default async function DeliveryLogPage({ params }: DeliveryPageProps) {
                         <article className="rounded-2xl border border-(--border-subtle) bg-(--surface-soft) p-5">
                             <p className="text-xs font-semibold uppercase tracking-[0.16em] text-(--text-muted)">Quick Actions</p>
                             <div className="mt-4 flex flex-col gap-3">
-                                <button className="inline-flex items-center justify-center gap-2 rounded-lg border border-border-subtle bg-surface-main px-4 py-2 text-sm font-medium text-foreground transition hover:bg-surface-subtle">
-                                    <RefreshCw className="h-4 w-4" /> Retry failed sends
-                                </button>
+                                <RetryFailedSendsButton dispatchId={dispatch.id} failedCount={failed} />
                                 <Button asChild className="rounded-full">
                                     <Link href="/admin/delivery">Back to dispatch list</Link>
                                 </Button>

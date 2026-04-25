@@ -135,38 +135,46 @@ export async function POST(request: Request) {
                 },
             });
 
-            if (studentRow.parentEmail || studentRow.parentPhone) {
-                const guardian = await tx.guardian.findFirst({
-                    where: {
-                        studentId: student.id,
-                        OR: [
-                            studentRow.parentEmail ? { email: studentRow.parentEmail } : undefined,
-                            studentRow.parentPhone ? { phone: studentRow.parentPhone } : undefined,
-                        ].filter(Boolean),
+            const guardianLookup = studentRow.parentEmail || studentRow.parentPhone
+                ? {
+                      studentId: student.id,
+                      OR: [
+                          studentRow.parentEmail ? { email: studentRow.parentEmail } : undefined,
+                          studentRow.parentPhone ? { phone: studentRow.parentPhone } : undefined,
+                      ].filter(Boolean),
+                  }
+                : {
+                      studentId: student.id,
+                      email: null,
+                      phone: null,
+                  };
+
+            const guardian = await tx.guardian.findFirst({
+                where: guardianLookup,
+            });
+
+            const guardianName = studentRow.parentName ?? "";
+
+            if (guardian) {
+                await tx.guardian.update({
+                    where: { id: guardian.id },
+                    data: {
+                        name: guardianName || guardian.name,
+                        relationship: studentRow.relationship,
+                        email: studentRow.parentEmail,
+                        phone: studentRow.parentPhone,
                     },
                 });
-
-                if (guardian) {
-                    await tx.guardian.update({
-                        where: { id: guardian.id },
-                        data: {
-                            name: studentRow.parentName ?? guardian.name,
-                            relationship: studentRow.relationship,
-                            email: studentRow.parentEmail,
-                            phone: studentRow.parentPhone,
-                        },
-                    });
-                } else {
-                    await tx.guardian.create({
-                        data: {
-                            studentId: student.id,
-                            name: studentRow.parentName ?? `${studentRow.studentName} Guardian`,
-                            relationship: studentRow.relationship,
-                            email: studentRow.parentEmail,
-                            phone: studentRow.parentPhone,
-                        },
-                    });
-                }
+            } else {
+                await tx.guardian.create({
+                    data: {
+                        studentId: student.id,
+                        name: guardianName,
+                        relationship: studentRow.relationship,
+                        email: studentRow.parentEmail,
+                        phone: studentRow.parentPhone,
+                    },
+                });
             }
 
             await tx.studentResult.create({

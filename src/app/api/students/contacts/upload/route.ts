@@ -25,8 +25,7 @@ export async function POST(request: Request) {
     if (rows.length === 0) {
         return NextResponse.json(
             {
-                error:
-                    "No valid rows found. Include matric_number, parent_name, and at least one contact (parent_email or parent_phone).",
+                error: "No valid rows found. Include at least matric_number.",
             },
             { status: 422 },
         );
@@ -69,22 +68,32 @@ export async function POST(request: Request) {
             }
 
             matched += 1;
+            const hasContactDetails = Boolean(row.parentEmail || row.parentPhone);
             const existing = await tx.guardian.findFirst({
-                where: {
-                    studentId: student.id,
-                    OR: [
-                        row.parentEmail ? { email: row.parentEmail } : undefined,
-                        row.parentPhone ? { phone: row.parentPhone } : undefined,
-                    ].filter(Boolean),
-                },
+                where: hasContactDetails
+                    ? {
+                          studentId: student.id,
+                          OR: [
+                              row.parentEmail ? { email: row.parentEmail } : undefined,
+                              row.parentPhone ? { phone: row.parentPhone } : undefined,
+                          ].filter(Boolean),
+                      }
+                    : {
+                          studentId: student.id,
+                          email: null,
+                          phone: null,
+                      },
             });
+
+            const guardianName = row.parentName ?? "";
+            const relationship = row.relationship ?? "Parent";
 
             if (existing) {
                 await tx.guardian.update({
                     where: { id: existing.id },
                     data: {
-                        name: row.parentName,
-                        relationship: row.relationship,
+                        name: guardianName,
+                        relationship,
                         email: row.parentEmail,
                         phone: row.parentPhone,
                     },
@@ -94,8 +103,8 @@ export async function POST(request: Request) {
                 await tx.guardian.create({
                     data: {
                         studentId: student.id,
-                        name: row.parentName,
-                        relationship: row.relationship,
+                        name: guardianName,
+                        relationship,
                         email: row.parentEmail,
                         phone: row.parentPhone,
                     },

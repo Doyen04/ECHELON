@@ -39,7 +39,7 @@ const GRADE_POINTS: Record<string, number> = {
 
 export type ParentContactImportRow = {
     matricNumber: string;
-    parentName: string;
+    parentName: string | null;
     parentEmail: string | null;
     parentPhone: string | null;
     relationship: string;
@@ -534,11 +534,11 @@ export function parseParentContactsFromCsv(csvText: string): ParentContactImport
     return csvToRows(csvText)
         .map((row) => {
             const matricNumber = (row.matric_number ?? row.matric ?? row.matric_no ?? "").trim().toUpperCase();
-            const parentName = (row.parent_name ?? row.guardian_name ?? row.name ?? "").trim();
+            const parentName = (row.parent_name ?? row.guardian_name ?? row.name ?? "").trim() || null;
             const parentEmail = (row.parent_email ?? row.email ?? "").trim() || null;
             const parentPhone = (row.parent_phone ?? row.phone ?? "").trim() || null;
 
-            if (!matricNumber || !parentName || (!parentEmail && !parentPhone)) {
+            if (!matricNumber) {
                 return null;
             }
 
