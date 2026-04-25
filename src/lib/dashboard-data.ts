@@ -68,7 +68,7 @@ export const summaryMetrics: SummaryMetric[] = [
         value: "96.4%",
         change: "+1.7%",
         trend: "up",
-        helper: "Last 7 days",
+        helper: "Last 24 hours",
     },
 ];
 

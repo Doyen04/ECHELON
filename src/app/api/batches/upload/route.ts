@@ -135,31 +135,17 @@ export async function POST(request: Request) {
                 },
             });
 
-            const guardianLookup = studentRow.parentEmail || studentRow.parentPhone
-                ? {
-                      studentId: student.id,
-                      OR: [
-                          studentRow.parentEmail ? { email: studentRow.parentEmail } : undefined,
-                          studentRow.parentPhone ? { phone: studentRow.parentPhone } : undefined,
-                      ].filter(Boolean),
-                  }
-                : {
-                      studentId: student.id,
-                      email: null,
-                      phone: null,
-                  };
-
             const guardian = await tx.guardian.findFirst({
-                where: guardianLookup,
+                where: { studentId: student.id },
             });
 
-            const guardianName = studentRow.parentName ?? "";
+            const guardianName = studentRow.parentName ?? guardian?.name ?? `${studentRow.studentName} Guardian`;
 
             if (guardian) {
                 await tx.guardian.update({
                     where: { id: guardian.id },
                     data: {
-                        name: guardianName || guardian.name,
+                        name: guardianName,
                         relationship: studentRow.relationship,
                         email: studentRow.parentEmail,
                         phone: studentRow.parentPhone,

@@ -6,52 +6,26 @@ import { prisma } from "@/lib/db";
 
 export const metadata: Metadata = {
     title: "Contacts",
-    description: "Manage parent contacts and students without guardian records.",
+    description: "Manage parent contact records linked to students.",
 };
 
 export default async function ContactsPage() {
     const db = prisma as any;
 
-    const [guardians, students] = await Promise.all([
-        db.guardian.findMany({
-            orderBy: { createdAt: "desc" },
-            include: {
-                student: {
-                    select: {
-                        id: true,
-                        fullName: true,
-                        matricNumber: true,
-                        department: true,
-                        faculty: true,
-                        level: true,
-                    },
+    const guardians = await db.guardian.findMany({
+        orderBy: { createdAt: "desc" },
+        include: {
+            student: {
+                select: {
+                    id: true,
+                    fullName: true,
+                    matricNumber: true,
+                    department: true,
+                    faculty: true,
+                    level: true,
                 },
             },
-        }),
-        db.student.findMany({
-            orderBy: [{ department: "asc" }, { fullName: "asc" }],
-            select: {
-                id: true,
-                fullName: true,
-                matricNumber: true,
-                department: true,
-                faculty: true,
-                level: true,
-                guardians: {
-                    select: {
-                        id: true,
-                        name: true,
-                        email: true,
-                        phone: true,
-                        relationship: true,
-                    },
-                },
-            },
-        }),
-    ]);
-
-    const studentsWithoutContacts = students.filter((student: any) => {
-        return !student.guardians.some((guardian: any) => Boolean(guardian.email || guardian.phone));
+        },
     });
 
     return (
@@ -82,14 +56,6 @@ export default async function ContactsPage() {
                             relationship: guardian.relationship,
                             email: guardian.email,
                             phone: guardian.phone,
-                        }))}
-                        studentsWithoutContacts={studentsWithoutContacts.map((student: any) => ({
-                            id: student.id,
-                            fullName: student.fullName,
-                            matricNumber: student.matricNumber,
-                            department: student.department,
-                            faculty: student.faculty,
-                            level: student.level,
                         }))}
                     />
                 </div>

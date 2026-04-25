@@ -120,7 +120,8 @@ function fallbackDashboardData(): DashboardViewData {
 
 export async function getDashboardViewData(): Promise<DashboardViewData> {
     const db = prisma as any;
-    const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+    const dashboardWindowHours = 24;
+    const dashboardWindowStart = new Date(Date.now() - dashboardWindowHours * 60 * 60 * 1000);
 
     try {
         const [
@@ -137,13 +138,13 @@ export async function getDashboardViewData(): Promise<DashboardViewData> {
             db.studentResult.count({ where: { status: "APPROVED" } }),
             db.notificationLog.count({
                 where: {
-                    attemptedAt: { gte: sevenDaysAgo },
+                    attemptedAt: { gte: dashboardWindowStart },
                     status: "SENT",
                 },
             }),
             db.notificationLog.count({
                 where: {
-                    attemptedAt: { gte: sevenDaysAgo },
+                    attemptedAt: { gte: dashboardWindowStart },
                     status: "FAILED",
                 },
             }),
@@ -160,7 +161,7 @@ export async function getDashboardViewData(): Promise<DashboardViewData> {
                 },
             }),
             db.notificationLog.findMany({
-                where: { attemptedAt: { gte: sevenDaysAgo } },
+                where: { attemptedAt: { gte: dashboardWindowStart } },
                 select: { studentResultId: true, channel: true, status: true },
             }),
             db.auditLog.findMany({
@@ -212,9 +213,9 @@ export async function getDashboardViewData(): Promise<DashboardViewData> {
             {
                 label: "Delivery Success Rate",
                 value: `${deliveryRate}%`,
-                change: "7 days",
+                change: "24 hours",
                 trend: metricTrend(deliveryRate, 95),
-                helper: "From attempted notifications",
+                helper: "From attempted notifications in the last 24 hours",
             },
         ];
 
@@ -280,55 +281,18 @@ export async function getDashboardViewData(): Promise<DashboardViewData> {
             sms: 1,
         };
 
-        const studentOutcomeMap = new Map<string, {
-            sentChannel: "whatsapp" | "email" | "sms" | null;
-            failedChannel: "whatsapp" | "email" | "sms" | null;
-            hasQueued: boolean;
-        }>();
-
         notificationRows.forEach((row: any) => {
-            const key = String(row.studentResultId ?? "");
             const channel = row.channel.toLowerCase() as "whatsapp" | "email" | "sms";
             const status = row.status.toLowerCase();
-
-            if (!key) {
-                return;
-            }
-
-            const current = studentOutcomeMap.get(key) ?? {
-                sentChannel: null,
-                failedChannel: null,
-                hasQueued: false,
-            };
-
             if (status === "queued") {
-                current.hasQueued = true;
+                channelMap[channel].queued += 1;
+                return;
             } else if (status === "sent") {
-                if (!current.sentChannel || channelPriority[channel] > channelPriority[current.sentChannel]) {
-                    current.sentChannel = channel;
-                }
+                channelMap[channel].sent += 1;
+                return;
             } else if (status === "failed") {
-                if (!current.failedChannel || channelPriority[channel] > channelPriority[current.failedChannel]) {
-                    current.failedChannel = channel;
-                }
-            }
-
-            studentOutcomeMap.set(key, current);
-        });
-
-        studentOutcomeMap.forEach((outcome) => {
-            if (outcome.sentChannel) {
-                channelMap[outcome.sentChannel].sent += 1;
+                channelMap[channel].failed += 1;
                 return;
-            }
-
-            if (outcome.failedChannel) {
-                channelMap[outcome.failedChannel].failed += 1;
-                return;
-            }
-
-            if (outcome.hasQueued) {
-                channelMap.email.queued += 1;
             }
         });
 
