@@ -1,8 +1,7 @@
 import { randomBytes } from "node:crypto";
 
-import { Resend } from "resend";
-
 import { prisma } from "@/lib/db";
+import { sendEmail } from "@/lib/notifications/email-provider";
 import type { NotifyJobPayload } from "@/lib/queue";
 
 type DispatchWorkerResult = {
@@ -75,28 +74,26 @@ async function sendNotification(
         portalLink: string;
     },
 ) {
-    
     if (channelSelection.channel === "EMAIL") {
-        if (!process.env.RESEND_API_KEY) {
-            return {
-                ok: false,
-                providerMessageId: null,
-                status: "FAILED",
-                failureReason: "RESEND_API_KEY is not configured.",
-            } satisfies ProviderSendResult;
-        }
-
         try {
-            const resend = new Resend(process.env.RESEND_API_KEY);
-            const response = await resend.emails.send({
-                from: process.env.RESEND_FROM_EMAIL ?? "Results <noreply@example.edu>",
+            const response = await sendEmail({
                 to: channelSelection.destination,
                 subject: `[Result Notification] ${payload.studentName} - ${payload.semester}`,
                 text: `Hello ${payload.parentName}, the results for ${payload.studentName} (${payload.matricNumber}) are ready. View full details: ${payload.portalLink}`,
             });
+
+            if (!response.ok) {
+                return {
+                    ok: false,
+                    providerMessageId: null,
+                    status: "FAILED",
+                    failureReason: response.failureReason ?? "Email provider rejected message.",
+                } satisfies ProviderSendResult;
+            }
+
             return {
                 ok: true,
-                providerMessageId: response?.data?.id ?? `resend-${Date.now()}`,
+                providerMessageId: response.providerMessageId,
                 status: "SENT",
             } satisfies ProviderSendResult;
         } catch (error) {

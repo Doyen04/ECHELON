@@ -1,8 +1,7 @@
 import { randomUUID } from "node:crypto";
 
-import { Resend } from "resend";
-
 import { prisma } from "@/lib/db";
+import { sendEmail } from "@/lib/notifications/email-provider";
 
 type RetryContact = {
     id: string;
@@ -125,19 +124,17 @@ async function sendRetryEmail(input: {
     semesterLabel: string;
     portalLink: string;
 }) {
-    if (!process.env.RESEND_API_KEY) {
-        throw new Error("RESEND_API_KEY is not configured.");
-    }
-
-    const resend = new Resend(process.env.RESEND_API_KEY);
-    const response = await resend.emails.send({
-        from: process.env.RESEND_FROM_EMAIL ?? "Results <noreply@example.edu>",
+    const response = await sendEmail({
         to: input.guardianEmail,
         subject: `[Result Notification] ${input.studentName} - ${input.semesterLabel}`,
         text: `Hello ${input.guardianName}, the results for ${input.studentName} (${input.matricNumber}) are ready. View full details: ${input.portalLink}`,
     });
 
-    return response?.data?.id ?? `resend-${Date.now()}`;
+    if (!response.ok) {
+        throw new Error(response.failureReason ?? "Email provider rejected message.");
+    }
+
+    return response.providerMessageId ?? `smtp-${Date.now()}`;
 }
 
 export async function getFailedSendPreview(dispatchId: string): Promise<FailedSendPreview> {
