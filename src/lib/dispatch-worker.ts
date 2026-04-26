@@ -4,6 +4,8 @@ import { prisma } from "@/lib/db";
 import { sendEmail } from "@/lib/notifications/email-provider";
 import { sendWhatsApp } from "@/lib/notifications/whatsapp-provider";
 import { sendSms } from "@/lib/notifications/sms-provider";
+import { buildUploadedPdfAttachment } from "@/lib/result-email-pdf";
+import { buildResultNotificationEmailTemplate } from "@/lib/result-email-template";
 import type { NotifyJobPayload } from "@/lib/queue";
 
 type DispatchWorkerResult = {
@@ -97,9 +99,10 @@ async function sendNotification(
         parentName: string;
         studentName: string;
         matricNumber: string;
-        semester: string;
+        semesterLabel: string;
         portalLink: string;
         gpa: string;
+        rawFileUrl: string | null;
     },
 ) {
     if (channelSelection.channel === "EMAIL") {
@@ -173,6 +176,23 @@ async function sendNotification(
             const response = await sendSms({
                 to: channelSelection.destination,
                 text,
+            const emailTemplate = buildResultNotificationEmailTemplate({
+                parentName: payload.parentName,
+                studentName: payload.studentName,
+                matricNumber: payload.matricNumber,
+                semesterLabel: payload.semesterLabel,
+                portalLink: payload.portalLink,
+            });
+
+            const pdfAttachment = await buildUploadedPdfAttachment(payload.rawFileUrl);
+
+            const response = await transporter.sendMail({
+                from: smtpConfig.from,
+                to: channelSelection.destination,
+                subject: emailTemplate.subject,
+                text: emailTemplate.text,
+                html: emailTemplate.html,
+                attachments: pdfAttachment ? [pdfAttachment] : undefined,
             });
 
             if (!response.ok) {
@@ -246,9 +266,10 @@ async function sendGuardianNotifications(
             parentName: guardian.name,
             studentName: studentResult.student.fullName,
             matricNumber: studentResult.student.matricNumber,
-            semester: `${studentResult.batch.session} ${studentResult.batch.semester}`,
+            semesterLabel: `${studentResult.batch.session} ${studentResult.batch.semester}`,
             portalLink,
             gpa: String(studentResult.gpa),
+            rawFileUrl: studentResult.batch.rawFileUrl ?? null,
         });
 
         await db.notificationLog.create({

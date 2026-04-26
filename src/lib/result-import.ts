@@ -337,6 +337,49 @@ function parseCourseLine(line: string) {
     };
 }
 
+function extractPdfCourseRows(text: string) {
+    const compactText = text.replace(/\s+/g, " ").trim();
+    const fullPattern = /([A-Z]{2,4}\s?\d{3}[A-Z]?)\s+(.+?)\s+(\d{1,2})\s+(\d{1,3})\s+([A-F][+-]?)(?=\s+[A-Z]{2,4}\s?\d{3}[A-Z]?|\s*$)/gi;
+    const shortPattern = /([A-Z]{2,4}\s?\d{3}[A-Z]?)\s+(.+?)\s+(\d{1,2})\s+([A-F][+-]?)(?=\s+[A-Z]{2,4}\s?\d{3}[A-Z]?|\s*$)/gi;
+
+    const rows: Array<{ code: string; title: string; unit: number; grade: string; score: number | null }> = [];
+    const seenCodes = new Set<string>();
+
+    for (const match of compactText.matchAll(fullPattern)) {
+        const code = match[1].replace(/\s+/g, "").toUpperCase();
+        if (seenCodes.has(code)) continue;
+
+        rows.push({
+            code,
+            title: match[2].trim(),
+            unit: Number(match[3]),
+            score: Number(match[4]),
+            grade: match[5].toUpperCase(),
+        });
+        seenCodes.add(code);
+    }
+
+    if (rows.length > 0) {
+        return rows;
+    }
+
+    for (const match of compactText.matchAll(shortPattern)) {
+        const code = match[1].replace(/\s+/g, "").toUpperCase();
+        if (seenCodes.has(code)) continue;
+
+        rows.push({
+            code,
+            title: match[2].trim(),
+            unit: Number(match[3]),
+            score: null,
+            grade: match[4].toUpperCase(),
+        });
+        seenCodes.add(code);
+    }
+
+    return rows;
+}
+
 function extractCourseCodesFromTable(lines: string[]): string[] {
     const startIndex = lines.findIndex((line) => /course\s*codes/i.test(line));
     if (startIndex < 0) {
@@ -423,6 +466,7 @@ function parseStudentRowsFromTabularPdf(lines: string[], fallbackDepartment: str
         const continuationName = segmentLines[1]?.match(/^([A-Za-z][A-Za-z .'-]{1,})\s+\d/)?.[1]?.trim();
         const studentName = continuationName ? `${initialName} ${continuationName}` : initialName;
 
+        const parsedPdfCourses = extractPdfCourseRows(merged);
         const scoreGradePairs = Array.from(merged.matchAll(/\b(\d{2,3})\s+([A-FP])\b/g)).map((m) => ({
             grade: m[2].toUpperCase(),
             score: Number(m[1]),
@@ -431,6 +475,24 @@ function parseStudentRowsFromTabularPdf(lines: string[], fallbackDepartment: str
             grade: m[1].toUpperCase(),
             score: Number(m[2]),
         }));
+
+        if (parsedPdfCourses.length > 0) {
+            students.push({
+                matricNumber,
+                studentName,
+                department,
+                faculty,
+                level,
+                gpa: Number.isFinite(gpa) ? gpa : 0,
+                cgpa,
+                parentName: null,
+                parentEmail: null,
+                parentPhone: null,
+                relationship: "Parent",
+                courses: parsedPdfCourses,
+            });
+            continue;
+        }
 
         const orderedPairs =
             courseCodes.length > 0 && scoreGradePairs.length >= courseCodes.length

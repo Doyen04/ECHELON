@@ -4,6 +4,9 @@ import { prisma } from "@/lib/db";
 import { sendEmail } from "@/lib/notifications/email-provider";
 import { sendWhatsApp } from "@/lib/notifications/whatsapp-provider";
 import { sendSms } from "@/lib/notifications/sms-provider";
+import { buildUploadedPdfAttachment } from "@/lib/result-email-pdf";
+import { buildResultNotificationEmailTemplate } from "@/lib/result-email-template";
+
 type RetryContact = {
     id: string;
     name: string;
@@ -124,11 +127,47 @@ async function sendRetryEmail(input: {
     matricNumber: string;
     semesterLabel: string;
     portalLink: string;
+    rawFileUrl: string | null;
 }) {
     const response = await sendEmail({
+    const host = process.env.SMTP_HOST;
+    const from = process.env.SMTP_FROM_EMAIL;
+    const port = Number(process.env.SMTP_PORT ?? "587");
+    const secure = (process.env.SMTP_SECURE ?? "false").toLowerCase() === "true";
+
+    if (!host || !from || Number.isNaN(port)) {
+        throw new Error("SMTP configuration is incomplete. Set SMTP_HOST, SMTP_PORT, and SMTP_FROM_EMAIL.");
+    }
+
+    const transporter = nodemailer.createTransport({
+        host,
+        port,
+        secure,
+        auth: process.env.SMTP_USER && process.env.SMTP_PASS
+            ? {
+                user: process.env.SMTP_USER,
+                pass: process.env.SMTP_PASS,
+            }
+            : undefined,
+    });
+
+    const emailTemplate = buildResultNotificationEmailTemplate({
+        parentName: input.guardianName,
+        studentName: input.studentName,
+        matricNumber: input.matricNumber,
+        semesterLabel: input.semesterLabel,
+        portalLink: input.portalLink,
+    });
+
+    const pdfAttachment = await buildUploadedPdfAttachment(input.rawFileUrl);
+
+    const response = await transporter.sendMail({
+        from,
         to: input.guardianEmail,
-        subject: `[Result Notification] ${input.studentName} - ${input.semesterLabel}`,
-        text: `Hello ${input.guardianName}, the results for ${input.studentName} (${input.matricNumber}) are ready. View full details: ${input.portalLink}`,
+        subject: emailTemplate.subject,
+        text: emailTemplate.text,
+        html: emailTemplate.html,
+        attachments: pdfAttachment ? [pdfAttachment] : undefined,
     });
 
     if (!response.ok) {
@@ -238,6 +277,7 @@ export async function retryFailedDispatchSends(dispatchId: string): Promise<Retr
                 select: {
                     session: true,
                     semester: true,
+                    rawFileUrl: true,
                 },
             },
         },
@@ -258,33 +298,26 @@ export async function retryFailedDispatchSends(dispatchId: string): Promise<Retr
         const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
         const portalLink = `${appUrl}/results/view?token=${portalToken}`;
 
-        let successChannel: "EMAIL" | "WHATSAPP" | "SMS" | null = null;
-        let providerMessageId: string | null = null;
+        const providerMessageId = await sendRetryEmail({
+            guardianName: item.guardianName,
+            guardianEmail: item.guardianEmail,
+            studentName: item.studentName,
+            matricNumber: item.matricNumber,
+            semesterLabel,
+            portalLink,
+            rawFileUrl: dispatch.batch.rawFileUrl ?? null,
+        });
 
-        // Try Email
-        if (item.guardianEmail && !successChannel) {
-            const emailRes = await sendEmail({
-                to: item.guardianEmail,
-                subject: `[Result Notification] ${item.studentName} - ${semesterLabel}`,
-                text: `Hello ${item.guardianName}, the results for ${item.studentName} (${item.matricNumber}) are ready. View full details: ${portalLink}`,
-            });
-            if (emailRes.ok) {
-                successChannel = "EMAIL";
-                providerMessageId = emailRes.providerMessageId;
-            }
-        }
-
-        // Try WhatsApp
-        if (item.guardianPhone && !successChannel) {
-            const waRes = await sendWhatsApp({
-                to: item.guardianPhone,
-                templateParams: [item.guardianName, semesterLabel, item.studentName, item.matricNumber, "-", portalLink]
-            });
-            if (waRes.ok) {
-                successChannel = "WHATSAPP";
-                providerMessageId = waRes.providerMessageId;
-            }
-        }
+        await db.notificationLog.update({
+            where: { id: item.id },
+            data: {
+                status: "SENT",
+                providerMessageId,
+                failureReason: null,
+                deliveredAt: new Date(),
+                attemptedAt: new Date(),
+            },
+        });
 
         // Try SMS
         if (item.guardianPhone && !successChannel) {
