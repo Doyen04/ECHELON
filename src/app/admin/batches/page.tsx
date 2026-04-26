@@ -8,6 +8,7 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { PageHeader } from "@/components/ui/page-header";
 import { StatusBadge } from "@/components/ui/badges";
+import { ExportButton } from "@/components/admin/export-button";
 import { prisma } from "@/lib/db";
 import { relativeTimeFromNow, semesterLabel, toBadgeStatus } from "@/lib/admin-format";
 
@@ -91,9 +92,11 @@ export default async function BatchesPage() {
                                     <th className="w-24 px-2 py-3 text-left text-xs font-semibold uppercase tracking-wider text-text-muted">Status</th>
                                     <th className="w-36 px-2 py-3 text-left text-xs font-semibold uppercase tracking-wider text-text-muted">Uploaded</th>
                                     <th className="w-20 px-2 py-3 text-right">
-                                        <Button variant="outline" size="xs" className="rounded-full">
-                                            <Download className="h-4 w-4" /> Export
-                                        </Button>
+                                        <ExportButton 
+                                            endpoint="/api/batches/export" 
+                                            filename={`batches-${new Date().toISOString().split('T')[0]}.csv`}
+                                            size="xs"
+                                        />
                                     </th>
                                 </tr>
                             </thead>

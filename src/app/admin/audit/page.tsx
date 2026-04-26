@@ -8,6 +8,7 @@ import { EmptyState } from "@/components/dashboard";
 import { Input } from "@/components/ui/input";
 import { prisma } from "@/lib/db";
 import { formatDateTime, humanizeEnum } from "@/lib/admin-format";
+import { ExportButton } from "@/components/admin/export-button";
 
 export const metadata: Metadata = {
     title: "Audit Log",
@@ -30,10 +31,10 @@ export default async function AuditLogPage() {
             <PageHeader
                 title="Audit Log"
                 action={
-                    <Button variant="outline" className="rounded-full">
-                        <Download className="h-4 w-4" />
-                        Export
-                    </Button>
+                    <ExportButton 
+                        endpoint="/api/audit/export"
+                        filename={`audit-log-${new Date().toISOString().split('T')[0]}.csv`}
+                    />
                 }
             />
 

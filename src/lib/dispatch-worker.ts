@@ -1,8 +1,9 @@
 import { randomBytes } from "node:crypto";
 
-import nodemailer from "nodemailer";
-
 import { prisma } from "@/lib/db";
+import { sendEmail } from "@/lib/notifications/email-provider";
+import { sendWhatsApp } from "@/lib/notifications/whatsapp-provider";
+import { sendSms } from "@/lib/notifications/sms-provider";
 import { buildUploadedPdfAttachment } from "@/lib/result-email-pdf";
 import { buildResultNotificationEmailTemplate } from "@/lib/result-email-template";
 import type { NotifyJobPayload } from "@/lib/queue";
@@ -52,6 +53,11 @@ function selectChannels(guardian: any): ChannelSelection[] {
         channels.push({ channel: "EMAIL", destination: guardian.email });
     }
 
+    if (guardian.phone) {
+        channels.push({ channel: "WHATSAPP", destination: guardian.phone });
+        channels.push({ channel: "SMS", destination: guardian.phone });
+    }
+
     return channels;
 }
 
@@ -95,34 +101,81 @@ async function sendNotification(
         matricNumber: string;
         semesterLabel: string;
         portalLink: string;
+        gpa: string;
         rawFileUrl: string | null;
     },
 ) {
-
     if (channelSelection.channel === "EMAIL") {
-        const smtpConfig = getSmtpConfig();
-        if (!smtpConfig) {
+        try {
+            const response = await sendEmail({
+                to: channelSelection.destination,
+                subject: `[Result Notification] ${payload.studentName} - ${payload.semester}`,
+                text: `Hello ${payload.parentName}, the results for ${payload.studentName} (${payload.matricNumber}) are ready. View full details: ${payload.portalLink}`,
+            });
+
+            if (!response.ok) {
+                return {
+                    ok: false,
+                    providerMessageId: null,
+                    status: "FAILED",
+                    failureReason: response.failureReason ?? "Email provider rejected message.",
+                } satisfies ProviderSendResult;
+            }
+
+            return {
+                ok: true,
+                providerMessageId: response.providerMessageId,
+                status: "SENT",
+            } satisfies ProviderSendResult;
+        } catch (error) {
+            const message = error instanceof Error ? error.message : "Unknown SMTP provider error.";
             return {
                 ok: false,
                 providerMessageId: null,
                 status: "FAILED",
-                failureReason: "SMTP configuration is incomplete. Set SMTP_HOST, SMTP_PORT, and SMTP_FROM_EMAIL.",
+                failureReason: `Email send failed: ${message}`,
             } satisfies ProviderSendResult;
         }
+    }
 
+    if (channelSelection.channel === "WHATSAPP") {
         try {
-            const transporter = nodemailer.createTransport({
-                host: smtpConfig.host,
-                port: smtpConfig.port,
-                secure: smtpConfig.secure,
-                auth: smtpConfig.user && smtpConfig.pass
-                    ? {
-                        user: smtpConfig.user,
-                        pass: smtpConfig.pass,
-                    }
-                    : undefined,
+            const response = await sendWhatsApp({
+                to: channelSelection.destination,
+                templateParams: [payload.parentName, payload.semester, payload.studentName, payload.matricNumber,  payload.portalLink]
             });
 
+            if (!response.ok) {
+                return {
+                    ok: false,
+                    providerMessageId: null,
+                    status: "FAILED",
+                    failureReason: response.failureReason ?? "WhatsApp provider rejected message.",
+                } satisfies ProviderSendResult;
+            }
+
+            return {
+                ok: true,
+                providerMessageId: response.providerMessageId,
+                status: "SENT",
+            } satisfies ProviderSendResult;
+        } catch (error) {
+            const message = error instanceof Error ? error.message : "Unknown WhatsApp provider error.";
+            return {
+                ok: false,
+                providerMessageId: null,
+                status: "FAILED",
+                failureReason: `WhatsApp send failed: ${message}`,
+            } satisfies ProviderSendResult;
+        }
+    }
+
+    if (channelSelection.channel === "SMS") {
+        try {
+            const text = `Hello ${payload.parentName}, the ${payload.semester} results for ${payload.studentName} (${payload.matricNumber}) are ready. View here: ${payload.portalLink}`;
+            const response = await sendSms({
+                to: channelSelection.destination,
+                text,
             const emailTemplate = buildResultNotificationEmailTemplate({
                 parentName: payload.parentName,
                 studentName: payload.studentName,
@@ -142,18 +195,27 @@ async function sendNotification(
                 attachments: pdfAttachment ? [pdfAttachment] : undefined,
             });
 
+            if (!response.ok) {
+                return {
+                    ok: false,
+                    providerMessageId: null,
+                    status: "FAILED",
+                    failureReason: response.failureReason ?? "SMS provider rejected message.",
+                } satisfies ProviderSendResult;
+            }
+
             return {
                 ok: true,
-                providerMessageId: response?.messageId ?? `smtp-${Date.now()}`,
+                providerMessageId: response.providerMessageId,
                 status: "SENT",
             } satisfies ProviderSendResult;
         } catch (error) {
-            const message = error instanceof Error ? error.message : "Unknown SMTP provider error.";
+            const message = error instanceof Error ? error.message : "Unknown SMS provider error.";
             return {
                 ok: false,
                 providerMessageId: null,
                 status: "FAILED",
-                failureReason: `Email send failed: ${message}`,
+                failureReason: `SMS send failed: ${message}`,
             } satisfies ProviderSendResult;
         }
     }
@@ -173,6 +235,7 @@ async function sendGuardianNotifications(
 ) {
     const db = prisma as any;
     const channelSelections = selectChannels(guardian);
+    
     if (channelSelections.length === 0) {
         await db.notificationLog.create({
             data: {
@@ -195,9 +258,8 @@ async function sendGuardianNotifications(
         };
     }
 
-    let sentCount = 0;
-    let failedCount = 0;
-    let primaryChannel: ChannelSelection | null = null;
+    let finalSendResult: ProviderSendResult | null = null;
+    let successChannel: "EMAIL" | "WHATSAPP" | "SMS" | null = null;
 
     for (const channelSelection of channelSelections) {
         const sendResult = await sendNotification(channelSelection, {
@@ -206,20 +268,11 @@ async function sendGuardianNotifications(
             matricNumber: studentResult.student.matricNumber,
             semesterLabel: `${studentResult.batch.session} ${studentResult.batch.semester}`,
             portalLink,
+            gpa: String(studentResult.gpa),
             rawFileUrl: studentResult.batch.rawFileUrl ?? null,
         });
 
-        if (!primaryChannel) {
-            primaryChannel = channelSelection;
-        }
-
-        if (sendResult.ok) {
-            sentCount += 1;
-        } else {
-            failedCount += 1;
-        }
-
-        await prisma.notificationLog.create({
+        await db.notificationLog.create({
             data: {
                 dispatchId: studentResult.dispatchId,
                 studentResultId: studentResult.id,
@@ -232,14 +285,20 @@ async function sendGuardianNotifications(
                 deliveredAt: sendResult.status === "SENT" ? new Date() : null,
             },
         });
+
+        if (sendResult.ok) {
+            finalSendResult = sendResult;
+            successChannel = channelSelection.channel;
+            break; // Stop at the first successful channel
+        }
     }
 
     return {
-        ok: failedCount === 0,
-        channel: primaryChannel,
-        sentCount,
-        failedCount,
-        failureReason: null,
+        ok: !!finalSendResult,
+        channel: successChannel,
+        sentCount: finalSendResult ? 1 : 0,
+        failedCount: finalSendResult ? 0 : 1,
+        failureReason: finalSendResult ? null : "All attempted channels failed.",
     };
 }
 

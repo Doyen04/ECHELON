@@ -7,6 +7,7 @@ import { PageHeader } from "@/components/ui/page-header";
 
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { ExportButton } from "@/components/admin/export-button";
 
 type Tab = "institution" | "templates" | "users" | "danger";
 
@@ -262,7 +263,11 @@ function DangerTab() {
                         <div className="font-medium text-foreground">Export completely</div>
                         <div className="text-sm text-text-muted mt-1">Download a unified CSV of all uploaded results, approvals, and logs across the system.</div>
                     </div>
-                    <Button variant="outline" className="shrink-0 rounded-full px-4 py-2 text-sm font-medium">Export All Data</Button>
+                    <ExportButton 
+                        endpoint="/api/settings/export-all"
+                        filename={`full-export-${new Date().toISOString().split('T')[0]}.zip`}
+                        label="Export All Data"
+                    />
                 </div>
 
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 py-4">

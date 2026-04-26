@@ -1,8 +1,9 @@
 import { randomUUID } from "node:crypto";
 
-import nodemailer from "nodemailer";
-
 import { prisma } from "@/lib/db";
+import { sendEmail } from "@/lib/notifications/email-provider";
+import { sendWhatsApp } from "@/lib/notifications/whatsapp-provider";
+import { sendSms } from "@/lib/notifications/sms-provider";
 import { buildUploadedPdfAttachment } from "@/lib/result-email-pdf";
 import { buildResultNotificationEmailTemplate } from "@/lib/result-email-template";
 
@@ -128,6 +129,7 @@ async function sendRetryEmail(input: {
     portalLink: string;
     rawFileUrl: string | null;
 }) {
+    const response = await sendEmail({
     const host = process.env.SMTP_HOST;
     const from = process.env.SMTP_FROM_EMAIL;
     const port = Number(process.env.SMTP_PORT ?? "587");
@@ -168,7 +170,11 @@ async function sendRetryEmail(input: {
         attachments: pdfAttachment ? [pdfAttachment] : undefined,
     });
 
-    return response?.messageId ?? `smtp-${Date.now()}`;
+    if (!response.ok) {
+        throw new Error(response.failureReason ?? "Email provider rejected message.");
+    }
+
+    return response.providerMessageId ?? `smtp-${Date.now()}`;
 }
 
 export async function getFailedSendPreview(dispatchId: string): Promise<FailedSendPreview> {
@@ -178,7 +184,6 @@ export async function getFailedSendPreview(dispatchId: string): Promise<FailedSe
         where: {
             dispatchId,
             status: "FAILED",
-            channel: "EMAIL",
         },
         orderBy: { attemptedAt: "desc" },
         select: {
@@ -262,7 +267,7 @@ export async function retryFailedDispatchSends(dispatchId: string): Promise<Retr
     const preview = await getFailedSendPreview(dispatchId);
 
     if (!preview.canRetry) {
-        throw new Error("No failed sends have a resolvable parent email contact for retry.");
+        throw new Error("No failed sends have a resolvable contact for retry.");
     }
 
     const dispatch = await db.notificationDispatch.findUnique({
@@ -286,10 +291,9 @@ export async function retryFailedDispatchSends(dispatchId: string): Promise<Retr
     const retriedLogs: string[] = [];
 
     for (const item of preview.items) {
-        if (!item.guardianEmail || !item.guardianName) {
+        if (!item.guardianName || (!item.guardianEmail && !item.guardianPhone)) {
             continue;
         }
-
         const portalToken = await getOrCreatePortalToken(item.studentResultId);
         const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
         const portalLink = `${appUrl}/results/view?token=${portalToken}`;
@@ -315,7 +319,40 @@ export async function retryFailedDispatchSends(dispatchId: string): Promise<Retr
             },
         });
 
-        retriedLogs.push(item.id);
+        // Try SMS
+        if (item.guardianPhone && !successChannel) {
+            const smsRes = await sendSms({
+                to: item.guardianPhone,
+                text: `Hello ${item.guardianName}, the ${semesterLabel} results for ${item.studentName} (${item.matricNumber}) are ready. View here: ${portalLink}`,
+            });
+            if (smsRes.ok) {
+                successChannel = "SMS";
+                providerMessageId = smsRes.providerMessageId;
+            }
+        }
+
+        if (successChannel) {
+            await db.notificationLog.update({
+                where: { id: item.id },
+                data: {
+                    status: "SENT",
+                    channel: successChannel,
+                    providerMessageId,
+                    failureReason: null,
+                    deliveredAt: new Date(),
+                    attemptedAt: new Date(),
+                },
+            });
+            retriedLogs.push(item.id);
+        } else {
+            await db.notificationLog.update({
+                where: { id: item.id },
+                data: {
+                    attemptedAt: new Date(),
+                    failureReason: "Retry failed across all available channels.",
+                },
+            });
+        }
     }
 
     // Recalculate the dispatch counters based on current log statuses

@@ -9,6 +9,7 @@ import { Card } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/page-header";
 import { StatusBadge } from "@/components/ui/badges";
 import { ApproveDispatchButton } from "@/components/admin/approve-dispatch-button";
+import { ExportButton } from "@/components/admin/export-button";
 import { prisma } from "@/lib/db";
 import { formatDateTime, relativeTimeFromNow, semesterLabel, toBadgeStatus } from "@/lib/admin-format";
 
@@ -83,9 +84,10 @@ export default async function BatchDetailPage({ params }: BatchPageProps) {
                         {batch.status === "PENDING" || batch.status === "IN_REVIEW" ? (
                             <ApproveDispatchButton batchId={batch.id} />
                         ) : null}
-                        <Button variant="outline" className="rounded-full">
-                            <Download className="h-4 w-4" /> Export
-                        </Button>
+                        <ExportButton 
+                            endpoint={`/api/batches/${batch.id}/export`}
+                            filename={`batch-detail-${batch.id}.csv`}
+                        />
                     </div>
                 }
             />
