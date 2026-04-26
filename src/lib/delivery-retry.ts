@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 
-import { Resend } from "resend";
+import nodemailer from "nodemailer";
 
 import { prisma } from "@/lib/db";
 
@@ -73,7 +73,7 @@ function chooseRetryContact(log: FailedSendLog) {
             selected: null as RetryContact | null,
             resolvedFrom: "none" as const,
             retryBlockedReason: log.studentContacts.length > 0
-                ? "Parent contact exists, but no email address is available for resend."
+                ? "Parent contact exists, but no email address is available for retry."
                 : "No parent contact found for this student.",
         };
     }
@@ -125,19 +125,35 @@ async function sendRetryEmail(input: {
     semesterLabel: string;
     portalLink: string;
 }) {
-    if (!process.env.RESEND_API_KEY) {
-        throw new Error("RESEND_API_KEY is not configured.");
+    const host = process.env.SMTP_HOST;
+    const from = process.env.SMTP_FROM_EMAIL;
+    const port = Number(process.env.SMTP_PORT ?? "587");
+    const secure = (process.env.SMTP_SECURE ?? "false").toLowerCase() === "true";
+
+    if (!host || !from || Number.isNaN(port)) {
+        throw new Error("SMTP configuration is incomplete. Set SMTP_HOST, SMTP_PORT, and SMTP_FROM_EMAIL.");
     }
 
-    const resend = new Resend(process.env.RESEND_API_KEY);
-    const response = await resend.emails.send({
-        from: process.env.RESEND_FROM_EMAIL ?? "Results <noreply@example.edu>",
+    const transporter = nodemailer.createTransport({
+        host,
+        port,
+        secure,
+        auth: process.env.SMTP_USER && process.env.SMTP_PASS
+            ? {
+                user: process.env.SMTP_USER,
+                pass: process.env.SMTP_PASS,
+            }
+            : undefined,
+    });
+
+    const response = await transporter.sendMail({
+        from,
         to: input.guardianEmail,
         subject: `[Result Notification] ${input.studentName} - ${input.semesterLabel}`,
         text: `Hello ${input.guardianName}, the results for ${input.studentName} (${input.matricNumber}) are ready. View full details: ${input.portalLink}`,
     });
 
-    return response?.data?.id ?? `resend-${Date.now()}`;
+    return response?.messageId ?? `smtp-${Date.now()}`;
 }
 
 export async function getFailedSendPreview(dispatchId: string): Promise<FailedSendPreview> {

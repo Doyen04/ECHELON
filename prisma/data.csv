@@ -1,15 +1,15 @@
 matric_number,student_name,department,course_code,grade,parent_phone,parent_email,course_unit,score
-CSE001,John Doe,Computer Science,CSE101,A,08010000001,solaopeyemi93@gmail.com,3,85
-CSE001,John Doe,Computer Science,CSE102,B,08010000001,solaopeyemi93@gmail.com,3,78
-CSE001,John Doe,Computer Science,CSE103,A,08010000001,solaopeyemi93@gmail.com,3,90
-CSE001,John Doe,Computer Science,CSE104,C,08010000001,solaopeyemi93@gmail.com,3,65
-CSE001,John Doe,Computer Science,CSE105,B,08010000001,solaopeyemi93@gmail.com,3,74
+CSE001,John Doe,Computer Science,CSE101,A,08010000001,similoluwagbenle04@gmail.com,3,85
+CSE001,John Doe,Computer Science,CSE102,B,08010000001,similoluwagbenle04@gmail.com,3,78
+CSE001,John Doe,Computer Science,CSE103,A,08010000001,similoluwagbenle04@gmail.com,3,90
+CSE001,John Doe,Computer Science,CSE104,C,08010000001,similoluwagbenle04@gmail.com,3,65
+CSE001,John Doe,Computer Science,CSE105,B,08010000001,similoluwagbenle04@gmail.com,3,74
 
-CSE002,Jane Smith,Computer Science,CSE101,B,08010000002,solaopeyemi93@gmail.com,3,75
-CSE002,Jane Smith,Computer Science,CSE102,A,08010000002,solaopeyemi93@gmail.com,3,88
-CSE002,Jane Smith,Computer Science,CSE103,B,08010000002,solaopeyemi93@gmail.com,3,79
-CSE002,Jane Smith,Computer Science,CSE104,A,08010000002,solaopeyemi93@gmail.com,3,91
-CSE002,Jane Smith,Computer Science,CSE105,C,08010000002,solaopeyemi93@gmail.com,3,66
+CSE002,Jane Smith,Computer Science,CSE101,B,08010000002,similoluwagbenle04@gmail.com,3,75
+CSE002,Jane Smith,Computer Science,CSE102,A,08010000002,similoluwagbenle04@gmail.com,3,88
+CSE002,Jane Smith,Computer Science,CSE103,B,08010000002,similoluwagbenle04@gmail.com,3,79
+CSE002,Jane Smith,Computer Science,CSE104,A,08010000002,similoluwagbenle04@gmail.com,3,91
+CSE002,Jane Smith,Computer Science,CSE105,C,08010000002,similoluwagbenle04@gmail.com,3,66
 
 CSE003,Michael Johnson,Software Engineering,CSE201,A,08010000003,solaopeyemi93@gmail.com,3,92
 CSE003,Michael Johnson,Software Engineering,CSE202,B,08010000003,solaopeyemi93@gmail.com,3,80

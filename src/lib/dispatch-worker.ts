@@ -1,6 +1,6 @@
 import { randomBytes } from "node:crypto";
 
-import { Resend } from "resend";
+import nodemailer from "nodemailer";
 
 import { prisma } from "@/lib/db";
 import type { NotifyJobPayload } from "@/lib/queue";
@@ -22,6 +22,26 @@ type ChannelSelection = {
     channel: "WHATSAPP" | "EMAIL" | "SMS";
     destination: string;
 };
+
+function getSmtpConfig() {
+    const host = process.env.SMTP_HOST;
+    const from = process.env.SMTP_FROM_EMAIL;
+    const port = Number(process.env.SMTP_PORT ?? "587");
+    const secure = (process.env.SMTP_SECURE ?? "false").toLowerCase() === "true";
+
+    if (!host || !from || Number.isNaN(port)) {
+        return null;
+    }
+
+    return {
+        host,
+        from,
+        port,
+        secure,
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS,
+    };
+}
 
 function selectChannels(guardian: any): ChannelSelection[] {
     const channels: ChannelSelection[] = [];
@@ -75,32 +95,45 @@ async function sendNotification(
         portalLink: string;
     },
 ) {
-    
+
     if (channelSelection.channel === "EMAIL") {
-        if (!process.env.RESEND_API_KEY) {
+        const smtpConfig = getSmtpConfig();
+        if (!smtpConfig) {
             return {
                 ok: false,
                 providerMessageId: null,
                 status: "FAILED",
-                failureReason: "RESEND_API_KEY is not configured.",
+                failureReason: "SMTP configuration is incomplete. Set SMTP_HOST, SMTP_PORT, and SMTP_FROM_EMAIL.",
             } satisfies ProviderSendResult;
         }
 
         try {
-            const resend = new Resend(process.env.RESEND_API_KEY);
-            const response = await resend.emails.send({
-                from: process.env.RESEND_FROM_EMAIL ?? "Results <noreply@example.edu>",
+            const transporter = nodemailer.createTransport({
+                host: smtpConfig.host,
+                port: smtpConfig.port,
+                secure: smtpConfig.secure,
+                auth: smtpConfig.user && smtpConfig.pass
+                    ? {
+                        user: smtpConfig.user,
+                        pass: smtpConfig.pass,
+                    }
+                    : undefined,
+            });
+
+            const response = await transporter.sendMail({
+                from: smtpConfig.from,
                 to: channelSelection.destination,
                 subject: `[Result Notification] ${payload.studentName} - ${payload.semester}`,
                 text: `Hello ${payload.parentName}, the results for ${payload.studentName} (${payload.matricNumber}) are ready. View full details: ${payload.portalLink}`,
             });
+
             return {
                 ok: true,
-                providerMessageId: response?.data?.id ?? `resend-${Date.now()}`,
+                providerMessageId: response?.messageId ?? `smtp-${Date.now()}`,
                 status: "SENT",
             } satisfies ProviderSendResult;
         } catch (error) {
-            const message = error instanceof Error ? error.message : "Unknown email provider error.";
+            const message = error instanceof Error ? error.message : "Unknown SMTP provider error.";
             return {
                 ok: false,
                 providerMessageId: null,
