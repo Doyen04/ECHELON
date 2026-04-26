@@ -466,6 +466,10 @@ function parseStudentRowsFromTabularPdf(lines: string[], fallbackDepartment: str
         const continuationName = segmentLines[1]?.match(/^([A-Za-z][A-Za-z .'-]{1,})\s+\d/)?.[1]?.trim();
         const studentName = continuationName ? `${initialName} ${continuationName}` : initialName;
 
+        const gpaValues = (merged.match(/\b\d\.\d{1,2}\b/g) ?? []).map(Number);
+        const gpa = gpaValues.length >= 2 ? gpaValues[gpaValues.length - 2] : (gpaValues[0] ?? 0);
+        const cgpa = gpaValues.length > 0 ? gpaValues[gpaValues.length - 1] : null;
+
         const parsedPdfCourses = extractPdfCourseRows(merged);
         const scoreGradePairs = Array.from(merged.matchAll(/\b(\d{2,3})\s+([A-FP])\b/g)).map((m) => ({
             grade: m[2].toUpperCase(),
@@ -508,10 +512,6 @@ function parseStudentRowsFromTabularPdf(lines: string[], fallbackDepartment: str
             const pair = limitedPairs[idx];
             return { code, title: "Imported From PDF", unit: 0, grade: pair?.grade ?? "N/A", score: pair?.score ?? null };
         });
-
-        const gpaValues = (merged.match(/\b\d\.\d{1,2}\b/g) ?? []).map(Number);
-        const gpa = gpaValues.length >= 2 ? gpaValues[gpaValues.length - 2] : (gpaValues[0] ?? 0);
-        const cgpa = gpaValues.length > 0 ? gpaValues[gpaValues.length - 1] : null;
 
         students.push({
             matricNumber,
