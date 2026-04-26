@@ -17,7 +17,6 @@ export type SmsSendResult = {
 
 async function sendViaSendChamp(input: SmsSendInput): Promise<SmsSendResult> {
     const accessKey = process.env.SENDCHAMP_ACCESS_KEY;
-    
     const senderId = process.env.SENDCHAMP_SENDER_ID || "Info";
 
     if (!accessKey) {
