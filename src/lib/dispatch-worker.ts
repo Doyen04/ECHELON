@@ -4,7 +4,6 @@ import { prisma } from "@/lib/db";
 import { sendEmail } from "@/lib/notifications/email-provider";
 import { sendWhatsApp } from "@/lib/notifications/whatsapp-provider";
 import { sendSms } from "@/lib/notifications/sms-provider";
-import { buildUploadedPdfAttachment } from "@/lib/result-email-pdf";
 import { buildResultNotificationEmailTemplate } from "@/lib/result-email-template";
 import type { NotifyJobPayload } from "@/lib/queue";
 
@@ -25,26 +24,6 @@ type ChannelSelection = {
     channel: "WHATSAPP" | "EMAIL" | "SMS";
     destination: string;
 };
-
-function getSmtpConfig() {
-    const host = process.env.SMTP_HOST;
-    const from = process.env.SMTP_FROM_EMAIL;
-    const port = Number(process.env.SMTP_PORT ?? "587");
-    const secure = (process.env.SMTP_SECURE ?? "false").toLowerCase() === "true";
-
-    if (!host || !from || Number.isNaN(port)) {
-        return null;
-    }
-
-    return {
-        host,
-        from,
-        port,
-        secure,
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASS,
-    };
-}
 
 function selectChannels(guardian: any): ChannelSelection[] {
     const channels: ChannelSelection[] = [];
@@ -101,16 +80,22 @@ async function sendNotification(
         matricNumber: string;
         semesterLabel: string;
         portalLink: string;
-        gpa: string;
-        rawFileUrl: string | null;
     },
 ) {
     if (channelSelection.channel === "EMAIL") {
         try {
+            const emailTemplate = buildResultNotificationEmailTemplate({
+                parentName: payload.parentName,
+                studentName: payload.studentName,
+                matricNumber: payload.matricNumber,
+                semesterLabel: payload.semesterLabel,
+                portalLink: payload.portalLink,
+            });
+
             const response = await sendEmail({
                 to: channelSelection.destination,
-                subject: `[Result Notification] ${payload.studentName} - ${payload.semester}`,
-                text: `Hello ${payload.parentName}, the results for ${payload.studentName} (${payload.matricNumber}) are ready. View full details: ${payload.portalLink}`,
+                subject: emailTemplate.subject,
+                text: emailTemplate.text,
             });
 
             if (!response.ok) {
@@ -142,7 +127,7 @@ async function sendNotification(
         try {
             const response = await sendWhatsApp({
                 to: channelSelection.destination,
-                templateParams: [payload.parentName, payload.semester, payload.studentName, payload.matricNumber,  payload.portalLink]
+                templateParams: [payload.parentName, payload.semesterLabel, payload.studentName, payload.matricNumber, payload.portalLink],
             });
 
             if (!response.ok) {
@@ -172,27 +157,10 @@ async function sendNotification(
 
     if (channelSelection.channel === "SMS") {
         try {
-            const text = `Hello ${payload.parentName}, the ${payload.semester} results for ${payload.studentName} (${payload.matricNumber}) are ready. View here: ${payload.portalLink}`;
+            const text = `Hello ${payload.parentName}, the ${payload.semesterLabel} results for ${payload.studentName} (${payload.matricNumber}) are ready. View here: ${payload.portalLink}`;
             const response = await sendSms({
                 to: channelSelection.destination,
                 text,
-            const emailTemplate = buildResultNotificationEmailTemplate({
-                parentName: payload.parentName,
-                studentName: payload.studentName,
-                matricNumber: payload.matricNumber,
-                semesterLabel: payload.semesterLabel,
-                portalLink: payload.portalLink,
-            });
-
-            const pdfAttachment = await buildUploadedPdfAttachment(payload.rawFileUrl);
-
-            const response = await transporter.sendMail({
-                from: smtpConfig.from,
-                to: channelSelection.destination,
-                subject: emailTemplate.subject,
-                text: emailTemplate.text,
-                html: emailTemplate.html,
-                attachments: pdfAttachment ? [pdfAttachment] : undefined,
             });
 
             if (!response.ok) {
@@ -268,8 +236,6 @@ async function sendGuardianNotifications(
             matricNumber: studentResult.student.matricNumber,
             semesterLabel: `${studentResult.batch.session} ${studentResult.batch.semester}`,
             portalLink,
-            gpa: String(studentResult.gpa),
-            rawFileUrl: studentResult.batch.rawFileUrl ?? null,
         });
 
         await db.notificationLog.create({

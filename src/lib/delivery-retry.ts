@@ -4,7 +4,6 @@ import { prisma } from "@/lib/db";
 import { sendEmail } from "@/lib/notifications/email-provider";
 import { sendWhatsApp } from "@/lib/notifications/whatsapp-provider";
 import { sendSms } from "@/lib/notifications/sms-provider";
-import { buildUploadedPdfAttachment } from "@/lib/result-email-pdf";
 import { buildResultNotificationEmailTemplate } from "@/lib/result-email-template";
 
 type RetryContact = {
@@ -127,30 +126,7 @@ async function sendRetryEmail(input: {
     matricNumber: string;
     semesterLabel: string;
     portalLink: string;
-    rawFileUrl: string | null;
 }) {
-    const response = await sendEmail({
-    const host = process.env.SMTP_HOST;
-    const from = process.env.SMTP_FROM_EMAIL;
-    const port = Number(process.env.SMTP_PORT ?? "587");
-    const secure = (process.env.SMTP_SECURE ?? "false").toLowerCase() === "true";
-
-    if (!host || !from || Number.isNaN(port)) {
-        throw new Error("SMTP configuration is incomplete. Set SMTP_HOST, SMTP_PORT, and SMTP_FROM_EMAIL.");
-    }
-
-    const transporter = nodemailer.createTransport({
-        host,
-        port,
-        secure,
-        auth: process.env.SMTP_USER && process.env.SMTP_PASS
-            ? {
-                user: process.env.SMTP_USER,
-                pass: process.env.SMTP_PASS,
-            }
-            : undefined,
-    });
-
     const emailTemplate = buildResultNotificationEmailTemplate({
         parentName: input.guardianName,
         studentName: input.studentName,
@@ -159,15 +135,10 @@ async function sendRetryEmail(input: {
         portalLink: input.portalLink,
     });
 
-    const pdfAttachment = await buildUploadedPdfAttachment(input.rawFileUrl);
-
-    const response = await transporter.sendMail({
-        from,
+    const response = await sendEmail({
         to: input.guardianEmail,
         subject: emailTemplate.subject,
         text: emailTemplate.text,
-        html: emailTemplate.html,
-        attachments: pdfAttachment ? [pdfAttachment] : undefined,
     });
 
     if (!response.ok) {
@@ -298,29 +269,40 @@ export async function retryFailedDispatchSends(dispatchId: string): Promise<Retr
         const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
         const portalLink = `${appUrl}/results/view?token=${portalToken}`;
 
-        const providerMessageId = await sendRetryEmail({
-            guardianName: item.guardianName,
-            guardianEmail: item.guardianEmail,
-            studentName: item.studentName,
-            matricNumber: item.matricNumber,
-            semesterLabel,
-            portalLink,
-            rawFileUrl: dispatch.batch.rawFileUrl ?? null,
-        });
+        let successChannel: "EMAIL" | "WHATSAPP" | "SMS" | null = null;
+        let providerMessageId: string | null = null;
+        let failureReason: string | null = null;
 
-        await db.notificationLog.update({
-            where: { id: item.id },
-            data: {
-                status: "SENT",
-                providerMessageId,
-                failureReason: null,
-                deliveredAt: new Date(),
-                attemptedAt: new Date(),
-            },
-        });
+        if (item.guardianEmail) {
+            try {
+                providerMessageId = await sendRetryEmail({
+                    guardianName: item.guardianName,
+                    guardianEmail: item.guardianEmail,
+                    studentName: item.studentName,
+                    matricNumber: item.matricNumber,
+                    semesterLabel,
+                    portalLink,
+                });
+                successChannel = "EMAIL";
+            } catch (error) {
+                failureReason = error instanceof Error ? error.message : "Email retry failed.";
+            }
+        }
 
-        // Try SMS
-        if (item.guardianPhone && !successChannel) {
+        if (!successChannel && item.guardianPhone) {
+            const whatsappRes = await sendWhatsApp({
+                to: item.guardianPhone,
+                templateParams: [item.guardianName, semesterLabel, item.studentName, item.matricNumber, portalLink],
+            });
+            if (whatsappRes.ok) {
+                successChannel = "WHATSAPP";
+                providerMessageId = whatsappRes.providerMessageId;
+            } else {
+                failureReason = whatsappRes.failureReason ?? failureReason;
+            }
+        }
+
+        if (!successChannel && item.guardianPhone) {
             const smsRes = await sendSms({
                 to: item.guardianPhone,
                 text: `Hello ${item.guardianName}, the ${semesterLabel} results for ${item.studentName} (${item.matricNumber}) are ready. View here: ${portalLink}`,
@@ -328,10 +310,12 @@ export async function retryFailedDispatchSends(dispatchId: string): Promise<Retr
             if (smsRes.ok) {
                 successChannel = "SMS";
                 providerMessageId = smsRes.providerMessageId;
+            } else {
+                failureReason = smsRes.failureReason ?? failureReason;
             }
         }
 
-        if (successChannel) {
+        if (successChannel && providerMessageId) {
             await db.notificationLog.update({
                 where: { id: item.id },
                 data: {
@@ -349,7 +333,7 @@ export async function retryFailedDispatchSends(dispatchId: string): Promise<Retr
                 where: { id: item.id },
                 data: {
                     attemptedAt: new Date(),
-                    failureReason: "Retry failed across all available channels.",
+                    failureReason: failureReason ?? "Retry failed across all available channels.",
                 },
             });
         }
