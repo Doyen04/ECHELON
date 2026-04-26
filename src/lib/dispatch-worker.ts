@@ -24,6 +24,26 @@ type ChannelSelection = {
     destination: string;
 };
 
+function getSmtpConfig() {
+    const host = process.env.SMTP_HOST;
+    const from = process.env.SMTP_FROM_EMAIL;
+    const port = Number(process.env.SMTP_PORT ?? "587");
+    const secure = (process.env.SMTP_SECURE ?? "false").toLowerCase() === "true";
+
+    if (!host || !from || Number.isNaN(port)) {
+        return null;
+    }
+
+    return {
+        host,
+        from,
+        port,
+        secure,
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS,
+    };
+}
+
 function selectChannels(guardian: any): ChannelSelection[] {
     const channels: ChannelSelection[] = [];
 
@@ -105,7 +125,7 @@ async function sendNotification(
                 status: "SENT",
             } satisfies ProviderSendResult;
         } catch (error) {
-            const message = error instanceof Error ? error.message : "Unknown email provider error.";
+            const message = error instanceof Error ? error.message : "Unknown SMTP provider error.";
             return {
                 ok: false,
                 providerMessageId: null,

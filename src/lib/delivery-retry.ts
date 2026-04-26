@@ -73,7 +73,7 @@ function chooseRetryContact(log: FailedSendLog) {
             selected: null as RetryContact | null,
             resolvedFrom: "none" as const,
             retryBlockedReason: log.studentContacts.length > 0
-                ? "Parent contact exists, but no email address is available for resend."
+                ? "Parent contact exists, but no email address is available for retry."
                 : "No parent contact found for this student.",
         };
     }
