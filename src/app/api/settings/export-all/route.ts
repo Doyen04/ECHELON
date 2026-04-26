@@ -56,7 +56,7 @@ export async function GET() {
     );
     zip.file("delivery_summary.csv", dispatchCsv);
 
-    const content = await zip.generateAsync({ type: "nodebuffer" });
+    const content = await zip.generateAsync({ type: "uint8array" });
     const filename = `full-export-${new Date().toISOString().split("T")[0]}.zip`;
 
     return new Response(content, {

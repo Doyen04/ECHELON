@@ -203,7 +203,7 @@ async function sendGuardianNotifications(
 ) {
     const db = prisma as any;
     const channelSelections = selectChannels(guardian);
-    
+
     if (channelSelections.length === 0) {
         await db.notificationLog.create({
             data: {
