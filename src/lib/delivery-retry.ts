@@ -3,6 +3,8 @@ import { randomUUID } from "node:crypto";
 import nodemailer from "nodemailer";
 
 import { prisma } from "@/lib/db";
+import { buildUploadedPdfAttachment } from "@/lib/result-email-pdf";
+import { buildResultNotificationEmailTemplate } from "@/lib/result-email-template";
 
 type RetryContact = {
     id: string;
@@ -124,6 +126,7 @@ async function sendRetryEmail(input: {
     matricNumber: string;
     semesterLabel: string;
     portalLink: string;
+    rawFileUrl: string | null;
 }) {
     const host = process.env.SMTP_HOST;
     const from = process.env.SMTP_FROM_EMAIL;
@@ -146,11 +149,23 @@ async function sendRetryEmail(input: {
             : undefined,
     });
 
+    const emailTemplate = buildResultNotificationEmailTemplate({
+        parentName: input.guardianName,
+        studentName: input.studentName,
+        matricNumber: input.matricNumber,
+        semesterLabel: input.semesterLabel,
+        portalLink: input.portalLink,
+    });
+
+    const pdfAttachment = await buildUploadedPdfAttachment(input.rawFileUrl);
+
     const response = await transporter.sendMail({
         from,
         to: input.guardianEmail,
-        subject: `[Result Notification] ${input.studentName} - ${input.semesterLabel}`,
-        text: `Hello ${input.guardianName}, the results for ${input.studentName} (${input.matricNumber}) are ready. View full details: ${input.portalLink}`,
+        subject: emailTemplate.subject,
+        text: emailTemplate.text,
+        html: emailTemplate.html,
+        attachments: pdfAttachment ? [pdfAttachment] : undefined,
     });
 
     return response?.messageId ?? `smtp-${Date.now()}`;
@@ -257,6 +272,7 @@ export async function retryFailedDispatchSends(dispatchId: string): Promise<Retr
                 select: {
                     session: true,
                     semester: true,
+                    rawFileUrl: true,
                 },
             },
         },
@@ -285,6 +301,7 @@ export async function retryFailedDispatchSends(dispatchId: string): Promise<Retr
             matricNumber: item.matricNumber,
             semesterLabel,
             portalLink,
+            rawFileUrl: dispatch.batch.rawFileUrl ?? null,
         });
 
         await db.notificationLog.update({

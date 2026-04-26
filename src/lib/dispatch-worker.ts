@@ -3,6 +3,8 @@ import { randomBytes } from "node:crypto";
 import nodemailer from "nodemailer";
 
 import { prisma } from "@/lib/db";
+import { buildUploadedPdfAttachment } from "@/lib/result-email-pdf";
+import { buildResultNotificationEmailTemplate } from "@/lib/result-email-template";
 import type { NotifyJobPayload } from "@/lib/queue";
 
 type DispatchWorkerResult = {
@@ -91,8 +93,9 @@ async function sendNotification(
         parentName: string;
         studentName: string;
         matricNumber: string;
-        semester: string;
+        semesterLabel: string;
         portalLink: string;
+        rawFileUrl: string | null;
     },
 ) {
 
@@ -120,11 +123,23 @@ async function sendNotification(
                     : undefined,
             });
 
+            const emailTemplate = buildResultNotificationEmailTemplate({
+                parentName: payload.parentName,
+                studentName: payload.studentName,
+                matricNumber: payload.matricNumber,
+                semesterLabel: payload.semesterLabel,
+                portalLink: payload.portalLink,
+            });
+
+            const pdfAttachment = await buildUploadedPdfAttachment(payload.rawFileUrl);
+
             const response = await transporter.sendMail({
                 from: smtpConfig.from,
                 to: channelSelection.destination,
-                subject: `[Result Notification] ${payload.studentName} - ${payload.semester}`,
-                text: `Hello ${payload.parentName}, the results for ${payload.studentName} (${payload.matricNumber}) are ready. View full details: ${payload.portalLink}`,
+                subject: emailTemplate.subject,
+                text: emailTemplate.text,
+                html: emailTemplate.html,
+                attachments: pdfAttachment ? [pdfAttachment] : undefined,
             });
 
             return {
@@ -189,8 +204,9 @@ async function sendGuardianNotifications(
             parentName: guardian.name,
             studentName: studentResult.student.fullName,
             matricNumber: studentResult.student.matricNumber,
-            semester: `${studentResult.batch.session} ${studentResult.batch.semester}`,
+            semesterLabel: `${studentResult.batch.session} ${studentResult.batch.semester}`,
             portalLink,
+            rawFileUrl: studentResult.batch.rawFileUrl ?? null,
         });
 
         if (!primaryChannel) {

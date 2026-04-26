@@ -8,6 +8,7 @@ import {
     parseStudentRowsFromPdf,
     type StudentImportRow,
 } from "@/lib/result-import";
+import { persistUploadedResultPdf } from "@/lib/result-email-pdf";
 import { getSuperAdminSession } from "@/lib/super-admin-session";
 
 const SEMESTER_VALUES = new Set(["FIRST", "SECOND", "THIRD"]);
@@ -77,6 +78,11 @@ export async function POST(request: Request) {
         return [] as StudentImportRow[];
     });
 
+    const isUploadedPdf = file.name.toLowerCase().endsWith(".pdf") || file.type.toLowerCase().includes("pdf");
+    const rawFileUrl = isUploadedPdf
+        ? await persistUploadedResultPdf(file)
+        : null;
+
     if (groupedStudents.length === 0) {
         return NextResponse.json(
             {
@@ -108,8 +114,8 @@ export async function POST(request: Request) {
                 uploadedById: actor.id,
                 approvedById: autoDispatch ? actor.id : null,
                 approvedAt: autoDispatch ? new Date() : null,
-                source: file.name.toLowerCase().endsWith(".pdf") ? "pdf" : "csv",
-                rawFileUrl: null,
+                source: isUploadedPdf ? "pdf" : "csv",
+                rawFileUrl,
             },
         });
 
