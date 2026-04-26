@@ -57,9 +57,10 @@ export async function GET() {
     zip.file("delivery_summary.csv", dispatchCsv);
 
     const content = await zip.generateAsync({ type: "uint8array" });
+    const body = Uint8Array.from(content).buffer;
     const filename = `full-export-${new Date().toISOString().split("T")[0]}.zip`;
 
-    return new Response(content, {
+    return new Response(body, {
         headers: {
             "Content-Type": "application/zip",
             "Content-Disposition": `attachment; filename=\"${filename}\"`,
