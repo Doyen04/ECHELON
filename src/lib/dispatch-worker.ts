@@ -106,7 +106,7 @@ async function sendNotification(
             // Build attachment using batch rawFileUrl if present on the studentResult object
             try {
                 // payload doesn't include batch info here; but the caller passes `studentResult` as the payload's context when invoking.
-            } catch {}
+            } catch { }
 
             // If we can access the batch rawFileUrl via closure, prefer it. As a pragmatic approach, try reading from the DB now.
             try {
@@ -116,7 +116,7 @@ async function sendNotification(
                     const attach = await buildStudentScopedPdfAttachment(batch.rawFileUrl, payload.matricNumber).catch(() => null);
                     if (attach) attachments.push(attach);
                 }
-            } catch {}
+            } catch { }
 
             const response = await sendEmail({
                 to: channelSelection.destination,
