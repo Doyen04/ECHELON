@@ -31,30 +31,35 @@ export default async function DashboardPage() {
                 action={<NotificationPanelTrigger notifications={data.notifications} />}
             />
 
-            <div className="mx-auto w-full max-w-7xl space-y-8 px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
+            <div className="mx-auto w-full max-w-7xl space-y-6 px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
                 <SummaryMetrics metrics={data.summaryMetrics} />
 
-                <div className="grid gap-8 xl:grid-cols-[0.9fr_1.1fr]">
+                <div className="grid gap-6 xl:grid-cols-[0.9fr_1.1fr]">
                     <DeliveryChannels channels={data.channelDelivery} />
 
-                    <Card className="dashboard-section border border-border/70 p-6">
-                        <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Upload Section</p>
-                        <h2 className="mt-2 text-2xl font-semibold text-foreground">Upload New Batch</h2>
-                        <p className="mt-2 text-sm text-muted-foreground">
-                            Start a new upload and trigger dispatch after validation.
-                        </p>
-                        <div className="mt-5">
-                            <Button asChild className="rounded-full shadow-sm">
-                                <Link href="/admin/batches/upload" className="inline-flex items-center gap-2">
-                                    Upload Batch
-                                    <ArrowRight className="h-4 w-4" />
-                                </Link>
-                            </Button>
+                    <Card className="relative overflow-hidden border-none bg-[#1D4B8F] p-8 text-white shadow-lg">
+                        <div className="relative z-10">
+                            <p className="text-xs font-bold uppercase tracking-[0.2em] text-blue-100/70">Operational Action</p>
+                            <h2 className="mt-3 font-serif text-3xl font-semibold leading-tight">Upload New<br />Batch Data</h2>
+                            <p className="mt-4 max-w-[280px] text-sm leading-relaxed text-blue-50/80">
+                                Seamlessly import student results and trigger automated multi-channel delivery.
+                            </p>
+                            <div className="mt-8">
+                                <Button asChild className="rounded-full bg-white px-6 text-[#1D4B8F] hover:bg-blue-50">
+                                    <Link href="/admin/batches/upload" className="inline-flex items-center gap-2">
+                                        Get Started
+                                        <ArrowRight className="h-4 w-4" />
+                                    </Link>
+                                </Button>
+                            </div>
                         </div>
+                        {/* Decorative element */}
+                        <div className="absolute -right-8 -top-8 h-48 w-48 rounded-full bg-blue-400/10 blur-3xl" />
+                        <div className="absolute -bottom-12 -left-12 h-64 w-64 rounded-full bg-blue-900/20 blur-3xl" />
                     </Card>
                 </div>
 
-                <div className="grid gap-8 xl:grid-cols-[1fr_1fr]">
+                <div className="grid gap-6 xl:grid-cols-[1fr_1fr]">
                     <DispatchQueuePanel queue={data.dispatchQueue} />
                     <RecentActivity events={data.recentActivity} />
                 </div>
