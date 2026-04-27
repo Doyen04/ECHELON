@@ -11,10 +11,19 @@ export async function GET() {
     }
 
     const db = prisma as any;
-    const actor = await db.user.findUnique({
+    let actor = await db.user.findUnique({
         where: { id: session.user.id },
         select: { institutionId: true },
     });
+
+    // fallback: sometimes the session may not contain a matching id (tokens differ).
+    // Try resolving by email when available before failing.
+    if (!actor && session.user.email) {
+        actor = await db.user.findUnique({
+            where: { email: session.user.email },
+            select: { id: true, institutionId: true },
+        });
+    }
 
     if (!actor) {
         return NextResponse.json({ error: "Authenticated user not found." }, { status: 404 });
@@ -47,7 +56,7 @@ export async function GET() {
 
     // 3. Delivery Summary
     const dispatches = await db.notificationDispatch.findMany({
-        where: { batch: { institutionId } },
+        where: { batch: { is: { institutionId } } },
         include: { triggeredBy: { select: { name: true } } },
     });
     const dispatchCsv = buildCsv(

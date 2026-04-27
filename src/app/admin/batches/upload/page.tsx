@@ -331,6 +331,43 @@ export default function BatchUploadPage() {
         }
     };
 
+    const handleDownloadTemplate = () => {
+        const headers = [
+            "matric_number",
+            "student_name",
+            "department",
+            "course_code",
+            "unit",
+            "grade",
+            "parent_phone",
+            "parent_email",
+            "score",
+        ];
+
+        const example = [
+            "ABC/001",
+            "John Doe",
+            "Computer Science",
+            "CSC101",
+            "3",
+            "A",
+            "",
+            "",
+            "",
+        ];
+
+        const csv = [headers.join(","), example.join(",")].join("\n");
+        const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "result-upload-template.csv";
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+    };
+
     return (
         <div className="dashboard-root min-h-screen bg-background">
             <PageHeader
@@ -633,7 +670,7 @@ export default function BatchUploadPage() {
                                 </div>
                             </div>
 
-                            <button className="flex w-full items-center justify-center gap-2 rounded-lg border border-border-subtle bg-surface-main px-4 py-2.5 text-sm font-medium text-foreground hover:bg-surface-subtle transition-colors">
+                            <button onClick={handleDownloadTemplate} className="flex w-full items-center justify-center gap-2 rounded-lg border border-border-subtle bg-surface-main px-4 py-2.5 text-sm font-medium text-foreground hover:bg-surface-subtle transition-colors">
                                 <Download className="h-4 w-4" />
                                 Download Template
                             </button>

@@ -4,6 +4,11 @@ export type EmailSendInput = {
     to: string;
     subject: string;
     text: string;
+    attachments?: Array<{
+        filename: string;
+        content: Buffer | Uint8Array | string;
+        contentType?: string;
+    }>;
 };
 
 export type EmailSendResult = {
@@ -62,12 +67,18 @@ export async function sendEmail(input: EmailSendInput): Promise<EmailSendResult>
 
     try {
         const transporter = getTransporter();
-        const info = await transporter.sendMail({
+        const mailOptions: any = {
             from,
             to: input.to,
             subject: input.subject,
             text: input.text,
-        });
+        };
+
+        if (input.attachments && input.attachments.length > 0) {
+            mailOptions.attachments = input.attachments;
+        }
+
+        const info = await transporter.sendMail(mailOptions);
 
         return {
             ok: true,

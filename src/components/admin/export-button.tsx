@@ -28,8 +28,30 @@ export function ExportButton({
         setIsExporting(true);
 
         try {
-            const response = await fetch(endpoint);
-            if (!response.ok) throw new Error("Export failed");
+            const response = await fetch(endpoint, {
+                method: "GET",
+                credentials: "include",
+                cache: "no-store",
+            });
+
+            if (!response.ok) {
+                let errorMessage = `Export failed (HTTP ${response.status})`;
+                const contentType = response.headers.get("content-type") ?? "";
+
+                if (contentType.includes("application/json")) {
+                    const payload = (await response.json().catch(() => null)) as { error?: string } | null;
+                    if (payload?.error) {
+                        errorMessage = payload.error;
+                    }
+                } else {
+                    const text = await response.text().catch(() => "");
+                    if (text) {
+                        errorMessage = text;
+                    }
+                }
+
+                throw new Error(errorMessage);
+            }
 
             const blob = await response.blob();
             const url = window.URL.createObjectURL(blob);
@@ -42,7 +64,8 @@ export function ExportButton({
             window.URL.revokeObjectURL(url);
         } catch (error) {
             console.error("Export error:", error);
-            alert("Failed to export data.");
+            const message = error instanceof Error ? error.message : "Failed to export data.";
+            alert(message || "Failed to export data.");
         } finally {
             setIsExporting(false);
         }
