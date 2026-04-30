@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/page-header";
 import { StatusBadge } from "@/components/ui/badges";
+import { DataTable } from "@/components/ui/data-table";
+import type { DataTableColumn } from "@/components/ui/data-table";
 import { ApproveDispatchButton } from "@/components/admin/approve-dispatch-button";
 import { prisma } from "@/lib/db";
 import { relativeTimeFromNow, semesterLabel, toBadgeStatus } from "@/lib/admin-format";
@@ -14,6 +16,13 @@ import { relativeTimeFromNow, semesterLabel, toBadgeStatus } from "@/lib/admin-f
 export const metadata: Metadata = {
     title: "Approvals",
     description: "Result batch review queue and approval history.",
+};
+
+type ReviewedBatchRow = {
+    id: string;
+    department: string;
+    session: string;
+    status: string;
 };
 
 export default async function ApprovalsPage() {
@@ -39,6 +48,29 @@ export default async function ApprovalsPage() {
         }),
     ]);
 
+    const reviewedRows: ReviewedBatchRow[] = reviewedBatches.map((batch: any) => ({
+        id: batch.id,
+        department: batch.department,
+        session: batch.session,
+        status: batch.status,
+    }));
+
+    const reviewedColumns: DataTableColumn<ReviewedBatchRow>[] = [
+        {
+            header: "Batch ID",
+            cell: (row) => <span className="font-mono text-text-muted">{row.id}</span>,
+        },
+        {
+            header: "Session & Department",
+            cell: (row) => <span className="font-medium text-foreground">{row.department} — {row.session}</span>,
+        },
+        {
+            header: "Status",
+            cell: (row) => <StatusBadge status={toBadgeStatus(row.status)} />,
+            align: "right",
+        },
+    ];
+
     return (
         <div className="flex h-full w-full flex-col overflow-y-auto bg-background">
             <PageHeader
@@ -55,6 +87,7 @@ export default async function ApprovalsPage() {
             />
 
             <main className="mx-auto w-full max-w-7xl space-y-8 px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
+                {/* ── Pending Batches ── */}
                 <Card className="space-y-6 p-6 dashboard-section shadow-sm">
                     <h2 className="flex items-center gap-2 text-xl font-serif text-foreground">
                         <Clock className="h-5 w-5 text-status-warning" /> Action Required ({pendingBatches.length})
@@ -64,8 +97,8 @@ export default async function ApprovalsPage() {
                         {pendingBatches.length > 0 ? (
                             pendingBatches.map((batch: any, index: number) => {
                                 const studentCount = batch.studentResults.length;
-                                const pendingCount = batch.studentResults.filter((result: any) => result.status === "PENDING").length;
-                                const approvedCount = batch.studentResults.filter((result: any) => result.status === "APPROVED").length;
+                                const pendingCount = batch.studentResults.filter((r: any) => r.status === "PENDING").length;
+                                const approvedCount = batch.studentResults.filter((r: any) => r.status === "APPROVED").length;
 
                                 return (
                                     <Card key={batch.id} className="dashboard-card rounded-xl border-border/70 bg-card p-6 shadow-sm transition-colors hover:border-brand/30" style={{ animationDelay: `${index * 60}ms` }}>
@@ -73,7 +106,7 @@ export default async function ApprovalsPage() {
                                             <div className="space-y-4 flex-1">
                                                 <div>
                                                     <h3 className="mb-1 font-serif text-lg text-foreground">
-                                                        {batch.department} - {semesterLabel(batch.semester)} {batch.session}
+                                                        {batch.department} — {semesterLabel(batch.semester)} {batch.session}
                                                     </h3>
                                                     <p className="text-sm text-text-muted">
                                                         Uploaded by <span className="font-medium text-foreground">{batch.uploadedBy?.name ?? "System"}</span> • {relativeTimeFromNow(batch.uploadedAt)}
@@ -117,6 +150,7 @@ export default async function ApprovalsPage() {
                     </div>
                 </Card>
 
+                {/* ── Historical Approvals ── */}
                 <Card className="pt-4 p-6 dashboard-section shadow-sm" style={{ animationDelay: "150ms" }}>
                     <h2 className="mb-4 text-lg font-serif text-foreground">Historical Approvals</h2>
                     <details className="group overflow-hidden rounded-xl border border-border-subtle bg-surface-main shadow-sm">
@@ -130,29 +164,14 @@ export default async function ApprovalsPage() {
                             <ChevronDown className="h-5 w-5 text-text-muted transition-transform group-open:rotate-180" />
                         </summary>
 
-                        <div className="overflow-x-auto border-t border-border-subtle bg-surface-main">
-                            <table className="min-w-full divide-y divide-border-subtle">
-                                <thead className="bg-surface-subtle/30">
-                                    <tr>
-                                        <th className="px-5 py-3 text-left text-xs font-medium uppercase tracking-wider text-text-muted">Batch ID</th>
-                                        <th className="px-5 py-3 text-left text-xs font-medium uppercase tracking-wider text-text-muted">Session & Department</th>
-                                        <th className="px-5 py-3 text-right text-xs font-medium uppercase tracking-wider text-text-muted">Status</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-border-subtle">
-                                    {reviewedBatches.map((batch: any) => (
-                                        <tr key={batch.id} className="transition-colors hover:bg-surface-subtle/30">
-                                            <td className="px-5 py-4 text-sm font-mono text-text-muted">{batch.id}</td>
-                                            <td className="px-5 py-4 text-sm font-medium text-foreground">
-                                                {batch.department} - {batch.session}
-                                            </td>
-                                            <td className="px-5 py-4 text-right">
-                                                <StatusBadge status={toBadgeStatus(batch.status)} />
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
+                        <div className="border-t border-border-subtle">
+                            <DataTable
+                                columns={reviewedColumns}
+                                data={reviewedRows}
+                                rowKey={(row) => row.id}
+                                emptyMessage="No reviewed batches yet."
+                                className="border-0 rounded-none shadow-none"
+                            />
                             <div className="border-t border-border-subtle bg-surface-subtle/5 px-5 py-4 text-center text-sm font-medium text-brand transition-colors hover:text-brand-hover hover:underline cursor-pointer">
                                 View complete review history
                             </div>

@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 
 import { GuardianContactManager } from "@/components/admin/guardian-contact-manager";
-import { Card } from "@/components/ui/card";
+import { PageHeader } from "@/components/ui/page-header";
 import { prisma } from "@/lib/db";
+import Link from "next/link";
 
 export const metadata: Metadata = {
     title: "Contacts",
@@ -29,37 +30,43 @@ export default async function ContactsPage() {
     });
 
     return (
-        <main className="dashboard-root min-h-screen bg-background px-4 py-8 sm:px-6 lg:px-8">
-            <div className="dashboard-grid-overlay" aria-hidden="true" />
-            <Card className="mx-auto w-full max-w-7xl rounded-3xl p-6 shadow-[0_25px_60px_-38px_rgba(2,23,23,0.75)] sm:p-8">
-                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-(--text-muted)">
-                    Contact Management
-                </p>
-                <h1 className="mt-2 text-3xl font-semibold tracking-tight text-foreground">
-                    Contacts
-                </h1>
-                <p className="mt-3 text-sm text-(--text-secondary)">
-                    Edit, search, upload, and delete parent contact records linked to students.
-                </p>
+        <div className="flex h-full w-full flex-col overflow-y-auto bg-background">
+            <PageHeader
+                title="Contacts"
+                breadcrumbs={
+                    <div className="flex items-center gap-1">
+                        <Link href="/admin/dashboard" className="transition-colors hover:text-foreground">
+                            Dashboard
+                        </Link>
+                        <span>/</span>
+                        <span className="text-foreground">Contact Management</span>
+                    </div>
+                }
+            />
 
-                <div className="mt-6 space-y-3">
-                    <GuardianContactManager
-                        guardians={guardians.map((guardian: any) => ({
-                            id: guardian.id,
-                            studentId: guardian.studentId,
-                            studentName: guardian.student.fullName,
-                            matricNumber: guardian.student.matricNumber,
-                            department: guardian.student.department,
-                            faculty: guardian.student.faculty,
-                            level: guardian.student.level,
-                            name: guardian.name,
-                            relationship: guardian.relationship,
-                            email: guardian.email,
-                            phone: guardian.phone,
-                        }))}
-                    />
+            <main className="mx-auto w-full max-w-7xl space-y-6 px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
+                <div className="mb-2">
+                    <p className="text-sm text-muted-foreground">
+                        Edit, search, upload, and delete parent contact records linked to students.
+                    </p>
                 </div>
-            </Card>
-        </main>
+
+                <GuardianContactManager
+                    guardians={guardians.map((guardian: any) => ({
+                        id: guardian.id,
+                        studentId: guardian.studentId,
+                        studentName: guardian.student.fullName,
+                        matricNumber: guardian.student.matricNumber,
+                        department: guardian.student.department,
+                        faculty: guardian.student.faculty,
+                        level: guardian.student.level,
+                        name: guardian.name,
+                        relationship: guardian.relationship,
+                        email: guardian.email,
+                        phone: guardian.phone,
+                    }))}
+                />
+            </main>
+        </div>
     );
 }

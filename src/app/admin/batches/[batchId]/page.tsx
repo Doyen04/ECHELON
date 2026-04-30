@@ -1,13 +1,14 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { ArrowRight, Download } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/page-header";
 import { StatusBadge } from "@/components/ui/badges";
+import { DataTable } from "@/components/ui/data-table";
+import type { DataTableColumn } from "@/components/ui/data-table";
 import { ApproveDispatchButton } from "@/components/admin/approve-dispatch-button";
 import { ExportButton } from "@/components/admin/export-button";
 import { prisma } from "@/lib/db";
@@ -22,6 +23,16 @@ type BatchPageProps = {
 export const metadata: Metadata = {
     title: "Batch Details",
     description: "Live result batch overview and student result records.",
+};
+
+type StudentResultRow = {
+    id: string;
+    fullName: string;
+    matricNumber: string;
+    status: string;
+    gpa: string;
+    token: string | null;
+    courseCount: number;
 };
 
 export default async function BatchDetailPage({ params }: BatchPageProps) {
@@ -62,9 +73,57 @@ export default async function BatchDetailPage({ params }: BatchPageProps) {
         notFound();
     }
 
-    const approvedCount = batch.studentResults.filter((result: any) => result.status === "APPROVED").length;
-    const pendingCount = batch.studentResults.filter((result: any) => result.status === "PENDING").length;
-    const withheldCount = batch.studentResults.filter((result: any) => result.status === "WITHHELD").length;
+    const approvedCount = batch.studentResults.filter((r: any) => r.status === "APPROVED").length;
+    const pendingCount = batch.studentResults.filter((r: any) => r.status === "PENDING").length;
+    const withheldCount = batch.studentResults.filter((r: any) => r.status === "WITHHELD").length;
+
+    const studentResults: StudentResultRow[] = batch.studentResults.map((result: any) => ({
+        id: result.id,
+        fullName: result.student.fullName,
+        matricNumber: result.student.matricNumber,
+        status: result.status,
+        gpa: result.cgpa ?? result.gpa ?? "—",
+        token: result.portalTokens?.[0]?.token ?? null,
+        courseCount: Array.isArray(result.courses) ? result.courses.length : 0,
+    }));
+
+    const resultColumns: DataTableColumn<StudentResultRow>[] = [
+        {
+            header: "Student",
+            cell: (row) => (
+                <div>
+                    <div className="font-medium text-foreground">{row.fullName}</div>
+                    <div className="mt-0.5 text-xs text-text-muted">{row.matricNumber}</div>
+                </div>
+            ),
+        },
+        {
+            header: "Status",
+            cell: (row) => <StatusBadge status={toBadgeStatus(row.status)} />,
+        },
+        {
+            header: "GPA",
+            cell: (row) => <span className="text-foreground">{row.gpa}</span>,
+            hideOnMobile: true,
+        },
+        {
+            header: "Token",
+            cell: (row) =>
+                row.token ? (
+                    <Link href={`/results/view?token=${row.token}`} target="_blank" className="text-brand hover:underline">
+                        View portal link
+                    </Link>
+                ) : (
+                    <span className="text-text-muted">Not generated</span>
+                ),
+            hideOnMobile: true,
+        },
+        {
+            header: "Courses",
+            cell: (row) => <span>{row.courseCount} courses</span>,
+            hideOnMobile: true,
+        },
+    ];
 
     return (
         <div className="dashboard-root flex h-full w-full flex-col overflow-y-auto bg-background">
@@ -84,7 +143,7 @@ export default async function BatchDetailPage({ params }: BatchPageProps) {
                         {batch.status === "PENDING" || batch.status === "IN_REVIEW" ? (
                             <ApproveDispatchButton batchId={batch.id} />
                         ) : null}
-                        <ExportButton 
+                        <ExportButton
                             endpoint={`/api/batches/${batch.id}/export`}
                             filename={`batch-detail-${batch.id}.csv`}
                         />
@@ -93,12 +152,17 @@ export default async function BatchDetailPage({ params }: BatchPageProps) {
             />
 
             <main className="mx-auto w-full max-w-7xl space-y-6 px-4 py-6 sm:px-6 lg:px-8 lg:py-8 pb-24">
-                <Card className="rounded-3xl p-6 shadow-[0_25px_60px_-38px_rgba(2,23,23,0.75)] sm:p-8">
+                {/* ── Batch Overview Card ── */}
+                <Card className="p-6 shadow-sm sm:p-8">
                     <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
                         <div>
-                            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-(--text-muted)">Batch Overview</p>
-                            <h1 className="mt-2 text-3xl font-semibold tracking-tight text-foreground">{batch.department}</h1>
-                            <p className="mt-2 text-sm text-(--text-secondary)">
+                            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                                Batch Overview
+                            </p>
+                            <h2 className="mt-2 font-serif text-2xl font-semibold tracking-tight text-foreground">
+                                {batch.department}
+                            </h2>
+                            <p className="mt-2 text-sm text-muted-foreground">
                                 {batch.session} • {semesterLabel(batch.semester)} Semester • Uploaded {relativeTimeFromNow(batch.uploadedAt)}
                             </p>
                         </div>
@@ -119,9 +183,9 @@ export default async function BatchDetailPage({ params }: BatchPageProps) {
                     </div>
 
                     <div className="mt-6 grid gap-4 lg:grid-cols-[1.25fr_.75fr]">
-                        <article className="rounded-2xl border border-(--border-subtle) bg-(--surface-soft) p-5">
-                            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-(--text-muted)">Batch Details</p>
-                            <div className="mt-4 grid gap-3 text-sm text-(--text-secondary) sm:grid-cols-2">
+                        <article className="rounded-2xl border border-border/60 bg-muted/30 p-5">
+                            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">Batch Details</p>
+                            <div className="mt-4 grid gap-3 text-sm text-muted-foreground sm:grid-cols-2">
                                 <p><span className="text-foreground font-medium">Uploaded by:</span> {batch.uploadedBy?.name ?? "System"}</p>
                                 <p><span className="text-foreground font-medium">Approved by:</span> {batch.approvedBy?.name ?? "Pending"}</p>
                                 <p><span className="text-foreground font-medium">Source:</span> {String(batch.source).toUpperCase()}</p>
@@ -129,88 +193,49 @@ export default async function BatchDetailPage({ params }: BatchPageProps) {
                             </div>
                         </article>
 
-                        <article className="rounded-2xl border border-(--border-subtle) bg-(--surface-soft) p-5">
-                            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-(--text-muted)">Recent Dispatches</p>
+                        <article className="rounded-2xl border border-border/60 bg-muted/30 p-5">
+                            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">Recent Dispatches</p>
                             <div className="mt-4 space-y-3">
                                 {batch.dispatches.length > 0 ? (
                                     batch.dispatches.map((dispatch: any) => (
-                                        <div key={dispatch.id} className="rounded-xl border border-(--border-subtle) bg-(--surface-strong) p-4 text-sm">
+                                        <div key={dispatch.id} className="rounded-xl border border-border/60 bg-card p-4 text-sm">
                                             <div className="flex items-center justify-between gap-3">
                                                 <div>
                                                     <p className="font-medium text-foreground">{dispatch.id}</p>
-                                                    <p className="text-xs text-(--text-muted)">Triggered by {dispatch.triggeredBy?.name ?? "System"}</p>
+                                                    <p className="text-xs text-muted-foreground">Triggered by {dispatch.triggeredBy?.name ?? "System"}</p>
                                                 </div>
                                                 <StatusBadge status={toBadgeStatus(dispatch.status)} />
                                             </div>
-                                            <p className="mt-2 text-xs text-(--text-secondary)">{dispatch._count.notificationLogs} notification logs</p>
+                                            <p className="mt-2 text-xs text-muted-foreground">{dispatch._count.notificationLogs} notification logs</p>
                                             <Link href={`/admin/delivery/${dispatch.id}`} className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-brand hover:underline">
                                                 Open delivery log <ArrowRight className="h-3 w-3" />
                                             </Link>
                                         </div>
                                     ))
                                 ) : (
-                                    <p className="text-sm text-(--text-secondary)">No dispatches have been created for this batch yet.</p>
+                                    <p className="text-sm text-muted-foreground">No dispatches have been created for this batch yet.</p>
                                 )}
                             </div>
                         </article>
                     </div>
                 </Card>
 
-                <section className="overflow-hidden rounded-3xl border border-(--border-subtle) bg-(--surface-strong) shadow-[0_25px_60px_-38px_rgba(2,23,23,0.75)]">
-                    <div className="border-b border-(--border-subtle) px-6 py-4 sm:px-8">
-                        <h2 className="text-lg font-semibold text-foreground">Student Results</h2>
-                        <p className="mt-1 text-sm text-(--text-secondary)">
+                {/* ── Student Results Table ── */}
+                <div className="space-y-3">
+                    <div className="px-1">
+                        <h2 className="font-serif text-lg font-semibold text-foreground">Student Results</h2>
+                        <p className="mt-0.5 text-sm text-muted-foreground">
                             Stored result rows for this batch, including the latest portal token when available.
                         </p>
                     </div>
-
-                    {batch.studentResults.length > 0 ? (
-                        <div className="overflow-x-auto">
-                            <table className="min-w-full divide-y divide-border-subtle">
-                                <thead className="bg-surface-subtle/40">
-                                    <tr>
-                                        <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-text-muted">Student</th>
-                                        <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-text-muted">Status</th>
-                                        <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-text-muted">GPA</th>
-                                        <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-text-muted">Token</th>
-                                        <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-text-muted">Courses</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-border-subtle bg-surface-main">
-                                    {batch.studentResults.map((result: any) => {
-                                        const token = result.portalTokens?.[0]?.token;
-                                        const courses = Array.isArray(result.courses) ? result.courses : [];
-
-                                        return (
-                                            <tr key={result.id} className="hover:bg-surface-subtle/30 transition-colors">
-                                                <td className="px-6 py-4 text-sm text-foreground">
-                                                    <div className="font-medium">{result.student.fullName}</div>
-                                                    <div className="mt-1 text-xs text-(--text-muted)">{result.student.matricNumber}</div>
-                                                </td>
-                                                <td className="px-6 py-4">
-                                                    <StatusBadge status={toBadgeStatus(result.status)} />
-                                                </td>
-                                                <td className="px-6 py-4 text-sm text-(--text-secondary)">{result.cgpa ?? result.gpa}</td>
-                                                <td className="px-6 py-4 text-sm text-(--text-secondary)">
-                                                    {token ? (
-                                                        <Link href={`/results/view?token=${token}`} target="_blank" className="text-brand hover:underline">
-                                                            View portal link
-                                                        </Link>
-                                                    ) : (
-                                                        "Not generated"
-                                                    )}
-                                                </td>
-                                                <td className="px-6 py-4 text-sm text-(--text-secondary)">{courses.length} courses</td>
-                                            </tr>
-                                        );
-                                    })}
-                                </tbody>
-                            </table>
-                        </div>
-                    ) : (
-                        <div className="px-6 py-10 text-sm text-(--text-secondary)">No student results are stored for this batch yet.</div>
-                    )}
-                </section>
+                    <DataTable
+                        columns={resultColumns}
+                        data={studentResults}
+                        rowKey={(row) => row.id}
+                        emptyMessage="No student results are stored for this batch yet."
+                        className="shadow-sm"
+                    />
+                </div>
             </main>
         </div>
     );
@@ -218,8 +243,8 @@ export default async function BatchDetailPage({ params }: BatchPageProps) {
 
 function SummaryCard({ title, value, color }: { title: string; value: string; color?: string }) {
     return (
-        <article className="flex flex-col justify-between rounded-2xl border border-(--border-subtle) bg-(--surface-soft) p-5 shadow-sm">
-            <div className="mb-2 text-xs font-semibold uppercase tracking-widest text-text-muted">{title}</div>
+        <article className="flex flex-col justify-between rounded-2xl border border-border/60 bg-muted/30 p-5 shadow-sm">
+            <div className="mb-2 text-xs font-semibold uppercase tracking-widest text-muted-foreground">{title}</div>
             <div className="text-3xl font-serif text-foreground">
                 <span className={color ?? ""}>{value}</span>
             </div>

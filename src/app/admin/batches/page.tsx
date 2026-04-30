@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Download, Filter, Search, ChevronRight, Upload } from "lucide-react";
+import { Search, ChevronRight, Upload } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -8,6 +8,8 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { PageHeader } from "@/components/ui/page-header";
 import { StatusBadge } from "@/components/ui/badges";
+import { DataTable } from "@/components/ui/data-table";
+import type { DataTableColumn } from "@/components/ui/data-table";
 import { ExportButton } from "@/components/admin/export-button";
 import { prisma } from "@/lib/db";
 import { relativeTimeFromNow, semesterLabel, toBadgeStatus } from "@/lib/admin-format";
@@ -17,10 +19,22 @@ export const metadata: Metadata = {
     description: "Review uploaded result batches and their current statuses.",
 };
 
+type BatchRow = {
+    id: string;
+    session: string;
+    semester: string;
+    department: string;
+    source: string;
+    status: string;
+    uploadedAt: Date;
+    uploaderName: string;
+    studentCount: number;
+};
+
 export default async function BatchesPage() {
     const db = prisma as any;
 
-    const batches = await db.resultBatch.findMany({
+    const rawBatches = await db.resultBatch.findMany({
         orderBy: { uploadedAt: "desc" },
         take: 25,
         select: {
@@ -40,6 +54,78 @@ export default async function BatchesPage() {
         },
     });
 
+    const batches: BatchRow[] = rawBatches.map((batch: any) => ({
+        id: batch.id,
+        session: batch.session,
+        semester: batch.semester,
+        department: batch.department,
+        source: String(batch.source).toUpperCase(),
+        status: batch.status,
+        uploadedAt: batch.uploadedAt,
+        uploaderName: batch.uploadedBy?.name ?? "System",
+        studentCount: batch._count?.studentResults ?? 0,
+    }));
+
+    const columns: DataTableColumn<BatchRow>[] = [
+        {
+            header: "Batch ID",
+            cell: (row) => (
+                <div className="max-w-24 truncate font-mono text-[10px] text-text-muted" title={row.id}>
+                    {row.id}
+                </div>
+            ),
+            width: "w-28",
+            hideOnMobile: true,
+        },
+        {
+            header: "Session",
+            accessorKey: "session",
+            width: "w-24",
+        },
+        {
+            header: "Semester",
+            cell: (row) => semesterLabel(row.semester),
+            width: "w-24",
+            hideOnMobile: true,
+        },
+        {
+            header: "Department",
+            accessorKey: "department",
+            className: "font-medium text-foreground",
+            width: "w-36",
+        },
+        {
+            header: "Students",
+            cell: (row) => <span>{row.studentCount}</span>,
+            width: "w-20",
+        },
+        {
+            header: "Source",
+            cell: (row) => (
+                <Badge variant="outline" className="rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-text-muted">
+                    {row.source}
+                </Badge>
+            ),
+            width: "w-20",
+            hideOnMobile: true,
+        },
+        {
+            header: "Status",
+            cell: (row) => <StatusBadge status={toBadgeStatus(row.status)} />,
+            width: "w-24",
+        },
+        {
+            header: "Uploaded",
+            cell: (row) => (
+                <div className="min-w-0 flex flex-col">
+                    <span className="truncate text-sm text-foreground">{row.uploaderName}</span>
+                    <span className="text-xs text-text-muted">{relativeTimeFromNow(row.uploadedAt)}</span>
+                </div>
+            ),
+            width: "w-36",
+        },
+    ];
+
     return (
         <div className="flex h-full w-full flex-col overflow-x-hidden overflow-y-auto bg-background">
             <PageHeader
@@ -57,10 +143,10 @@ export default async function BatchesPage() {
             <main className="mx-auto w-full max-w-7xl min-w-0 space-y-6 px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
                 <Card className="dashboard-section flex min-w-0 flex-col justify-between gap-4 p-4 shadow-sm xl:flex-row xl:items-center">
                     <div className="flex flex-wrap items-center gap-3">
-                        <FilterSelect placeholder="Session: All" options={Array.from(new Set(batches.map((batch: any) => batch.session)))} />
-                        <FilterSelect placeholder="Semester: All" options={Array.from(new Set(batches.map((batch: any) => semesterLabel(batch.semester))))} />
-                        <FilterSelect placeholder="Status: All" options={Array.from(new Set(batches.map((batch: any) => batch.status)))} />
-                        <FilterSelect placeholder="Department: All" options={Array.from(new Set(batches.map((batch: any) => batch.department)))} />
+                        <FilterSelect placeholder="Session: All" options={Array.from(new Set(batches.map((b) => b.session)))} />
+                        <FilterSelect placeholder="Semester: All" options={Array.from(new Set(batches.map((b) => semesterLabel(b.semester))))} />
+                        <FilterSelect placeholder="Status: All" options={Array.from(new Set(batches.map((b) => b.status)))} />
+                        <FilterSelect placeholder="Department: All" options={Array.from(new Set(batches.map((b) => b.department)))} />
 
                         <div className="relative min-w-0">
                             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-muted" />
@@ -77,90 +163,44 @@ export default async function BatchesPage() {
                     </div>
                 </Card>
 
-                <Card className="dashboard-section min-w-0 overflow-hidden rounded-xl shadow-sm">
-                    <div className="max-h-[calc(100vh-18rem)] min-w-0 overflow-auto">
-                        <table className="w-full table-fixed divide-y divide-border-subtle">
-                            <thead className="bg-surface-subtle/40">
-                                <tr>
-                                    <th className="w-10 px-2 py-3 text-left"><input type="checkbox" className="rounded border-border-subtle accent-brand" /></th>
-                                    <th className="w-28 px-2 py-3 text-left text-xs font-semibold uppercase tracking-wider text-text-muted">Batch ID</th>
-                                    <th className="w-24 px-2 py-3 text-left text-xs font-semibold uppercase tracking-wider text-text-muted">Session</th>
-                                    <th className="w-24 px-2 py-3 text-left text-xs font-semibold uppercase tracking-wider text-text-muted">Semester</th>
-                                    <th className="w-36 px-2 py-3 text-left text-xs font-semibold uppercase tracking-wider text-text-muted">Department</th>
-                                    <th className="w-20 px-2 py-3 text-left text-xs font-semibold uppercase tracking-wider text-text-muted">Students</th>
-                                    <th className="w-20 px-2 py-3 text-left text-xs font-semibold uppercase tracking-wider text-text-muted">Source</th>
-                                    <th className="w-24 px-2 py-3 text-left text-xs font-semibold uppercase tracking-wider text-text-muted">Status</th>
-                                    <th className="w-36 px-2 py-3 text-left text-xs font-semibold uppercase tracking-wider text-text-muted">Uploaded</th>
-                                    <th className="w-20 px-2 py-3 text-right">
-                                        <ExportButton 
-                                            endpoint="/api/batches/export" 
-                                            filename={`batches-${new Date().toISOString().split('T')[0]}.csv`}
-                                            size="xs"
-                                        />
-                                    </th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-border-subtle bg-surface-main">
-                                {batches.map((batch: any, index: number) => {
-                                    const studentCount = batch._count?.studentResults ?? 0;
-                                    const uploader = batch.uploadedBy?.name ?? "System";
-                                    const source = String(batch.source).toUpperCase();
-
-                                    return (
-                                        <tr key={batch.id} className="group table-row-enter hover:bg-surface-subtle/50 transition-colors" style={{ animationDelay: `${index * 30}ms` }}>
-                                            <td className="px-2 py-3 align-top whitespace-nowrap"><input type="checkbox" className="rounded border-border-subtle accent-brand" /></td>
-                                            <td className="px-2 py-3 align-top text-[10px] font-mono text-text-muted">
-                                                <div className="max-w-24 truncate" title={batch.id}>
-                                                    {batch.id}
-                                                </div>
-                                            </td>
-                                            <td className="truncate px-2 py-3 align-top text-sm text-foreground">{batch.session}</td>
-                                            <td className="truncate px-2 py-3 align-top text-sm text-foreground">{semesterLabel(batch.semester)}</td>
-                                            <td className="truncate px-2 py-3 align-top text-sm font-medium text-foreground">{batch.department}</td>
-                                            <td className="px-2 py-3 align-top text-sm text-foreground">{studentCount}</td>
-                                            <td className="px-2 py-3 align-top whitespace-nowrap">
-                                                <Badge variant="outline" className="rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-text-muted">
-                                                    {source}
-                                                </Badge>
-                                            </td>
-                                            <td className="px-2 py-3 align-top whitespace-nowrap">
-                                                <StatusBadge status={toBadgeStatus(batch.status)} />
-                                            </td>
-                                            <td className="px-2 py-3 align-top">
-                                                <div className="min-w-0 flex flex-col">
-                                                    <span className="truncate text-sm text-foreground">{uploader}</span>
-                                                    <span className="text-xs text-text-muted">{relativeTimeFromNow(batch.uploadedAt)}</span>
-                                                </div>
-                                            </td>
-                                            <td className="px-2 py-3 align-top whitespace-nowrap text-right">
-                                                <Link
-                                                    href={`/admin/batches/${batch.id}`}
-                                                    className="inline-flex items-center gap-1 text-sm font-medium text-brand opacity-0 transition-opacity hover:text-brand-hover hover:underline group-hover:opacity-100"
-                                                >
-                                                    View <ChevronRight className="h-4 w-4" />
-                                                </Link>
-                                            </td>
-                                        </tr>
-                                    );
-                                })}
-                            </tbody>
-                        </table>
-                    </div>
-
-                    <div className="flex items-center justify-between border-t border-border-subtle bg-surface-subtle/20 px-6 py-4">
-                        <div className="text-sm text-text-muted">
-                            Showing 1 to {Math.min(batches.length, 10)} of {batches.length} entries
-                        </div>
-                        <div className="flex gap-2">
-                            <Button disabled variant="outline" size="sm" className="rounded-full">
-                                Previous
-                            </Button>
-                            <Button variant="outline" size="sm" className="rounded-full">
-                                Next
-                            </Button>
-                        </div>
-                    </div>
-                </Card>
+                <DataTable
+                    columns={columns}
+                    data={batches}
+                    rowKey={(row) => row.id}
+                    emptyMessage="No result batches found."
+                    maxHeight="calc(100vh - 18rem)"
+                    className="dashboard-section shadow-sm"
+                    headerAction={
+                        <ExportButton
+                            endpoint="/api/batches/export"
+                            filename={`batches-${new Date().toISOString().split('T')[0]}.csv`}
+                            size="xs"
+                        />
+                    }
+                    rowAction={(row) => (
+                        <Link
+                            href={`/admin/batches/${row.id}`}
+                            className="inline-flex items-center gap-1 text-sm font-medium text-brand opacity-0 transition-opacity hover:text-brand-hover hover:underline group-hover:opacity-100"
+                        >
+                            View <ChevronRight className="h-4 w-4" />
+                        </Link>
+                    )}
+                    pagination={
+                        <>
+                            <div className="text-sm text-text-muted">
+                                Showing 1 to {Math.min(batches.length, 10)} of {batches.length} entries
+                            </div>
+                            <div className="flex gap-2">
+                                <Button disabled variant="outline" size="sm" className="rounded-full">
+                                    Previous
+                                </Button>
+                                <Button variant="outline" size="sm" className="rounded-full">
+                                    Next
+                                </Button>
+                            </div>
+                        </>
+                    }
+                />
             </main>
         </div>
     );

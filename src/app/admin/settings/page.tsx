@@ -7,9 +7,26 @@ import { PageHeader } from "@/components/ui/page-header";
 
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { DataTable } from "@/components/ui/data-table";
+import type { DataTableColumn } from "@/components/ui/data-table";
 import { ExportButton } from "@/components/admin/export-button";
 
 type Tab = "institution" | "templates" | "users" | "danger";
+
+type UserRow = {
+    id: string;
+    name: string;
+    email: string;
+    role: string;
+    roleColor: string;
+    active: boolean;
+};
+
+const usersData: UserRow[] = [
+    { id: "1", name: "System Admin", email: "admin@university.edu.ng", role: "Super Admin", roleColor: "bg-[#B8860B]", active: true },
+    { id: "2", name: "Prof. A. Okoye", email: "senate@university.edu.ng", role: "Senate Officer", roleColor: "bg-teal-600", active: true },
+    { id: "3", name: "Registrar Adeyemi", email: "registry@university.edu.ng", role: "Registrar", roleColor: "bg-slate-600", active: true },
+];
 
 export default function SettingsPage() {
     const searchParams = useSearchParams();
@@ -149,7 +166,7 @@ function TemplatesTab({ onChange }: { onChange: () => void }) {
                         <AlertTriangle className="h-5 w-5 shrink-0 mt-0.5" />
                         <p className="text-sm">
                             <span className="font-semibold block mb-1">Meta Approval Required</span>
-                            WhatsApp templates must be submitted to Meta for approval before use. Changes here do not auto-update your Meta template â€” manual re-submission in your provider dashboard is required to avoid delivery failures.
+                            WhatsApp templates must be submitted to Meta for approval before use. Changes here do not auto-update your Meta template — manual re-submission in your provider dashboard is required to avoid delivery failures.
                         </p>
                     </div>
                 )}
@@ -194,6 +211,36 @@ function TemplatesTab({ onChange }: { onChange: () => void }) {
 }
 
 function UsersTab() {
+    const userColumns: DataTableColumn<UserRow>[] = [
+        {
+            header: "Name & Email",
+            cell: (row) => (
+                <div>
+                    <div className="font-medium text-foreground">{row.name}</div>
+                    <div className="text-sm text-text-muted">{row.email}</div>
+                </div>
+            ),
+        },
+        {
+            header: "Role",
+            cell: (row) => (
+                <span className={`inline-flex rounded-full ${row.roleColor} px-2.5 py-0.5 text-xs font-medium text-white`}>
+                    {row.role}
+                </span>
+            ),
+        },
+        {
+            header: "Status",
+            cell: (row) => (
+                <span className="inline-flex items-center gap-1.5 text-sm text-foreground">
+                    <span className={`w-2 h-2 rounded-full ${row.active ? "bg-status-success" : "bg-muted"}`} />
+                    {row.active ? "Active" : "Inactive"}
+                </span>
+            ),
+            hideOnMobile: true,
+        },
+    ];
+
     return (
         <Card className="rounded-xl shadow-sm overflow-hidden page-transition-enter">
             <div className="p-6 border-b border-border-subtle flex items-center justify-between">
@@ -206,45 +253,16 @@ function UsersTab() {
                 </Button>
             </div>
 
-            <table className="min-w-full divide-y divide-border-subtle">
-                <thead className="bg-surface-subtle/40">
-                    <tr>
-                        <th className="px-6 py-3 text-left text-xs font-semibold text-text-muted uppercase tracking-wider">Name & Email</th>
-                        <th className="px-6 py-3 text-left text-xs font-semibold text-text-muted uppercase tracking-wider">Role</th>
-                        <th className="px-6 py-3 text-left text-xs font-semibold text-text-muted uppercase tracking-wider">Status</th>
-                        <th className="px-6 py-3 text-right"></th>
-                    </tr>
-                </thead>
-                <tbody className="divide-y divide-border-subtle bg-surface-main">
-                    <tr>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="font-medium text-foreground">System Admin</div>
-                            <div className="text-sm text-text-muted">admin@university.edu.ng</div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap"><span className="inline-flex rounded-full bg-[#B8860B] px-2 py-0.5 text-xs font-medium text-white">Super Admin</span></td>
-                        <td className="px-6 py-4 whitespace-nowrap"><span className="inline-flex items-center gap-1.5 text-sm text-foreground"><div className="w-2 h-2 rounded-full bg-status-success"></div> Active</span></td>
-                        <td className="px-6 py-4 whitespace-nowrap text-right"><button className="text-sm text-text-muted hover:text-foreground">Edit</button></td>
-                    </tr>
-                    <tr>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="font-medium text-foreground">Prof. A. Okoye</div>
-                            <div className="text-sm text-text-muted">senate@university.edu.ng</div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap"><span className="inline-flex rounded-full bg-teal-600 px-2 py-0.5 text-xs font-medium text-white">Senate Officer</span></td>
-                        <td className="px-6 py-4 whitespace-nowrap"><span className="inline-flex items-center gap-1.5 text-sm text-foreground"><div className="w-2 h-2 rounded-full bg-status-success"></div> Active</span></td>
-                        <td className="px-6 py-4 whitespace-nowrap text-right"><button className="text-sm text-text-muted hover:text-foreground">Edit</button></td>
-                    </tr>
-                    <tr>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="font-medium text-foreground">Registrar Adeyemi</div>
-                            <div className="text-sm text-text-muted">registry@university.edu.ng</div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap"><span className="inline-flex rounded-full bg-slate-600 px-2 py-0.5 text-xs font-medium text-white">Registrar</span></td>
-                        <td className="px-6 py-4 whitespace-nowrap"><span className="inline-flex items-center gap-1.5 text-sm text-foreground"><div className="w-2 h-2 rounded-full bg-status-success"></div> Active</span></td>
-                        <td className="px-6 py-4 whitespace-nowrap text-right"><button className="text-sm text-text-muted hover:text-foreground">Edit</button></td>
-                    </tr>
-                </tbody>
-            </table>
+            <DataTable
+                columns={userColumns}
+                data={usersData}
+                rowKey={(row) => row.id}
+                emptyMessage="No users found."
+                className="border-0 rounded-none shadow-none"
+                rowAction={() => (
+                    <button className="text-sm text-text-muted hover:text-foreground transition-colors">Edit</button>
+                )}
+            />
         </Card>
     )
 }
@@ -263,7 +281,7 @@ function DangerTab() {
                         <div className="font-medium text-foreground">Export completely</div>
                         <div className="text-sm text-text-muted mt-1">Download a unified CSV of all uploaded results, approvals, and logs across the system.</div>
                     </div>
-                    <ExportButton 
+                    <ExportButton
                         endpoint="/api/settings/export-all"
                         filename={`full-export-${new Date().toISOString().split('T')[0]}.zip`}
                         label="Export All Data"

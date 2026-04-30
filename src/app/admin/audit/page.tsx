@@ -1,18 +1,31 @@
 import type { Metadata } from "next";
-import { Download, Search } from "lucide-react";
+import { Search } from "lucide-react";
 
 import { PageHeader } from "@/components/ui/page-header";
-import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { EmptyState } from "@/components/dashboard";
 import { Input } from "@/components/ui/input";
+import { DataTable } from "@/components/ui/data-table";
+import type { DataTableColumn } from "@/components/ui/data-table";
+import { EmptyState } from "@/components/dashboard";
+import { ExportButton } from "@/components/admin/export-button";
 import { prisma } from "@/lib/db";
 import { formatDateTime, humanizeEnum } from "@/lib/admin-format";
-import { ExportButton } from "@/components/admin/export-button";
 
 export const metadata: Metadata = {
     title: "Audit Log",
     description: "Immutable action history for the institution.",
+};
+
+type AuditLogRow = {
+    id: string;
+    createdAt: Date;
+    actorName: string;
+    actionDomain: string;
+    action: string;
+    entityType: string;
+    entityId: string;
+    ipAddress: string | null;
+    metadata: Record<string, unknown>;
 };
 
 export default async function AuditLogPage() {
@@ -26,12 +39,70 @@ export default async function AuditLogPage() {
         },
     });
 
+    const rows: AuditLogRow[] = logs.map((log: any) => ({
+        id: log.id,
+        createdAt: log.createdAt,
+        actorName: log.actor?.name ?? "System",
+        actionDomain: humanizeEnum(log.action.split(".")[0] ?? "system"),
+        action: log.action,
+        entityType: log.entityType,
+        entityId: log.entityId,
+        ipAddress: log.ipAddress ?? null,
+        metadata: log.metadata ?? {},
+    }));
+
+    const columns: DataTableColumn<AuditLogRow>[] = [
+        {
+            header: "Timestamp",
+            cell: (row) => <span className="whitespace-nowrap text-foreground">{formatDateTime(row.createdAt)}</span>,
+        },
+        {
+            header: "Actor",
+            cell: (row) => (
+                <div className="flex items-center gap-2">
+                    <span className="font-medium text-foreground">{row.actorName}</span>
+                    <span className="inline-flex rounded-full bg-surface-subtle px-2 py-0.5 text-[10px] font-semibold uppercase text-text-muted">
+                        {row.actionDomain}
+                    </span>
+                </div>
+            ),
+        },
+        {
+            header: "Action",
+            cell: (row) => <span className="text-foreground">{row.action}</span>,
+            hideOnMobile: true,
+        },
+        {
+            header: "Entity",
+            cell: (row) => (
+                <div className="max-w-[28rem] break-words whitespace-normal text-foreground">
+                    {row.entityType} {row.entityId}
+                </div>
+            ),
+            hideOnMobile: true,
+        },
+        {
+            header: "IP Address",
+            cell: (row) => <span className="font-mono text-text-muted">{row.ipAddress ?? "N/A"}</span>,
+            hideOnMobile: true,
+        },
+        {
+            header: "Metadata",
+            cell: (row) => (
+                <pre className="max-w-xl whitespace-pre-wrap break-words font-mono text-[11px] leading-5 text-text-muted">
+                    {JSON.stringify(row.metadata, null, 2)}
+                </pre>
+            ),
+            hideOnMobile: true,
+        },
+    ];
+
     return (
         <div className="dashboard-root relative flex h-full w-full flex-col overflow-x-hidden overflow-y-auto bg-background">
             <PageHeader
                 title="Audit Log"
                 action={
-                    <ExportButton 
+                    <ExportButton
                         endpoint="/api/audit/export"
                         filename={`audit-log-${new Date().toISOString().split('T')[0]}.csv`}
                     />
@@ -68,56 +139,23 @@ export default async function AuditLogPage() {
                     </div>
                 </Card>
 
-                <Card className="overflow-x-auto rounded-xl bg-surface-main shadow-sm dashboard-section" style={{ animationDelay: "100ms" }}>
-                    {logs.length === 0 ? (
-                        <div className="p-6">
-                            <EmptyState
-                                title="No audit entries yet"
-                                description="Activity records will appear here once users upload, review, or dispatch result batches."
-                            />
-                        </div>
-                    ) : (
-                        <table className="min-w-full divide-y divide-border-subtle">
-                            <thead className="bg-surface-subtle/40">
-                                <tr>
-                                    <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-text-muted">Timestamp</th>
-                                    <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-text-muted">Actor</th>
-                                    <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-text-muted">Action</th>
-                                    <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-text-muted">Entity</th>
-                                    <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-text-muted">IP Address</th>
-                                    <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-text-muted">Metadata</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-border-subtle bg-surface-main">
-                                {logs.map((log: any, index: number) => (
-                                    <tr key={log.id} className="table-row-enter hover:bg-surface-subtle/40 transition-colors" style={{ animationDelay: `${index * 20}ms` }}>
-                                        <td className="px-5 py-4 whitespace-nowrap text-sm text-foreground">{formatDateTime(log.createdAt)}</td>
-                                        <td className="px-5 py-4 whitespace-nowrap">
-                                            <div className="flex items-center gap-2">
-                                                <span className="text-sm font-medium text-foreground">{log.actor?.name ?? "System"}</span>
-                                                <span className="inline-flex rounded-full bg-surface-subtle px-2 py-0.5 text-[10px] font-semibold uppercase text-text-muted">
-                                                    {humanizeEnum(log.action.split(".")[0] ?? "system")}
-                                                </span>
-                                            </div>
-                                        </td>
-                                        <td className="px-5 py-4 whitespace-nowrap text-sm text-foreground">{log.action}</td>
-                                        <td className="max-w-[28rem] px-5 py-4 text-sm text-foreground">
-                                            <div className="break-words whitespace-normal">
-                                                {log.entityType} {log.entityId}
-                                            </div>
-                                        </td>
-                                        <td className="px-5 py-4 whitespace-nowrap text-sm font-mono text-text-muted">{log.ipAddress ?? "N/A"}</td>
-                                        <td className="px-5 py-4 text-sm text-text-muted">
-                                            <pre className="max-w-xl whitespace-pre-wrap break-words font-mono text-[11px] leading-5">
-                                                {JSON.stringify(log.metadata ?? {}, null, 2)}
-                                            </pre>
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    )}
-                </Card>
+                {rows.length === 0 ? (
+                    <Card className="p-6 shadow-sm dashboard-section" style={{ animationDelay: "100ms" }}>
+                        <EmptyState
+                            title="No audit entries yet"
+                            description="Activity records will appear here once users upload, review, or dispatch result batches."
+                        />
+                    </Card>
+                ) : (
+                    <DataTable
+                        columns={columns}
+                        data={rows}
+                        rowKey={(row) => row.id}
+                        emptyMessage="No audit entries yet."
+                        className="dashboard-section shadow-sm"
+                        animateDelay={20}
+                    />
+                )}
             </main>
         </div>
     );
