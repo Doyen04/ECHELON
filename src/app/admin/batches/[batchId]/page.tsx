@@ -1,7 +1,11 @@
-import type { Metadata } from "next";
+"use client";
+
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { ArrowRight, Download } from "lucide-react";
+import { use } from "react";
+import { useApi } from "@/lib/api";
+import { LoadingState } from "@/components/ui/loading-state";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -11,7 +15,7 @@ import { StatusBadge } from "@/components/ui/badges";
 import { DataTable } from "@/components/ui/data-table";
 import { ApproveDispatchButton } from "@/components/admin/approve-dispatch-button";
 import { ExportButton } from "@/components/admin/export-button";
-import { prisma } from "@/lib/db";
+
 import {
   formatDateTime,
   relativeTimeFromNow,
@@ -25,47 +29,26 @@ type BatchPageProps = {
   }>;
 };
 
-export const metadata: Metadata = {
-  title: "Batch Details",
-  description: "Live result batch overview and student result records.",
-};
+export default function BatchDetailPage({ params }: BatchPageProps) {
+  const { batchId } = use(params);
 
-export default async function BatchDetailPage({ params }: BatchPageProps) {
-  const db = prisma as any;
-  const { batchId } = await params;
+  const {
+    data: batch,
+    isLoading,
+    error,
+  } = useApi<any>(`/api/batches/${batchId}`, { immediate: true });
 
-  if (!batchId) {
-    notFound();
+  if (isLoading) {
+    return <LoadingState title='Loading batch details...' />;
   }
 
-  const batch = await db.resultBatch.findUnique({
-    where: { id: batchId },
-    include: {
-      uploadedBy: { select: { name: true } },
-      approvedBy: { select: { name: true } },
-      studentResults: {
-        orderBy: { id: "desc" },
-        include: {
-          student: { select: { fullName: true, matricNumber: true } },
-          portalTokens: {
-            orderBy: { createdAt: "desc" },
-            take: 1,
-          },
-        },
-      },
-      dispatches: {
-        orderBy: { triggeredAt: "desc" },
-        take: 5,
-        include: {
-          triggeredBy: { select: { name: true } },
-          _count: { select: { notificationLogs: true } },
-        },
-      },
-    },
-  });
-
-  if (!batch) {
-    notFound();
+  if (error || !batch) {
+    if (error === "Batch not found") return notFound();
+    return (
+      <div className='p-8 text-center text-status-danger'>
+        {error || "Failed to load batch details"}
+      </div>
+    );
   }
 
   const approvedCount = batch.studentResults.filter(

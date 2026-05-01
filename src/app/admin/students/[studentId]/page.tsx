@@ -1,4 +1,5 @@
-import type { Metadata } from "next";
+"use client";
+
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import {
@@ -9,6 +10,8 @@ import {
   Mail,
   Plus,
 } from "lucide-react";
+import { use, useEffect } from "react";
+import { useApi } from "@/lib/api";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -16,12 +19,12 @@ import { Card } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/page-header";
 import { StatusBadge } from "@/components/ui/badges";
 import { DataTable } from "@/components/ui/data-table";
-import { prisma } from "@/lib/db";
 import {
   formatDateTime,
   semesterLabel,
   toBadgeStatus,
 } from "@/lib/admin-format";
+import {LoadingState} from "@/components/ui/loading-state";
 
 type StudentPageProps = {
   params: Promise<{
@@ -29,42 +32,39 @@ type StudentPageProps = {
   }>;
 };
 
-export const metadata: Metadata = {
-  title: "Student Records",
-  description: "Detailed student profile, guardians, and result history.",
-};
-
-export default async function StudentRecordPage({ params }: StudentPageProps) {
-  const db = prisma as any;
-  const { studentId } = await params;
+export default function StudentRecordPage({ params }: StudentPageProps) {
+  const { studentId } = use(params);
 
   if (!studentId) {
     notFound();
   }
 
-  const student = await db.student.findUnique({
-    where: { id: studentId },
-    include: {
-      guardians: true,
-      studentResults: {
-        orderBy: { id: "desc" },
-        include: {
-          batch: true,
-          portalTokens: {
-            orderBy: { createdAt: "desc" },
-            take: 1,
-          },
-        },
-      },
-    },
-  });
+  const {
+    data: student,
+    isLoading,
+    error,
+  } = useApi<any>(`/api/students/${studentId}`, { immediate: true });
 
-  if (!student) {
-    notFound();
+  if (isLoading) {
+    return <LoadingState />;
   }
 
+  if (error || !student) {
+    if (error === "Student not found") return notFound();
+    return (
+      <div className='p-8 text-center text-status-danger'>
+        {error || "Failed to load student data"}
+      </div>
+    );
+  }
+
+  // Adjust for potential mismatch in included relationships based on previous code
+  const studentResults = student.studentResults || student.results || [];
+  const guardians =
+    student.guardians || (student.guardian ? [student.guardian] : []);
+
   const expandedHistory = new Set(
-    student.studentResults.map((result: any) => result.id),
+    studentResults.map((result: any) => result.id),
   );
 
   return (
@@ -103,12 +103,12 @@ export default async function StudentRecordPage({ params }: StudentPageProps) {
                 variant='outline'
                 className='rounded-full px-2 py-0.5 text-xs font-medium text-text-muted'
               >
-                {student.studentResults.length} records
+                {studentResults.length} records
               </Badge>
             </h2>
 
             <div className='space-y-4'>
-              {student.studentResults.map((result: any, index: number) => {
+              {studentResults.map((result: any, index: number) => {
                 const isExpanded = expandedHistory.has(result.id);
                 const token = result.portalTokens?.[0]?.token;
 
@@ -226,12 +226,12 @@ export default async function StudentRecordPage({ params }: StudentPageProps) {
                 variant='outline'
                 className='rounded-full px-2 py-0.5 text-xs font-medium text-text-muted'
               >
-                {student.guardians.length} assigned
+                {guardians.length} assigned
               </Badge>
             </h2>
 
             <div className='space-y-4'>
-              {student.guardians.map((guardian: any) => (
+              {guardians.map((guardian: any) => (
                 <div
                   key={guardian.id}
                   className='rounded-xl border border-border-subtle bg-surface-main p-5 shadow-sm'

@@ -1,6 +1,10 @@
-import type { Metadata } from "next";
+"use client";
+
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import { use } from "react";
+import { useApi } from "@/lib/api";
+import { LoadingState } from "@/components/ui/loading-state";
 
 import { ExportButton } from "@/components/admin/export-button";
 import { RetryFailedSendsButton } from "@/components/admin/retry-failed-sends-button";
@@ -10,19 +14,11 @@ import { Card } from "@/components/ui/card";
 import { DataTable } from "@/components/ui/data-table";
 import { PageHeader } from "@/components/ui/page-header";
 import { StatusBadge, ChannelBadge } from "@/components/ui/badges";
-import { prisma } from "@/lib/db";
-// Ensure this page always fetches fresh data from the database
-export const dynamic = "force-dynamic";
 
 type DeliveryPageProps = {
   params: Promise<{
     dispatchId: string;
   }>;
-};
-
-export const metadata: Metadata = {
-  title: "Delivery Log",
-  description: "Dispatch delivery detail and notification logs.",
 };
 
 function formatDateTime(value: Date | string | null | undefined) {
@@ -37,60 +33,28 @@ function formatDateTime(value: Date | string | null | undefined) {
   });
 }
 
-export default async function DeliveryLogPage({ params }: DeliveryPageProps) {
-  const db = prisma as any;
-  const { dispatchId } = await params;
+export default function DeliveryLogPage({ params }: DeliveryPageProps) {
+  const { dispatchId } = use(params);
 
-  if (!dispatchId) {
-    notFound();
+  const { data, isLoading, error } = useApi<any>(
+    `/api/delivery/${dispatchId}`,
+    { immediate: true },
+  );
+
+  if (isLoading) {
+    return <LoadingState title='Loading delivery log...' />;
   }
 
-  const dispatch = await db.notificationDispatch.findUnique({
-    where: { id: dispatchId },
-    include: {
-      batch: {
-        select: { department: true, session: true, semester: true },
-      },
-      triggeredBy: {
-        select: { name: true },
-      },
-    },
-  });
-
-  if (!dispatch) {
-    notFound();
+  if (error || !data) {
+    if (error === "Dispatch not found") return notFound();
+    return (
+      <div className='p-8 text-center text-status-danger'>
+        {error || "Failed to load delivery details"}
+      </div>
+    );
   }
 
-  const notificationLogs = await db.notificationLog.findMany({
-    where: { dispatchId },
-    orderBy: { attemptedAt: "desc" },
-  });
-
-  const studentIds = [
-    ...new Set(
-      notificationLogs.map((log: any) => log.studentId).filter(Boolean),
-    ),
-  ];
-  const guardianIds = [
-    ...new Set(
-      notificationLogs.map((log: any) => log.guardianId).filter(Boolean),
-    ),
-  ];
-
-  const [students, guardians] = await Promise.all([
-    studentIds.length > 0
-      ? db.student.findMany({
-          where: { id: { in: studentIds } },
-          select: { id: true, fullName: true, matricNumber: true },
-        })
-      : [],
-    guardianIds.length > 0
-      ? db.guardian.findMany({
-          where: { id: { in: guardianIds } },
-          select: { id: true, name: true },
-        })
-      : [],
-  ]);
+  const { dispatch, notificationLogs, students, guardians } = data;
 
   const studentById = new Map<
     string,

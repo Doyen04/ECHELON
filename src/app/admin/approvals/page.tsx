@@ -1,6 +1,9 @@
-import type { Metadata } from "next";
+"use client";
+
 import Link from "next/link";
 import { ChevronDown, CheckSquare, Clock, ArrowRight } from "lucide-react";
+import { useApi } from "@/lib/api";
+import { LoadingState } from "@/components/ui/loading-state";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -9,40 +12,30 @@ import { DataTable } from "@/components/ui/data-table";
 import { PageHeader } from "@/components/ui/page-header";
 import { StatusBadge } from "@/components/ui/badges";
 import { ApproveDispatchButton } from "@/components/admin/approve-dispatch-button";
-import { prisma } from "@/lib/db";
 import {
   relativeTimeFromNow,
   semesterLabel,
   toBadgeStatus,
 } from "@/lib/admin-format";
 
-export const metadata: Metadata = {
-  title: "Approvals",
-  description: "Result batch review queue and approval history.",
-};
+export default function ApprovalsPage() {
+  const { data, isLoading, error } = useApi<any>("/api/approvals", {
+    immediate: true,
+  });
 
-export default async function ApprovalsPage() {
-  const db = prisma as any;
+  if (isLoading) {
+    return <LoadingState title='Loading approvals...' />;
+  }
 
-  const [pendingBatches, reviewedBatches] = await Promise.all([
-    db.resultBatch.findMany({
-      where: { status: { in: ["PENDING", "IN_REVIEW"] } },
-      orderBy: { uploadedAt: "desc" },
-      include: {
-        uploadedBy: { select: { name: true } },
-        studentResults: { select: { status: true } },
-      },
-    }),
-    db.resultBatch.findMany({
-      where: { status: { in: ["APPROVED", "DISPATCHED"] } },
-      orderBy: { approvedAt: "desc" },
-      take: 12,
-      include: {
-        approvedBy: { select: { name: true } },
-        studentResults: { select: { status: true } },
-      },
-    }),
-  ]);
+  if (error || !data) {
+    return (
+      <div className='p-8 text-center text-status-danger'>
+        {error || "Failed to load approvals"}
+      </div>
+    );
+  }
+
+  const { pendingBatches, reviewedBatches } = data;
 
   return (
     <div className='flex h-full w-full flex-col overflow-y-auto bg-background'>
