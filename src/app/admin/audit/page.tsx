@@ -1,16 +1,18 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { AlertCircle, Loader2, Search } from "lucide-react";
+import { useState, useMemo } from "react";
+import { Search } from "lucide-react";
 
 import { PageHeader } from "@/components/shared/page-header";
 import { Card } from "@/components/ui/card";
-import { EmptyState } from "@/components/dashboard";
 import { Input } from "@/components/ui/input";
 import { DataTable } from "@/components/shared/data-table";
 import { formatDateTime, humanizeEnum } from "@/lib/admin-format";
 import { ExportButton } from "@/components/features/admin/export-button";
 import { Sheet } from "@/components/ui/sheet";
+import { useApi } from "@/hooks/use-api";
+import { ApiGate } from "@/components/shared/api-gate";
+import { Badge } from "@/components/ui/badge";
 
 type AuditLogEntry = {
   id: string;
@@ -24,17 +26,37 @@ type AuditLogEntry = {
 };
 
 export default function AuditLogPage() {
-  const [logs, setLogs] = useState<AuditLogEntry[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [selectedEntry, setSelectedEntry] = useState<AuditLogEntry | null>(null);
+  const { data, isLoading, error } = useApi<{ logs: AuditLogEntry[] }>(
+    "/api/audit",
+    { immediate: true },
+  );
 
-  useEffect(() => {
-    // ... (fetch logic remains same)
-  }, []);
+  const [query, setQuery] = useState("");
+  const [selectedEntry, setSelectedEntry] = useState<AuditLogEntry | null>(
+    null,
+  );
+
+  const filteredLogs = useMemo(() => {
+    if (!data?.logs) return [];
+    const normalized = query.trim().toLowerCase();
+    if (!normalized) return data.logs;
+
+    return data.logs.filter((log) => {
+      return [
+        log.actorName,
+        log.action,
+        log.entityType,
+        log.entityId,
+        log.ipAddress ?? "",
+      ]
+        .join(" ")
+        .toLowerCase()
+        .includes(normalized);
+    });
+  }, [data?.logs, query]);
 
   return (
-    <div className='dashboard-root relative flex h-full w-full flex-col overflow-x-hidden overflow-y-auto bg-background'>
+    <div className='flex h-full w-full flex-col overflow-x-hidden overflow-y-auto bg-background'>
       <PageHeader
         title='Activity Audit'
         action={
@@ -45,149 +67,260 @@ export default function AuditLogPage() {
         }
       />
 
-      <main className='mx-auto w-full max-w-7xl space-y-6 px-4 py-6 sm:px-6 lg:px-8 lg:py-8'>
-        <div className='flex flex-wrap items-center gap-3 px-1'>
-            <div className='relative flex-1 min-w-60'>
-                <Search className='absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground' />
-                <Input
-                type='text'
-                placeholder='Search records, actors or IDs...'
-                className='h-10 w-full pl-9 pr-4 bg-card'
-                />
-            </div>
-            <select
-                defaultValue=''
-                className='h-10 cursor-pointer rounded-md border border-input bg-card px-3 text-sm text-foreground shadow-xs focus:border-ring focus:ring-2 focus:ring-ring/30 focus:outline-none transition-all'
-            >
-                <option value='' disabled hidden>Category: All</option>
-                <option>Batches</option>
-                <option>Results</option>
-                <option>Users</option>
-            </select>
-        </div>
+      <ApiGate
+        data={data}
+        isLoading={isLoading}
+        error={error}
+        loadingTitle='Loading audit history...'
+        errorMessage='Failed to load activity logs'
+      >
+        {() => (
+          <main className='mx-auto w-full max-w-7xl min-w-0 px-4 py-6 sm:px-6 lg:px-8 lg:py-8'>
+            <div className='flex flex-col gap-6'>
+              <div className='flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between'>
+                <div className='relative w-full max-w-xl'>
+                  <Search className='absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground' />
+                  <Input
+                    type='search'
+                    value={query}
+                    onChange={(e) => setQuery(e.target.value)}
+                    placeholder='Search by actor, event, or reference ID...'
+                    className='h-11 w-full pl-10 pr-4 rounded-xl border-border bg-card'
+                  />
+                </div>
 
-        <Card
-          className='overflow-hidden shadow-sm dashboard-section border-border'
-        >
-          {isLoading ? (
-            <div className='flex items-center gap-3 p-12 text-sm text-muted-foreground justify-center'>
-              <Loader2 className='h-4 w-4 animate-spin' />
-              Loading activity history...
-            </div>
-          ) : error ? (
-            <div className='p-6 text-center'>
-              <div className='inline-flex items-start gap-3 rounded-xl border border-destructive/20 bg-destructive/5 p-4 text-sm text-destructive'>
-                <AlertCircle className='mt-0.5 h-4 w-4 shrink-0' />
-                <p>{error}</p>
+                <div className='flex items-center gap-4'>
+                  <div className='hidden text-[10px] font-bold uppercase tracking-widest text-muted-foreground lg:block'>
+                    <span className='text-foreground'>
+                      {filteredLogs.length}
+                    </span>{" "}
+                    Entries
+                  </div>
+                </div>
               </div>
-            </div>
-          ) : logs.length === 0 ? (
-            <div className='p-6'>
-              <EmptyState
-                title='No activity recorded'
-                description='Activity records will appear here once users upload, review, or dispatch result batches.'
-              />
-            </div>
-          ) : (
-            <DataTable
-              data={logs}
-              pageSize={20}
-              onRowClick={(entry) => setSelectedEntry(entry)}
-              columns={[
-                {
-                  header: "Time",
-                  cell: (row) => (
-                    <div className="flex flex-col">
-                        <span className="text-sm font-semibold text-foreground">{formatDateTime(row.createdAt).split(',')[0]}</span>
-                        <span className="text-xs text-muted-foreground">{formatDateTime(row.createdAt).split(',')[1]}</span>
-                    </div>
-                  ),
-                  className: "px-6 py-4",
-                },
-                {
-                  header: "Actor",
-                  cell: (row) => (
-                    <div className='flex items-center gap-3'>
-                      <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center text-[10px] font-bold">
-                        {row.actorName?.slice(0, 2).toUpperCase() || "SY"}
+
+              {/* Desktop View */}
+              <Card className='hidden md:block overflow-hidden rounded-xl border-border shadow-none'>
+                <DataTable
+                  data={filteredLogs}
+                  hideCount
+                  pageSize={15}
+                  onRowClick={(entry) => setSelectedEntry(entry)}
+                  columns={[
+                    {
+                      header: "Time",
+                      className: "px-6 py-4",
+                      cell: (row) => (
+                        <div className='flex flex-col'>
+                          <span className='text-sm font-bold text-foreground leading-none'>
+                            {formatDateTime(row.createdAt).split(",")[0]}
+                          </span>
+                          <span className='mt-1 text-[10px] font-medium text-muted-foreground uppercase tracking-tight'>
+                            {formatDateTime(row.createdAt).split(",")[1]}
+                          </span>
+                        </div>
+                      ),
+                    },
+                    {
+                      header: "Actor",
+                      className: "px-6 py-4",
+                      cell: (row) => (
+                        <div className='flex items-center gap-3'>
+                          <div className='flex flex-col'>
+                            <span className='text-sm font-bold text-foreground leading-none'>
+                              {row.actorName || "System"}
+                            </span>
+                            <span className='mt-1 text-[10px] text-muted-foreground font-mono tracking-tighter'>
+                              {row.ipAddress ?? "Internal"}
+                            </span>
+                          </div>
+                        </div>
+                      ),
+                    },
+                    {
+                      header: "Event",
+                      className: "px-6 py-4",
+                      cell: (row) => {
+                        const [category, event] = row.action.split(".");
+                        return (
+                          <div className='flex items-center gap-2'>
+                            <span className='text-sm font-medium text-foreground'>
+                              {humanizeEnum(category + " " + event || " ")}
+                            </span>
+                          </div>
+                        );
+                      },
+                    },
+                    {
+                      header: "Reference",
+                      className: "px-6 py-4",
+                      cell: (row) => (
+                        <div className='flex flex-col'>
+                          <span className='text-[10px] font-mono text-muted-foreground truncate max-w-[120px]'>
+                            {row.entityId}
+                          </span>
+                          <span className='text-[9px] font-bold uppercase tracking-widest text-muted-foreground/60'>
+                            {row.entityType}
+                          </span>
+                        </div>
+                      ),
+                    },
+                  ]}
+                />
+              </Card>
+
+              {/* Mobile View */}
+              <div className='grid gap-4 md:hidden'>
+                {filteredLogs.map((log) => (
+                  <div
+                    key={log.id}
+                    onClick={() => setSelectedEntry(log)}
+                    className='rounded-xl border border-border bg-card p-5 space-y-4'
+                  >
+                    <div className='flex items-start justify-between'>
+                      <div className='flex items-center gap-3'>
+                        <div className='h-8 w-8 rounded-full bg-muted flex items-center justify-center text-[10px] font-bold border border-border'>
+                          {log.actorName?.slice(0, 2).toUpperCase() || "SY"}
+                        </div>
+                        <div className='flex flex-col'>
+                          <span className='text-sm font-bold text-foreground'>
+                            {log.actorName || "System"}
+                          </span>
+                          <span className='text-[10px] text-muted-foreground font-mono'>
+                            {log.ipAddress ?? "Internal"}
+                          </span>
+                        </div>
                       </div>
-                      <div className="flex flex-col">
-                        <span className='text-sm font-bold text-foreground'>
-                            {row.actorName || "System"}
-                        </span>
-                        <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-tight">
-                            {row.ipAddress ?? "Internal"}
-                        </span>
+                      <div className='text-right'>
+                        <div className='text-[10px] font-bold text-foreground'>
+                          {formatDateTime(log.createdAt).split(",")[0]}
+                        </div>
+                        <div className='text-[9px] font-medium text-muted-foreground uppercase'>
+                          {formatDateTime(log.createdAt).split(",")[1]}
+                        </div>
                       </div>
                     </div>
-                  ),
-                  className: "px-6 py-4",
-                },
-                {
-                  header: "Event",
-                  cell: (row) => (
-                    <div className="flex items-center gap-2">
-                        <span className="inline-flex rounded-md bg-muted px-2 py-0.5 text-[10px] font-bold uppercase tracking-tight text-foreground">
-                            {row.action.split(".")[0]}
-                        </span>
-                        <span className="text-sm font-medium">{humanizeEnum(row.action.split(".")[1] || row.action)}</span>
+
+                    <div className='flex items-center gap-2 pt-3 border-t border-border/50'>
+                      <Badge
+                        variant='outline'
+                        className='h-5 rounded-md px-1.5 text-[9px] font-bold uppercase tracking-widest bg-muted/50'
+                      >
+                        {log.action.split(".")[0]}
+                      </Badge>
+                      <span className='text-sm font-medium'>
+                        {humanizeEnum(log.action.split(".")[1] || log.action)}
+                      </span>
                     </div>
-                  ),
-                  className: "px-6 py-4",
-                },
-                {
-                  header: "Reference",
-                  cell: (row) => (
-                    <div className='flex flex-col'>
-                      <span className="text-xs font-mono text-muted-foreground">{row.entityId}</span>
-                      <span className="text-[10px] font-bold uppercase text-muted-foreground/60">{row.entityType}</span>
+
+                    <div className='flex flex-col pt-3 border-t border-border/50'>
+                      <span className='text-[9px] font-bold uppercase tracking-widest text-muted-foreground/60'>
+                        {log.entityType}
+                      </span>
+                      <span className='text-[10px] font-mono text-muted-foreground truncate'>
+                        {log.entityId}
+                      </span>
                     </div>
-                  ),
-                  className: "px-6 py-4",
-                },
-              ]}
-            />
-          )}
-        </Card>
-      </main>
+                  </div>
+                ))}
+              </div>
+
+              {filteredLogs.length === 0 && (
+                <div className='flex flex-col items-center justify-center py-20 bg-card rounded-xl border border-border border-dashed'>
+                  <Search className='h-8 w-8 text-muted-foreground/30' />
+                  <p className='mt-2 text-sm font-medium text-muted-foreground'>
+                    No activity records found matching your search.
+                  </p>
+                </div>
+              )}
+            </div>
+          </main>
+        )}
+      </ApiGate>
 
       <Sheet
         isOpen={!!selectedEntry}
         onClose={() => setSelectedEntry(null)}
-        title="Activity Details"
-        description="Full event metadata and context"
+        title='Activity Detail'
+        description='Full event metadata and context'
       >
         {selectedEntry && (
-            <div className="space-y-6">
-                <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-1">
-                        <p className="text-[10px] font-bold uppercase text-muted-foreground">Action</p>
-                        <p className="text-sm font-semibold">{selectedEntry.action}</p>
-                    </div>
-                    <div className="space-y-1">
-                        <p className="text-[10px] font-bold uppercase text-muted-foreground">Actor</p>
-                        <p className="text-sm font-semibold">{selectedEntry.actorName || "System"}</p>
-                    </div>
+          <div className='space-y-8'>
+            <div className='grid grid-cols-2 gap-6'>
+              <div className='space-y-1.5'>
+                <p className='text-[10px] font-bold uppercase tracking-widest text-muted-foreground'>
+                  Action Event
+                </p>
+                <div className='flex items-center gap-2'>
+                  <Badge
+                    variant='outline'
+                    className='rounded-md bg-muted/50 px-1.5 text-[9px] font-bold uppercase'
+                  >
+                    {selectedEntry.action.split(".")[0]}
+                  </Badge>
+                  <p className='text-sm font-bold'>
+                    {humanizeEnum(
+                      selectedEntry.action.split(".")[1] ||
+                        selectedEntry.action,
+                    )}
+                  </p>
                 </div>
-
-                <div className="space-y-2">
-                    <p className="text-[10px] font-bold uppercase text-muted-foreground">Contextual Data</p>
-                    <div className="rounded-xl border border-border bg-muted/30 p-4">
-                        <pre className="whitespace-pre-wrap font-mono text-xs text-muted-foreground leading-relaxed">
-                            {JSON.stringify(selectedEntry.metadata ?? {}, null, 2)}
-                        </pre>
-                    </div>
-                </div>
-
-                <div className="pt-4 space-y-2">
-                     <p className="text-[10px] font-bold uppercase text-muted-foreground">System Context</p>
-                     <div className="text-xs space-y-1">
-                        <p><span className="text-muted-foreground">Entry ID:</span> {selectedEntry.id}</p>
-                        <p><span className="text-muted-foreground">IP Address:</span> {selectedEntry.ipAddress || "N/A"}</p>
-                        <p><span className="text-muted-foreground">Recorded At:</span> {formatDateTime(selectedEntry.createdAt)}</p>
-                     </div>
-                </div>
+              </div>
+              <div className='space-y-1.5'>
+                <p className='text-[10px] font-bold uppercase tracking-widest text-muted-foreground'>
+                  Recorded By
+                </p>
+                <p className='text-sm font-bold'>
+                  {selectedEntry.actorName || "System"}
+                </p>
+              </div>
             </div>
+
+            <div className='space-y-3'>
+              <p className='text-[10px] font-bold uppercase tracking-widest text-muted-foreground'>
+                Contextual Metadata
+              </p>
+              <div className='rounded-xl border border-border bg-muted/10 p-5 overflow-hidden'>
+                <pre className='whitespace-pre-wrap font-mono text-[11px] text-muted-foreground leading-relaxed overflow-x-auto max-h-[300px]'>
+                  {JSON.stringify(selectedEntry.metadata ?? {}, null, 2)}
+                </pre>
+              </div>
+            </div>
+
+            <div className='pt-6 border-t border-border space-y-4'>
+              <p className='text-[10px] font-bold uppercase tracking-widest text-muted-foreground'>
+                System Context
+              </p>
+              <div className='grid gap-3'>
+                <div className='flex justify-between text-xs'>
+                  <span className='text-muted-foreground'>Log Entry ID</span>
+                  <span className='font-mono font-medium'>
+                    {selectedEntry.id}
+                  </span>
+                </div>
+                <div className='flex justify-between text-xs'>
+                  <span className='text-muted-foreground'>IP Address</span>
+                  <span className='font-mono font-medium'>
+                    {selectedEntry.ipAddress || "Internal"}
+                  </span>
+                </div>
+                <div className='flex justify-between text-xs'>
+                  <span className='text-muted-foreground'>Full Timestamp</span>
+                  <span className='font-medium'>
+                    {formatDateTime(selectedEntry.createdAt)}
+                  </span>
+                </div>
+                <div className='flex justify-between text-xs'>
+                  <span className='text-muted-foreground'>
+                    Entity Reference
+                  </span>
+                  <span className='font-mono font-medium text-right max-w-[180px] truncate'>
+                    {selectedEntry.entityId} ({selectedEntry.entityType})
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
         )}
       </Sheet>
     </div>
