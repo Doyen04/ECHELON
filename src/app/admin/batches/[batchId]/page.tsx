@@ -142,6 +142,7 @@ export default function BatchDetailPage({ params }: BatchPageProps) {
                         {batch.studentResults.length > 0 ? (
                         <div className='overflow-x-auto'>
                             <DataTable
+                            hideCount={true}
                             data={batch.studentResults}
                             className='border-0 shadow-none -mx-px'
                             columns={columns}

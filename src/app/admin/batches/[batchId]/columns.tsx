@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { StatusBadge } from "@/components/shared/badges";
-import { toBadgeStatus } from "@/lib/admin-format";
+import { toBadgeStatus, relativeTimeFromNow } from "@/lib/admin-format";
 
 export const columns = [
   {
@@ -47,6 +47,17 @@ export const columns = [
       ) : (
         "Not generated"
       );
+    },
+  },
+  {
+    header: "Accessed",
+    accessorKey: "accessed",
+    className: "px-6 py-4 text-sm text-(--text-secondary)",
+    cell: (row: any) => {
+      const portalToken = row.portalTokens?.[0];
+      if (!portalToken) return <span className="text-(--text-muted)">N/A</span>;
+      if (!portalToken.viewedAt) return <span className="text-(--text-muted)">Not viewed yet</span>;
+      return <span className="text-[var(--color-success)]">Viewed {relativeTimeFromNow(portalToken.viewedAt)}</span>;
     },
   },
   {

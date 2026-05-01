@@ -37,6 +37,15 @@ export async function GET(
             return NextResponse.json({ type: "expired", error: "Token expired" }, { status: 410 });
         }
 
+        if (!portalToken.viewedAt) {
+            const now = new Date();
+            await prisma.portalToken.update({
+                where: { token },
+                data: { viewedAt: now },
+            });
+            portalToken.viewedAt = now;
+        }
+
         return NextResponse.json(portalToken);
     } catch (error) {
         console.error("Error fetching portal token:", error);
