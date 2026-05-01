@@ -2,7 +2,7 @@
 
 import React from "react";
 import { Menu, Layers } from "lucide-react";
-import { useSidebar } from "./sidebar-provider";
+import { useSidebar } from "@/providers/sidebar-provider";
 
 interface AdminShellProps {
     sidebar: React.ReactNode;

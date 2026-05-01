@@ -1,10 +1,10 @@
 "use client";
 
-import { GuardianContactManager } from "@/components/admin/guardian-contact-manager";
+import { GuardianContactManager } from "@/components/features/contacts/guardian-contact-manager";
 import { Card } from "@/components/ui/card";
-import { useApi } from "@/lib/api";
-import { LoadingState } from "@/components/ui/loading-state";
-import { ApiGate } from "@/components/ui/api-gate";
+import { useApi } from "@/hooks/use-api";
+import { LoadingState } from "@/components/shared/loading-state";
+import { ApiGate } from "@/components/shared/api-gate";
 
 export default function ContactsPage() {
   const { data, isLoading, error } = useApi<{ guardians: any[] }>(

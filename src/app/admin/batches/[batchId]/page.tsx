@@ -4,21 +4,20 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { ArrowRight, Download } from "lucide-react";
 import { use } from "react";
-import { useApi } from "@/lib/api";
-import { LoadingState } from "@/components/ui/loading-state";
+import { useApi } from "@/hooks/use-api";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { PageHeader } from "@/components/ui/page-header";
-import { StatusBadge } from "@/components/ui/badges";
-import { SummaryCard } from "@/components/ui/summary-card";
-import { DataTable } from "@/components/ui/data-table";
-import { ApproveDispatchButton } from "@/components/admin/approve-dispatch-button";
-import { ExportButton } from "@/components/admin/export-button";
-import { ApiGate } from "@/components/ui/api-gate";
+import { PageHeader } from "@/components/shared/page-header";
+import { StatusBadge } from "@/components/shared/badges";
+import { SummaryCard } from "@/components/shared/summary-card";
+import { DataTable } from "@/components/shared/data-table";
+import { ApproveDispatchButton } from "@/components/features/admin/approve-dispatch-button";
+import { ExportButton } from "@/components/features/admin/export-button";
+import { ApiGate } from "@/components/shared/api-gate";
 import { columns } from "./columns";
-import { Breadcrumbs } from "@/components/ui/breadcrumbs";
+import { Breadcrumbs } from "@/components/shared/breadcrumbs";
 
 import {
   formatDateTime,

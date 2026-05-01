@@ -13,12 +13,12 @@ import {
   Trash2,
   ShieldAlert,
 } from "lucide-react";
-import { PageHeader } from "@/components/ui/page-header";
+import { PageHeader } from "@/components/shared/page-header";
 
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { ExportButton } from "@/components/admin/export-button";
-import { DataTable } from "@/components/ui/data-table";
+import { ExportButton } from "@/components/features/admin/export-button";
+import { DataTable } from "@/components/shared/data-table";
 
 type Tab = "institution" | "templates" | "users" | "danger";
 

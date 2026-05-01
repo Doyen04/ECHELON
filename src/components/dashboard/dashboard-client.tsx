@@ -12,7 +12,7 @@ import {
 import { NotificationPanelTrigger } from "./notification-panel-trigger";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { PageHeader } from "@/components/ui/page-header";
+import { PageHeader } from "@/components/shared/page-header";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 

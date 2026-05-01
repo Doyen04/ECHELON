@@ -2,19 +2,19 @@
 
 import Link from "next/link";
 import { ChevronDown, CheckSquare, Clock, ArrowRight } from "lucide-react";
-import { useApi } from "@/lib/api";
-import { LoadingState } from "@/components/ui/loading-state";
-import { ApiGate } from "@/components/ui/api-gate";
-import { Breadcrumbs } from "@/components/ui/breadcrumbs";
+import { useApi } from "@/hooks/use-api";
+import { LoadingState } from "@/components/shared/loading-state";
+import { ApiGate } from "@/components/shared/api-gate";
+import { Breadcrumbs } from "@/components/shared/breadcrumbs";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { DataTable } from "@/components/ui/data-table";
-import { PageHeader } from "@/components/ui/page-header";
-import { StatusBadge } from "@/components/ui/badges";
-import { ApproveDispatchButton } from "@/components/admin/approve-dispatch-button";
-import { BatchCard } from "@/components/admin/batch-card";
+import { DataTable } from "@/components/shared/data-table";
+import { PageHeader } from "@/components/shared/page-header";
+import { StatusBadge } from "@/components/shared/badges";
+import { ApproveDispatchButton } from "@/components/features/admin/approve-dispatch-button";
+import { BatchCard } from "@/components/features/admin/batch-card";
 import {
   relativeTimeFromNow,
   semesterLabel,

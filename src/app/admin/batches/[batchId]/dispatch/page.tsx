@@ -4,15 +4,15 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { ArrowRight, Download, Send } from "lucide-react";
 import { use } from "react";
-import { useApi } from "@/lib/api";
-import { LoadingState } from "@/components/ui/loading-state";
+import { useApi } from "@/hooks/use-api";
+import { LoadingState } from "@/components/shared/loading-state";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { PageHeader } from "@/components/ui/page-header";
-import { StatusBadge } from "@/components/ui/badges";
-import { SummaryCard } from "@/components/ui/summary-card";
+import { PageHeader } from "@/components/shared/page-header";
+import { StatusBadge } from "@/components/shared/badges";
+import { SummaryCard } from "@/components/shared/summary-card";
 import {
   formatDateTime,
   relativeTimeFromNow,

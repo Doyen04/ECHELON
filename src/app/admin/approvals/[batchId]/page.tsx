@@ -1,13 +1,13 @@
 import React from "react";
 import Link from "next/link";
-import { PageHeader } from "@/components/ui/page-header";
-import { StatusBadge } from "@/components/ui/badges";
+import { PageHeader } from "@/components/shared/page-header";
+import { StatusBadge } from "@/components/shared/badges";
 import { ArrowRight, ChevronDown, CheckSquare, Clock } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { DataTable } from "@/components/ui/data-table";
+import { DataTable } from "@/components/shared/data-table";
 
 export default function ApprovalsPage() {
   return (

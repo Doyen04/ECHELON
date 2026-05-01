@@ -11,8 +11,8 @@ import {
   Download,
   X,
 } from "lucide-react";
-import { PageHeader } from "@/components/ui/page-header";
-import { DataTable } from "@/components/ui/data-table";
+import { PageHeader } from "@/components/shared/page-header";
+import { DataTable } from "@/components/shared/data-table";
 
 type ParsedRow = {
   matricNumber: string;

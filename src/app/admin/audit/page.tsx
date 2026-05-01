@@ -3,13 +3,13 @@
 import { useEffect, useState } from "react";
 import { AlertCircle, Loader2, Search } from "lucide-react";
 
-import { PageHeader } from "@/components/ui/page-header";
+import { PageHeader } from "@/components/shared/page-header";
 import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/dashboard";
 import { Input } from "@/components/ui/input";
-import { DataTable } from "@/components/ui/data-table";
+import { DataTable } from "@/components/shared/data-table";
 import { formatDateTime, humanizeEnum } from "@/lib/admin-format";
-import { ExportButton } from "@/components/admin/export-button";
+import { ExportButton } from "@/components/features/admin/export-button";
 
 type AuditLogEntry = {
   id: string;

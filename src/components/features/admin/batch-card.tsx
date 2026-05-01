@@ -4,7 +4,7 @@ import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { StatusBadge } from "@/components/ui/badges";
+import { StatusBadge } from "@/components/shared/badges";
 import { semesterLabel, relativeTimeFromNow, toBadgeStatus } from "@/lib/admin-format";
 import { ApproveDispatchButton } from "./approve-dispatch-button";
 

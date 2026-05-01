@@ -3,19 +3,19 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { use } from "react";
-import { useApi } from "@/lib/api";
-import { LoadingState } from "@/components/ui/loading-state";
+import { useApi } from "@/hooks/use-api";
+import { LoadingState } from "@/components/shared/loading-state";
 
-import { ExportButton } from "@/components/admin/export-button";
-import { RetryFailedSendsButton } from "@/components/admin/retry-failed-sends-button";
+import { ExportButton } from "@/components/features/admin/export-button";
+import { RetryFailedSendsButton } from "@/components/features/admin/retry-failed-sends-button";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { DataTable } from "@/components/ui/data-table";
-import { PageHeader } from "@/components/ui/page-header";
-import { StatusBadge, ChannelBadge } from "@/components/ui/badges";
-import { SummaryCard } from "@/components/ui/summary-card";
-import { Breadcrumbs } from "@/components/ui/breadcrumbs";
+import { DataTable } from "@/components/shared/data-table";
+import { PageHeader } from "@/components/shared/page-header";
+import { StatusBadge, ChannelBadge } from "@/components/shared/badges";
+import { SummaryCard } from "@/components/shared/summary-card";
+import { Breadcrumbs } from "@/components/shared/breadcrumbs";
 import {
   formatDateTime,
 } from "@/lib/admin-format";

@@ -11,20 +11,20 @@ import {
   Plus,
 } from "lucide-react";
 import { use, useEffect } from "react";
-import { useApi } from "@/lib/api";
+import { useApi } from "@/hooks/use-api";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { PageHeader } from "@/components/ui/page-header";
-import { StatusBadge } from "@/components/ui/badges";
-import { DataTable } from "@/components/ui/data-table";
+import { PageHeader } from "@/components/shared/page-header";
+import { StatusBadge } from "@/components/shared/badges";
+import { DataTable } from "@/components/shared/data-table";
 import {
   formatDateTime,
   semesterLabel,
   toBadgeStatus,
 } from "@/lib/admin-format";
-import {LoadingState} from "@/components/ui/loading-state";
+import {LoadingState} from "@/components/shared/loading-state";
 
 type StudentPageProps = {
   params: Promise<{

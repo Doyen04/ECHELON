@@ -1,10 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useApi } from "@/lib/api";
-import { DispatchCard } from "@/components/admin/dispatch-card";
-import { LoadingState } from "@/components/ui/loading-state";
-import { ApiGate } from "@/components/ui/api-gate";
+import { useApi } from "@/hooks/use-api";
+import { DispatchCard } from "@/components/features/admin/dispatch-card";
+import { LoadingState } from "@/components/shared/loading-state";
+import { ApiGate } from "@/components/shared/api-gate";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";

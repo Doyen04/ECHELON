@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { StatusBadge } from "@/components/ui/badges";
+import { StatusBadge } from "@/components/shared/badges";
 import { toBadgeStatus } from "@/lib/admin-format";
 
 export const columns = [

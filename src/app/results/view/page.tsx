@@ -3,10 +3,10 @@
 import Link from "next/link";
 import { Building2, CheckCircle2 } from "lucide-react";
 import { use } from "react";
-import { useApi } from "@/lib/api";
-import { LoadingState } from "@/components/ui/loading-state";
+import { useApi } from "@/hooks/use-api";
+import { LoadingState } from "@/components/shared/loading-state";
 
-import { ErrorState as UiErrorState } from "@/components/ui/error-state";
+import { ErrorState as UiErrorState } from "@/components/shared/error-state";
 import { formatDateTime } from "@/lib/admin-format";
 
 type ResultViewPageProps = {

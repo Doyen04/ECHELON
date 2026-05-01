@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Inbox } from "lucide-react";
 
-import { EmptyState as UiEmptyState } from "@/components/ui/empty-state";
+import { EmptyState as UiEmptyState } from "@/components/shared/empty-state";
 import { Button } from "@/components/ui/button";
 
 type EmptyStateProps = {
