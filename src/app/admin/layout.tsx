@@ -1,14 +1,14 @@
 import type { ReactNode } from "react";
 
-import { AdminSidebar } from "@/components/admin/admin-sidebar";
+import { AdminSidebar } from "@/components/layout/admin-sidebar";
 import { requireSuperAdminSession } from "@/lib/super-admin-session";
 
 type AdminLayoutProps = {
     children: ReactNode;
 };
 
-import { SidebarProvider } from "@/components/admin/sidebar-provider";
-import { AdminShell } from "@/components/admin/admin-shell";
+import { SidebarProvider } from "@/providers/sidebar-provider";
+import { AdminShell } from "@/components/layout/admin-shell";
 
 
 export default async function AdminLayout({ children }: AdminLayoutProps) {

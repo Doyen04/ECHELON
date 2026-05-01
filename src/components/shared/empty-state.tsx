@@ -1,6 +1,6 @@
 import { FileQuestion } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 type EmptyStateProps = {
     icon?: React.ReactNode;

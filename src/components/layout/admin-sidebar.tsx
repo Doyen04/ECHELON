@@ -17,7 +17,7 @@ import {
 } from "lucide-react";
 
 import { SignOutButton } from "@/components/auth/sign-out-button";
-import { useSidebar } from "@/components/admin/sidebar-provider";
+import { useSidebar } from "@/providers/sidebar-provider";
 
 type NavItem = {
     label: string;

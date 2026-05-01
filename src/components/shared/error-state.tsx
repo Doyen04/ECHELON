@@ -1,9 +1,9 @@
 "use client";
 
 import { AlertCircle, RotateCw, ShieldAlert } from "lucide-react";
-import { Alert, AlertDescription, AlertTitle } from "./alert";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./card";
-import { Button } from "./button";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 
 type ErrorStateProps = {
     title?: string;
