@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { ChevronRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { StatusBadge } from "@/components/ui/badges";
+import { StatusBadge } from "@/components/shared/badges";
 import { relativeTimeFromNow, semesterLabel, toBadgeStatus } from "@/lib/admin-format";
 
 export const columns = [

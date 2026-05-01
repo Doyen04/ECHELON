@@ -1,6 +1,6 @@
 "use client";
 
-import { ErrorState } from "@/components/ui/error-state";
+import { ErrorState } from "@/components/shared/error-state";
 
 type AppErrorProps = {
     error: Error & { digest?: string };
