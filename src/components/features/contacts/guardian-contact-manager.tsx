@@ -5,6 +5,8 @@ import { AlertTriangle, Edit3, Trash2, Search, Save, Upload, X, CheckCircle2 } f
 
 import { Badge } from "@/components/ui/badge";
 import { Modal, ConfirmModal } from "@/components/ui/modal";
+import { DataTable } from "@/components/ui/data-table";
+import type { DataTableColumn } from "@/components/ui/data-table";
 
 type GuardianRow = {
     id: string;
@@ -62,24 +64,14 @@ export function GuardianContactManager({ guardians }: GuardianContactManagerProp
 
     const filteredGuardians = useMemo(() => {
         const normalized = query.trim().toLowerCase();
-        if (!normalized) {
-            return guardians;
-        }
+        if (!normalized) return guardians;
 
-        return guardians.filter((guardian) => {
-            return [
-                guardian.name,
-                guardian.relationship,
-                guardian.email ?? "",
-                guardian.phone ?? "",
-                guardian.matricNumber,
-                guardian.studentName,
-                guardian.department,
-            ]
+        return guardians.filter((guardian) =>
+            [guardian.name, guardian.relationship, guardian.email ?? "", guardian.phone ?? "", guardian.matricNumber, guardian.studentName, guardian.department]
                 .join(" ")
                 .toLowerCase()
-                .includes(normalized);
-        });
+                .includes(normalized),
+        );
     }, [guardians, query]);
 
     const openEditor = (guardian: GuardianRow) => {
@@ -108,10 +100,7 @@ export function GuardianContactManager({ guardians }: GuardianContactManagerProp
     };
 
     const closeUploadModal = () => {
-        if (isUploading) {
-            return;
-        }
-
+        if (isUploading) return;
         setIsUploadOpen(false);
         setUploadFile(null);
         setUploadResult(null);
@@ -119,9 +108,7 @@ export function GuardianContactManager({ guardians }: GuardianContactManagerProp
     };
 
     const handleUploadContacts = async () => {
-        if (!uploadFile || isUploading) {
-            return;
-        }
+        if (!uploadFile || isUploading) return;
 
         setIsUploading(true);
         setUploadError(null);
@@ -154,9 +141,7 @@ export function GuardianContactManager({ guardians }: GuardianContactManagerProp
     };
 
     const saveGuardian = () => {
-        if (!selectedGuardian || isSaving) {
-            return;
-        }
+        if (!selectedGuardian || isSaving) return;
 
         startSaving(async () => {
             setMessage(null);
@@ -190,9 +175,7 @@ export function GuardianContactManager({ guardians }: GuardianContactManagerProp
     };
 
     const deleteGuardian = () => {
-        if (!deleteTarget || isSaving) {
-            return;
-        }
+        if (!deleteTarget || isSaving) return;
 
         startSaving(async () => {
             setMessage(null);
@@ -216,6 +199,43 @@ export function GuardianContactManager({ guardians }: GuardianContactManagerProp
         });
     };
 
+    const columns: DataTableColumn<GuardianRow>[] = [
+        {
+            header: "Parent",
+            cell: (row) => (
+                <div>
+                    <div className="font-medium text-foreground">{row.name || "No parent contact"}</div>
+                    <div className="text-xs text-text-muted">{row.relationship}</div>
+                </div>
+            ),
+        },
+        {
+            header: "Student",
+            cell: (row) => (
+                <div>
+                    <div className="font-medium text-foreground">{row.studentName}</div>
+                    <div className="text-xs text-text-muted">{row.matricNumber}</div>
+                    <div className="text-xs text-text-muted">{row.department} · {row.faculty} · Level {row.level}</div>
+                </div>
+            ),
+        },
+        {
+            header: "Contact",
+            cell: (row) => (
+                <div className="text-text-muted">
+                    <div>{row.email ?? "No email"}</div>
+                    <div>{row.phone ?? "No phone"}</div>
+                </div>
+            ),
+            hideOnMobile: true,
+        },
+        {
+            header: "Consent",
+            cell: () => <span className="text-text-muted">Contact active</span>,
+            hideOnMobile: true,
+        },
+    ];
+
     return (
         <div className="space-y-4">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -226,7 +246,7 @@ export function GuardianContactManager({ guardians }: GuardianContactManagerProp
                         value={query}
                         onChange={(event) => setQuery(event.target.value)}
                         placeholder="Search parent name, matric number, email, phone..."
-                        className="w-full rounded-xl border border-border-subtle bg-surface-main py-3 pl-10 pr-4 text-sm text-foreground outline-none transition-colors focus:border-brand focus:ring-1 focus:ring-brand"
+                        className="w-full rounded-full border border-input bg-background py-3 pl-10 pr-4 text-sm text-foreground outline-none transition-colors focus:border-ring focus:ring-2 focus:ring-ring/30"
                     />
                 </div>
                 <div className="text-sm text-text-muted">
@@ -235,7 +255,7 @@ export function GuardianContactManager({ guardians }: GuardianContactManagerProp
                 <button
                     type="button"
                     onClick={openUploadModal}
-                    className="inline-flex items-center gap-2 rounded-full bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover"
+                    className="inline-flex items-center gap-2 rounded-full bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover transition-colors"
                 >
                     <Upload className="h-4 w-4" />
                     Upload Contacts
@@ -248,71 +268,35 @@ export function GuardianContactManager({ guardians }: GuardianContactManagerProp
                 </div>
             ) : null}
 
-            <div className="overflow-hidden rounded-2xl border border-border-subtle bg-surface-main shadow-sm">
-                <div className="overflow-x-auto">
-                    <table className="min-w-full divide-y divide-border-subtle">
-                        <thead className="bg-surface-subtle/40">
-                            <tr>
-                                <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-text-muted">Parent</th>
-                                <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-text-muted">Student</th>
-                                <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-text-muted">Contact</th>
-                                <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-text-muted">Consent</th>
-                                <th className="px-5 py-3 text-right text-xs font-semibold uppercase tracking-wider text-text-muted">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-border-subtle">
-                            {filteredGuardians.map((guardian) => (
-                                <tr key={guardian.id} className="hover:bg-surface-subtle/30">
-                                    <td className="px-5 py-4 align-top">
-                                        <div className="font-medium text-foreground">{guardian.name || "No parent contact"}</div>
-                                        <div className="text-xs text-text-muted">{guardian.relationship}</div>
-                                    </td>
-                                    <td className="px-5 py-4 align-top">
-                                        <div className="font-medium text-foreground">{guardian.studentName}</div>
-                                        <div className="text-xs text-text-muted">{guardian.matricNumber}</div>
-                                        <div className="text-xs text-text-muted">{guardian.department} · {guardian.faculty} · Level {guardian.level}</div>
-                                    </td>
-                                    <td className="px-5 py-4 align-top text-sm text-text-muted">
-                                        <div>{guardian.email ?? "No email"}</div>
-                                        <div>{guardian.phone ?? "No phone"}</div>
-                                    </td>
-                                    <td className="px-5 py-4 align-top text-sm text-text-muted">
-                                        Contact active
-                                    </td>
-                                    <td className="px-5 py-4 align-top text-right">
-                                        <div className="inline-flex items-center gap-2">
-                                            <button
-                                                type="button"
-                                                onClick={() => openEditor(guardian)}
-                                                className="inline-flex items-center gap-2 rounded-md border border-border-subtle bg-surface-main px-3 py-2 text-sm font-medium text-foreground transition-colors hover:bg-surface-subtle"
-                                            >
-                                                <Edit3 className="h-4 w-4" />
-                                                Edit
-                                            </button>
-                                            <button
-                                                type="button"
-                                                onClick={() => setDeleteTarget(guardian)}
-                                                className="inline-flex items-center gap-2 rounded-md border border-status-danger/30 bg-status-danger/10 px-3 py-2 text-sm font-medium text-status-danger transition-colors hover:bg-status-danger/15"
-                                            >
-                                                <Trash2 className="h-4 w-4" />
-                                                Delete
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
-                            ))}
-                            {filteredGuardians.length === 0 ? (
-                                <tr>
-                                    <td colSpan={5} className="px-5 py-10 text-center text-sm text-text-muted">
-                                        No contacts found.
-                                    </td>
-                                </tr>
-                            ) : null}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
+            <DataTable
+                columns={columns}
+                data={filteredGuardians}
+                rowKey={(row) => row.id}
+                emptyMessage="No contacts found."
+                className="shadow-sm"
+                rowAction={(row) => (
+                    <div className="inline-flex items-center gap-2">
+                        <button
+                            type="button"
+                            onClick={() => openEditor(row)}
+                            className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-muted"
+                        >
+                            <Edit3 className="h-3.5 w-3.5" />
+                            Edit
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setDeleteTarget(row)}
+                            className="inline-flex items-center gap-1.5 rounded-full border border-status-danger/30 bg-status-danger/10 px-3 py-1.5 text-xs font-medium text-status-danger transition-colors hover:bg-status-danger/15"
+                        >
+                            <Trash2 className="h-3.5 w-3.5" />
+                            Delete
+                        </button>
+                    </div>
+                )}
+            />
 
+            {/* ── Edit Modal ── */}
             <Modal
                 isOpen={Boolean(selectedGuardian)}
                 onClose={closeEditor}
@@ -324,7 +308,7 @@ export function GuardianContactManager({ guardians }: GuardianContactManagerProp
                         <span className="font-medium text-foreground">Parent name</span>
                         <input
                             value={editState.name}
-                            onChange={(event) => setEditState((value) => ({ ...value, name: event.target.value }))}
+                            onChange={(event) => setEditState((v) => ({ ...v, name: event.target.value }))}
                             className="w-full rounded-lg border border-border-subtle bg-surface-main px-3 py-2 text-foreground outline-none focus:border-brand focus:ring-1 focus:ring-brand"
                         />
                     </label>
@@ -333,7 +317,7 @@ export function GuardianContactManager({ guardians }: GuardianContactManagerProp
                         <span className="font-medium text-foreground">Relationship</span>
                         <input
                             value={editState.relationship}
-                            onChange={(event) => setEditState((value) => ({ ...value, relationship: event.target.value }))}
+                            onChange={(event) => setEditState((v) => ({ ...v, relationship: event.target.value }))}
                             className="w-full rounded-lg border border-border-subtle bg-surface-main px-3 py-2 text-foreground outline-none focus:border-brand focus:ring-1 focus:ring-brand"
                         />
                     </label>
@@ -343,7 +327,7 @@ export function GuardianContactManager({ guardians }: GuardianContactManagerProp
                             <span className="font-medium text-foreground">Email</span>
                             <input
                                 value={editState.email}
-                                onChange={(event) => setEditState((value) => ({ ...value, email: event.target.value }))}
+                                onChange={(event) => setEditState((v) => ({ ...v, email: event.target.value }))}
                                 className="w-full rounded-lg border border-border-subtle bg-surface-main px-3 py-2 text-foreground outline-none focus:border-brand focus:ring-1 focus:ring-brand"
                             />
                         </label>
@@ -351,7 +335,7 @@ export function GuardianContactManager({ guardians }: GuardianContactManagerProp
                             <span className="font-medium text-foreground">Phone</span>
                             <input
                                 value={editState.phone}
-                                onChange={(event) => setEditState((value) => ({ ...value, phone: event.target.value }))}
+                                onChange={(event) => setEditState((v) => ({ ...v, phone: event.target.value }))}
                                 className="w-full rounded-lg border border-border-subtle bg-surface-main px-3 py-2 text-foreground outline-none focus:border-brand focus:ring-1 focus:ring-brand"
                             />
                         </label>
@@ -361,7 +345,7 @@ export function GuardianContactManager({ guardians }: GuardianContactManagerProp
                         <button
                             type="button"
                             onClick={closeEditor}
-                            className="inline-flex items-center gap-2 rounded-md border border-border-subtle bg-surface-main px-4 py-2 text-sm font-medium text-foreground hover:bg-surface-subtle"
+                            className="inline-flex items-center gap-2 rounded-full border border-border bg-background px-4 py-2 text-sm font-medium text-foreground hover:bg-muted transition-colors"
                         >
                             <X className="h-4 w-4" />
                             Cancel
@@ -370,7 +354,7 @@ export function GuardianContactManager({ guardians }: GuardianContactManagerProp
                             type="button"
                             onClick={saveGuardian}
                             disabled={isSaving}
-                            className="inline-flex items-center gap-2 rounded-md bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover disabled:cursor-not-allowed disabled:opacity-70"
+                            className="inline-flex items-center gap-2 rounded-full bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover disabled:cursor-not-allowed disabled:opacity-70 transition-colors"
                         >
                             <Save className="h-4 w-4" />
                             {isSaving ? "Saving..." : "Save changes"}
@@ -379,6 +363,7 @@ export function GuardianContactManager({ guardians }: GuardianContactManagerProp
                 </div>
             </Modal>
 
+            {/* ── Delete Confirmation ── */}
             <ConfirmModal
                 isOpen={Boolean(deleteTarget)}
                 onClose={() => setDeleteTarget(null)}
@@ -386,7 +371,7 @@ export function GuardianContactManager({ guardians }: GuardianContactManagerProp
                 title="Delete Parent Contact"
                 description={
                     <span>
-                        This will permanently remove <strong>{deleteTarget?.name}</strong> from {deleteTarget?.studentName}'s contact list.
+                        This will permanently remove <strong>{deleteTarget?.name}</strong> from {deleteTarget?.studentName}&apos;s contact list.
                     </span>
                 }
                 confirmText={isSaving ? "Deleting..." : "Delete Contact"}
@@ -394,6 +379,7 @@ export function GuardianContactManager({ guardians }: GuardianContactManagerProp
                 isDestructive
             />
 
+            {/* ── Upload Modal ── */}
             <Modal
                 isOpen={isUploadOpen}
                 onClose={closeUploadModal}
@@ -443,7 +429,7 @@ export function GuardianContactManager({ guardians }: GuardianContactManagerProp
                         <button
                             type="button"
                             onClick={closeUploadModal}
-                            className="inline-flex items-center gap-2 rounded-md border border-border-subtle bg-surface-main px-4 py-2 text-sm font-medium text-foreground hover:bg-surface-subtle"
+                            className="inline-flex items-center gap-2 rounded-full border border-border bg-background px-4 py-2 text-sm font-medium text-foreground hover:bg-muted transition-colors"
                         >
                             <X className="h-4 w-4" />
                             Cancel
@@ -452,7 +438,7 @@ export function GuardianContactManager({ guardians }: GuardianContactManagerProp
                             type="button"
                             onClick={handleUploadContacts}
                             disabled={!uploadFile || isUploading}
-                            className="inline-flex items-center gap-2 rounded-md bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover disabled:cursor-not-allowed disabled:opacity-70"
+                            className="inline-flex items-center gap-2 rounded-full bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover disabled:cursor-not-allowed disabled:opacity-70 transition-colors"
                         >
                             <Upload className="h-4 w-4" />
                             {isUploading ? "Uploading..." : "Upload Contacts"}
