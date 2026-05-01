@@ -71,7 +71,7 @@ export default function ApprovalsPage() {
                 </div>
 
               <Card
-                className='p-0 shadow-sm overflow-hidden'
+                className='p-0 overflow-hidden'
               >
                 <details className='group'>
                   <summary className='flex cursor-pointer list-none items-center justify-between bg-muted/30 p-5 transition-colors hover:bg-muted/50 [&::-webkit-details-marker]:hidden'>
@@ -89,6 +89,7 @@ export default function ApprovalsPage() {
 
                   <div className='overflow-x-auto border-t border-border bg-card'>
                     <DataTable
+                      hideCount
                       data={reviewedBatches}
                       className='border-0 shadow-none -mx-px'
                       columns={[
