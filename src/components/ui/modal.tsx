@@ -5,6 +5,7 @@ import React, { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { Button } from "./button";
 import { Input } from "./input";
+import { cn } from "@/lib/utils";
 
 type ModalProps = {
     isOpen: boolean;
@@ -12,9 +13,17 @@ type ModalProps = {
     title: string;
     children: React.ReactNode;
     icon?: React.ReactNode;
+    size?: "sm" | "md" | "lg" | "xl" | "2xl" | "3xl" | "4xl";
 };
 
-export function Modal({ isOpen, onClose, title, children, icon }: ModalProps) {
+export function Modal({ 
+    isOpen, 
+    onClose, 
+    title, 
+    children, 
+    icon,
+    size = "md" 
+}: ModalProps) {
     const [isMounted, setIsMounted] = useState(false);
 
     useEffect(() => {
@@ -50,40 +59,51 @@ export function Modal({ isOpen, onClose, title, children, icon }: ModalProps) {
         }
     }, [isOpen]);
 
+    const sizeClasses = {
+        sm: "max-w-sm",
+        md: "max-w-md",
+        lg: "max-w-lg",
+        xl: "max-w-xl",
+        "2xl": "max-w-2xl",
+        "3xl": "max-w-3xl",
+        "4xl": "max-w-4xl",
+    };
+
     if (!isOpen || !isMounted) return null;
 
     return createPortal(
-        <div className="fixed inset-0 z-50 grid place-items-center overflow-hidden p-4 font-sans sm:p-6">
-            <button
-                type="button"
-                className="absolute inset-0 bg-black/50 backdrop-blur-sm transition-opacity page-transition-enter"
+        <div className="fixed inset-0 z-50 grid place-items-center overflow-hidden p-4 sm:p-6">
+            <div
+                className="absolute inset-0 bg-black/40 backdrop-blur-[2px] transition-opacity animate-in fade-in duration-300"
                 onClick={onClose}
-                aria-label="Close modal backdrop"
             />
 
             <div
-                className="relative z-10 w-full max-w-md overflow-y-auto rounded-xl bg-surface-main shadow-2xl modal-enter max-h-[calc(100vh-2rem)] sm:max-h-[calc(100vh-3rem)]"
+                className={cn(
+                    "relative z-10 w-full overflow-y-auto rounded-xl bg-card border border-border shadow-2xl animate-in zoom-in-95 duration-300 max-h-[calc(100vh-2rem)] sm:max-h-[calc(100vh-4rem)]",
+                    sizeClasses[size]
+                )}
                 role="dialog"
                 aria-modal="true"
                 aria-label={title}
             >
-                <div className="flex items-center justify-between border-b border-border-subtle px-6 py-4">
+                <div className="sticky top-0 z-20 flex items-center justify-between border-b border-border bg-card/95 backdrop-blur-sm px-6 py-4">
                     <div className="flex items-center gap-3">
-                        {icon && <div className="text-brand">{icon}</div>}
-                        <h2 className="font-sans text-lg font-semibold text-foreground">
+                        {icon && <div className="text-sidebar-primary">{icon}</div>}
+                        <h2 className="text-base font-bold tracking-tight text-foreground">
                             {title}
                         </h2>
                     </div>
                     <button
                         onClick={onClose}
-                        className="rounded p-1 text-text-muted transition-colors hover:bg-surface-subtle hover:text-foreground"
+                        className="rounded-full p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
                         aria-label="Close modal"
                     >
-                        <X className="h-5 w-5" />
+                        <X className="h-4 w-4" />
                     </button>
                 </div>
 
-                <div className="px-6 py-5">
+                <div className="px-6 py-6">
                     {children}
                 </div>
             </div>

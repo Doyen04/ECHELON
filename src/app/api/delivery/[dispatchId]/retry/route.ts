@@ -40,7 +40,8 @@ export async function POST(_request: Request, context: RouteContext) {
     }
 
     try {
-        const result = await retryFailedDispatchSends(dispatchId);
+        const body = await _request.json().catch(() => ({}));
+        const result = await retryFailedDispatchSends(dispatchId, body.logId);
         return NextResponse.json(result);
     } catch (error) {
         const message = error instanceof Error ? error.message : "Failed to retry failed sends.";

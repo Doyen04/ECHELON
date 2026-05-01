@@ -10,6 +10,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 
+import { PageHeader } from "@/components/shared/page-header";
+
 export default function DeliveryPage() {
   const { data, isLoading, error } = useApi<{ dispatches: any[] }>(
     "/api/delivery",
@@ -27,32 +29,27 @@ export default function DeliveryPage() {
       {(data) => {
         const { dispatches } = data;
         return (
-          <main className='dashboard-root min-h-screen bg-background px-4 py-8 sm:px-6 lg:px-8'>
-            <div className='dashboard-grid-overlay' aria-hidden='true' />
-            <Card className='mx-auto w-full max-w-6xl rounded-3xl p-6 shadow-[0_25px_60px_-38px_rgba(2,23,23,0.75)] sm:p-8'>
-              <p className='text-xs font-semibold uppercase tracking-[0.16em] text-(--text-muted)'>
-                Delivery Monitoring
-              </p>
-              <h1 className='mt-2 text-3xl font-semibold tracking-tight text-foreground'>
-                Dispatch Activity
-              </h1>
-              <p className='mt-3 text-sm text-(--text-secondary)'>
-                Track each dispatch job and open detail views for status and failed
-                sends.
-              </p>
+          <div className='flex h-full w-full flex-col overflow-x-hidden overflow-y-auto bg-background'>
+            <PageHeader
+              title='Dispatch Activity'
+              
+            />
 
-              <div className='mt-6 space-y-3'>
+            <main className='mx-auto w-full max-w-7xl min-w-0 px-4 py-6 sm:px-6 lg:px-8 lg:py-8'>
+              <div className='space-y-4'>
                 {dispatches.map((dispatch: any) => (
                   <DispatchCard key={dispatch.id} dispatch={dispatch} />
                 ))}
-                {dispatches.length === 0 ? (
-                  <div className='rounded-2xl border border-dashed border-(--border-subtle) p-8 text-sm text-(--text-secondary)'>
-                    No dispatches found.
-                  </div>
-                ) : null}
+                {dispatches.length === 0 && (
+                  <Card className="flex flex-col items-center justify-center p-12 text-center border-dashed">
+                    <p className='text-sm text-muted-foreground'>
+                      No delivery dispatches found.
+                    </p>
+                  </Card>
+                )}
               </div>
-            </Card>
-          </main>
+            </main>
+          </div>
         );
       }}
     </ApiGate>

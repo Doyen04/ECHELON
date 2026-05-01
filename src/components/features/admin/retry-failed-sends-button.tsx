@@ -3,7 +3,7 @@
 import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { AlertTriangle, RefreshCw } from "lucide-react";
-
+import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/ui/modal";
@@ -73,9 +73,15 @@ export function RetryFailedSendsButton({ dispatchId, failedCount }: RetryFailedS
         setLoadError(null);
     };
 
-    const retryFailedSends = () => {
-        if (!preview?.canRetry || isRetrying) {
+    const [retryingLogId, setRetryingLogId] = useState<string | null>(null);
+
+    const retryFailedSends = (logId?: string) => {
+        if (isRetrying) {
             return;
+        }
+
+        if (logId) {
+            setRetryingLogId(logId);
         }
 
         startRetrying(async () => {
@@ -84,6 +90,7 @@ export function RetryFailedSendsButton({ dispatchId, failedCount }: RetryFailedS
             try {
                 const response = await fetch(`/api/delivery/${dispatchId}/retry`, {
                     method: "POST",
+                    body: JSON.stringify({ logId }),
                 });
 
                 const payload = await response.json().catch(() => null);
@@ -92,10 +99,19 @@ export function RetryFailedSendsButton({ dispatchId, failedCount }: RetryFailedS
                     return;
                 }
 
-                closeModal();
+                if (logId) {
+                    // Just refresh the preview if it was a single retry
+                    const previewResponse = await fetch(`/api/delivery/${dispatchId}/retry`);
+                    const previewData = await previewResponse.json();
+                    setPreview(previewData);
+                    setRetryingLogId(null);
+                } else {
+                    closeModal();
+                }
                 router.refresh();
             } catch {
                 setLoadError("Network error while retrying failed sends.");
+                setRetryingLogId(null);
             }
         });
     };
@@ -105,12 +121,12 @@ export function RetryFailedSendsButton({ dispatchId, failedCount }: RetryFailedS
             <Button
                 type="button"
                 variant="outline"
-                className="inline-flex w-full items-center justify-center gap-2 rounded-lg border-border-subtle bg-surface-main px-4 py-2 text-sm font-medium text-foreground transition hover:bg-surface-subtle sm:w-auto"
+                className="gap-2 rounded-xl border-border bg-card px-4 py-2 text-sm font-bold text-foreground transition-all hover:bg-muted"
                 onClick={() => setIsOpen(true)}
                 disabled={failedCount === 0}
             >
-                <RefreshCw className="h-4 w-4" />
-                {failedCount === 0 ? "No failed sends" : "Retry failed sends"}
+                <RefreshCw className={cn("h-4 w-4", isRetrying && "animate-spin")} />
+                {failedCount === 0 ? "No failed sends" : "Retry failures"}
             </Button>
 
             <Modal
@@ -118,69 +134,108 @@ export function RetryFailedSendsButton({ dispatchId, failedCount }: RetryFailedS
                 onClose={closeModal}
                 title="Retry Failed Sends"
                 icon={<RefreshCw className="h-5 w-5" />}
+                size="2xl"
             >
-                <div className="space-y-5">
-                    <div className="space-y-2 text-sm text-text-muted">
-                        <p>Review every failed send before retrying. Rows without a usable parent email contact are blocked to avoid repeating the delivery error.</p>
-                        {preview ? (
-                            <p>
-                                Failed sends: <span className="font-semibold text-foreground">{preview.totalFailed}</span> | Retryable: <span className="font-semibold text-foreground">{preview.retryableCount}</span> | Blocked: <span className="font-semibold text-foreground">{preview.unresolvedCount}</span>
+                <div className="space-y-6">
+                    <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between p-4 rounded-xl bg-muted/30 border border-border">
+                        <div className="space-y-1">
+                            <p className="text-xs font-bold text-foreground uppercase tracking-widest">Summary View</p>
+                            <p className="text-xs text-muted-foreground leading-relaxed">
+                                Reviewing <span className="text-foreground font-bold">{failedCount}</span> failures across this dispatch.
                             </p>
-                        ) : null}
+                        </div>
+                        {preview && (
+                            <div className="flex gap-4">
+                                <div className="text-center">
+                                    <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-tighter">Retryable</p>
+                                    <p className="text-lg font-bold text-emerald-600">{preview.retryableCount}</p>
+                                </div>
+                                <div className="text-center">
+                                    <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-tighter">Blocked</p>
+                                    <p className="text-lg font-bold text-destructive">{preview.unresolvedCount}</p>
+                                </div>
+                            </div>
+                        )}
                     </div>
 
                     {loadError ? (
-                        <div className="flex items-start gap-2 rounded-xl border border-status-danger/30 bg-status-danger/10 px-4 py-3 text-sm text-status-danger">
-                            <AlertTriangle className="mt-0.5 h-4 w-4" />
+                        <div className="flex items-start gap-3 rounded-xl border border-destructive/20 bg-destructive/5 p-4 text-sm text-destructive font-medium animate-in slide-in-from-top-2">
+                            <AlertTriangle className="h-4 w-4 shrink-0" />
                             <span>{loadError}</span>
                         </div>
                     ) : null}
 
                     {isLoading ? (
-                        <div className="rounded-xl border border-border-subtle bg-surface-main px-4 py-6 text-sm text-text-muted">
-                            Loading failed send details...
+                        <div className="flex flex-col items-center justify-center py-12 space-y-4 rounded-xl border border-dashed border-border">
+                            <RefreshCw className="h-8 w-8 text-muted-foreground animate-spin opacity-50" />
+                            <p className="text-sm font-medium text-muted-foreground">Analysing delivery logs...</p>
                         </div>
                     ) : null}
 
                     {preview ? (
-                        <div className="max-h-[52vh] space-y-3 overflow-y-auto pr-1">
+                        <div className="max-h-[50vh] space-y-4 overflow-y-auto pr-2 custom-scrollbar">
                             {preview.items.map((item) => (
-                                <article key={item.id} className="rounded-2xl border border-border-subtle bg-surface-main p-4 shadow-sm">
-                                    <div className="flex flex-wrap items-start justify-between gap-3">
-                                        <div>
-                                            <p className="text-sm font-semibold text-foreground">{item.studentName}</p>
-                                            <p className="mt-0.5 text-xs text-text-muted">{item.matricNumber}</p>
+                                <article 
+                                    key={item.id} 
+                                    className={cn(
+                                        "rounded-xl border p-5 transition-all",
+                                        item.retryBlockedReason ? "border-border bg-muted/10 opacity-75" : "border-border bg-card hover:border-sidebar-primary/20"
+                                    )}
+                                >
+                                    <div className="flex flex-wrap items-start justify-between gap-4">
+                                        <div className="space-y-1">
+                                            <div className="flex items-center gap-2">
+                                                <h4 className="text-sm font-bold text-foreground">{item.studentName}</h4>
+                                                <Badge variant={item.retryBlockedReason ? "secondary" : "outline"} className="text-[10px] font-bold">
+                                                    {item.retryBlockedReason ? "Blocked" : "Ready"}
+                                                </Badge>
+                                            </div>
+                                            <p className="text-[11px] font-mono text-muted-foreground tracking-tight">{item.matricNumber}</p>
                                         </div>
-                                        <Badge variant={item.retryBlockedReason ? "warning" : "success"} className="rounded-full">
-                                            {item.retryBlockedReason ? "Blocked" : "Retryable"}
-                                        </Badge>
+                                        
+                                        {!item.retryBlockedReason && (
+                                            <Button 
+                                                size="sm" 
+                                                variant="outline" 
+                                                disabled={isRetrying}
+                                                onClick={() => retryFailedSends(item.id)}
+                                                className="h-8 rounded-md text-[10px] font-bold uppercase tracking-tight bg-white hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-200"
+                                            >
+                                                {retryingLogId === item.id ? (
+                                                    <RefreshCw className="h-3 w-3 animate-spin" />
+                                                ) : "Retry Individually"}
+                                            </Button>
+                                        )}
                                     </div>
 
-                                    <div className="mt-4 grid gap-3 text-sm sm:grid-cols-2">
-                                        <div className="rounded-xl border border-border-subtle bg-surface-subtle/40 px-3 py-2">
-                                            <p className="text-xs uppercase tracking-widest text-text-muted">Parent contact</p>
-                                            <div className="mt-2 space-y-1 text-foreground">
-                                                <p className="font-medium">{item.guardianName ?? "No parent contact found"}</p>
-                                                <p className="text-xs text-text-muted">
-                                                    Email: {item.guardianEmail ?? "Not available"}
-                                                </p>
-                                                <p className="text-xs text-text-muted">
-                                                    Phone: {item.guardianPhone ?? "Not available"}
-                                                </p>
-                                                <p className="text-xs text-text-muted">
-                                                    Source: {item.resolvedFrom === "original" ? "From failed log" : item.resolvedFrom === "current" ? "Current student contacts" : "Missing"}
-                                                </p>
+                                    <div className="mt-5 grid gap-4 sm:grid-cols-2">
+                                        <div className="space-y-2">
+                                            <div className="flex items-center gap-2 text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
+                                                <div className="h-1 w-1 rounded-full bg-muted-foreground/30" />
+                                                Parent Contact
+                                            </div>
+                                            <div className="space-y-1">
+                                                <p className="text-[11px] font-bold text-foreground">{item.guardianName ?? "N/A"}</p>
+                                                <p className="text-[11px] text-muted-foreground truncate">{item.guardianEmail ?? "No email"}</p>
+                                                <p className="text-[11px] text-muted-foreground">{item.guardianPhone ?? "No phone"}</p>
                                             </div>
                                         </div>
 
-                                        <div className="rounded-xl border border-border-subtle bg-surface-subtle/40 px-3 py-2">
-                                            <p className="text-xs uppercase tracking-widest text-text-muted">Failure details</p>
-                                            <div className="mt-2 space-y-1 text-foreground">
-                                                <p className="text-xs text-text-muted">Attempted: {new Date(item.attemptedAt).toLocaleString()}</p>
-                                                <p className="text-xs text-text-muted">Reason: {item.failureReason ?? "No failure reason stored."}</p>
-                                                <p className="text-xs text-text-muted">
-                                                    {item.retryBlockedReason ?? "This send can be retried safely."}
+                                        <div className="space-y-2">
+                                            <div className="flex items-center gap-2 text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
+                                                <div className="h-1 w-1 rounded-full bg-destructive/50" />
+                                                Failure Detail
+                                            </div>
+                                            <div className="space-y-1">
+                                                <p className="text-[11px] font-medium text-destructive/80 leading-relaxed italic">
+                                                    "{item.failureReason ?? "Unknown error"}"
                                                 </p>
+                                                {item.retryBlockedReason && (
+                                                    <p className="text-[10px] font-bold text-destructive mt-1 flex items-center gap-1">
+                                                        <AlertTriangle className="h-3 w-3" />
+                                                        {item.retryBlockedReason}
+                                                    </p>
+                                                )}
                                             </div>
                                         </div>
                                     </div>
@@ -189,18 +244,23 @@ export function RetryFailedSendsButton({ dispatchId, failedCount }: RetryFailedS
                         </div>
                     ) : null}
 
-                    <div className="flex items-center justify-end gap-3 pt-2">
-                        <Button type="button" variant="outline" onClick={closeModal} className="rounded-full">
-                            Close
+                    <div className="flex flex-col-reverse sm:flex-row items-center justify-between gap-4 pt-4 border-t border-border">
+                        <Button 
+                            type="button" 
+                            variant="ghost" 
+                            onClick={closeModal} 
+                            className="text-muted-foreground hover:text-foreground w-full sm:w-auto"
+                        >
+                            Cancel
                         </Button>
                         <Button
                             type="button"
-                            onClick={retryFailedSends}
-                            className="rounded-full"
+                            onClick={() => retryFailedSends()}
+                            className="rounded-xl w-full sm:w-auto min-w-[200px] gap-2 bg-sidebar-primary shadow-md shadow-sidebar-primary/20"
                             disabled={!preview?.canRetry || isRetrying || isLoading || !preview}
                         >
-                            <RefreshCw className="h-4 w-4" />
-                            {isRetrying ? "Retrying..." : "Retry failed sends"}
+                            <RefreshCw className={cn("h-4 w-4", isRetrying && "animate-spin")} />
+                            {isRetrying ? "Retrying..." : `Retry ${preview?.retryableCount ?? ""} Failures`}
                         </Button>
                     </div>
                 </div>
