@@ -104,7 +104,7 @@ function FilterSelect({
   return (
     <select
       defaultValue=''
-      className='h-10 cursor-pointer rounded-full border border-input bg-background px-3 text-sm text-foreground shadow-sm hover:bg-muted/60 focus:border-ring focus:ring-2 focus:ring-ring/30 focus:outline-none'
+      className='h-10 cursor-pointer rounded-full border border-input bg-background px-3 text-sm text-foreground hover:bg-muted/60 focus:border-ring focus:ring-2 focus:ring-ring/30 focus:outline-none'
     >
       <option value='' disabled hidden>
         {placeholder}

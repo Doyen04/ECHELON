@@ -69,7 +69,7 @@ export function NotificationPanelTrigger({ notifications }: NotificationPanelTri
                         />
 
                         <aside
-                            className={`absolute inset-y-0 right-0 flex w-full max-w-sm flex-col border-l border-border/70 bg-background shadow-2xl transition-transform duration-300 ease-out sm:max-w-md ${isOpen ? "translate-x-0" : "translate-x-full"}`}
+                            className={`absolute inset-y-0 right-0 flex w-full max-w-sm flex-col border-l border-border/70 bg-background transition-transform duration-300 ease-out sm:max-w-md ${isOpen ? "translate-x-0" : "translate-x-full"}`}
                             role="dialog"
                             aria-modal="true"
                             aria-label="Notifications"
@@ -100,7 +100,7 @@ export function NotificationPanelTrigger({ notifications }: NotificationPanelTri
                                     notifications.map((item, index) => (
                                         <article
                                             key={item.id}
-                                            className="rounded-2xl border border-border/70 bg-card px-4 py-3 shadow-sm"
+                                            className="rounded-2xl border border-border/70 bg-card px-4 py-3"
                                             style={{ animationDelay: `${index * 40}ms` }}
                                         >
                                             <div className="flex items-start gap-3">
