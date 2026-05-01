@@ -19,7 +19,7 @@ export function SummaryCard({
   return (
     <article
       className={cn(
-        "flex flex-col justify-between rounded-xl border border-border bg-card p-5 shadow-sm transition-all hover:shadow-md",
+        "flex flex-col justify-between rounded-xl border border-border bg-card p-5 transition-all",
         className
       )}
     >

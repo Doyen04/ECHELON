@@ -74,7 +74,7 @@ export default function DeliveryLogPage({ params }: DeliveryPageProps) {
           <Breadcrumbs
             items={[
               { label: "Delivery", href: "/admin/delivery" },
-              { label: dispatch.id.slice(0, 8) + "..." },
+              { label: dispatch.id },
             ]}
           />
         }
@@ -94,7 +94,7 @@ export default function DeliveryLogPage({ params }: DeliveryPageProps) {
 
       <main className='mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8 lg:py-8'>
         <div className="grid gap-6">
-            <Card className='rounded-xl border-border p-6 sm:p-8'>
+            <div className='rounded-xl border-border'>
                 <div className='flex flex-col gap-6 md:flex-row md:items-start md:justify-between'>
                     <div className="space-y-1">
                         <div className="flex items-center gap-3">
@@ -160,7 +160,7 @@ export default function DeliveryLogPage({ params }: DeliveryPageProps) {
                         </span>
                     </div>
                 </div>
-            </Card>
+            </div>
 
             <Card className='overflow-hidden rounded-xl border-border'>
                 <div className='border-b border-border bg-muted/20 px-6 py-4'>
