@@ -300,6 +300,7 @@ function UsersTab() {
 
       <DataTable
         className='border-0'
+        hideCount
         data={MOCK_USERS}
         columns={[
           {
