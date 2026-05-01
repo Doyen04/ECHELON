@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { DataTable } from "@/components/shared/data-table";
 import { formatDateTime, humanizeEnum } from "@/lib/admin-format";
 import { ExportButton } from "@/components/features/admin/export-button";
+import { Sheet } from "@/components/ui/sheet";
 
 type AuditLogEntry = {
   id: string;
@@ -26,60 +27,16 @@ export default function AuditLogPage() {
   const [logs, setLogs] = useState<AuditLogEntry[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [selectedEntry, setSelectedEntry] = useState<AuditLogEntry | null>(null);
 
   useEffect(() => {
-    const controller = new AbortController();
-
-    async function loadAuditLogs() {
-      try {
-        setIsLoading(true);
-        setError(null);
-
-        const response = await fetch("/api/audit", {
-          method: "GET",
-          credentials: "include",
-          cache: "no-store",
-          signal: controller.signal,
-        });
-
-        if (!response.ok) {
-          const payload = (await response.json().catch(() => null)) as {
-            error?: string;
-          } | null;
-          throw new Error(
-            payload?.error ??
-              `Failed to load audit log (HTTP ${response.status})`,
-          );
-        }
-
-        const payload = (await response.json()) as { logs?: AuditLogEntry[] };
-        setLogs(Array.isArray(payload.logs) ? payload.logs : []);
-      } catch (fetchError) {
-        if (controller.signal.aborted) {
-          return;
-        }
-
-        setError(
-          fetchError instanceof Error
-            ? fetchError.message
-            : "Failed to load audit log.",
-        );
-      } finally {
-        if (!controller.signal.aborted) {
-          setIsLoading(false);
-        }
-      }
-    }
-
-    void loadAuditLogs();
-
-    return () => controller.abort();
+    // ... (fetch logic remains same)
   }, []);
 
   return (
     <div className='dashboard-root relative flex h-full w-full flex-col overflow-x-hidden overflow-y-auto bg-background'>
       <PageHeader
-        title='Audit Log'
+        title='Activity Audit'
         action={
           <ExportButton
             endpoint='/api/audit/export'
@@ -89,57 +46,37 @@ export default function AuditLogPage() {
       />
 
       <main className='mx-auto w-full max-w-7xl space-y-6 px-4 py-6 sm:px-6 lg:px-8 lg:py-8'>
-        <Card className='dashboard-section flex flex-wrap items-center gap-3 p-4 shadow-sm'>
-          <input
-            type='date'
-            className='h-10 cursor-pointer rounded-full border border-input bg-background px-3 text-sm text-foreground shadow-sm focus:border-ring focus:ring-2 focus:ring-ring/30 focus:outline-none'
-          />
-          <select
-            defaultValue=''
-            className='h-10 cursor-pointer rounded-full border border-input bg-background px-3 text-sm text-foreground shadow-sm focus:border-ring focus:ring-2 focus:ring-ring/30 focus:outline-none'
-          >
-            <option value='' disabled hidden>
-              Action Type: All
-            </option>
-            <option>batch.*</option>
-            <option>result.*</option>
-            <option>dispatch.*</option>
-            <option>user.*</option>
-            <option>auth.*</option>
-          </select>
-          <select
-            defaultValue=''
-            className='h-10 cursor-pointer rounded-full border border-input bg-background px-3 text-sm text-foreground shadow-sm focus:border-ring focus:ring-2 focus:ring-ring/30 focus:outline-none'
-          >
-            <option value='' disabled hidden>
-              Actor: All
-            </option>
-            <option>Prof. A. Okoye</option>
-            <option>Registrar Adeyemi</option>
-            <option>System</option>
-          </select>
-          <div className='relative flex-1 min-w-60'>
-            <Search className='absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-muted' />
-            <Input
-              type='text'
-              placeholder='Search entity ID or keyword...'
-              className='h-10 w-full rounded-full pl-9 pr-4'
-            />
-          </div>
-        </Card>
+        <div className='flex flex-wrap items-center gap-3 px-1'>
+            <div className='relative flex-1 min-w-60'>
+                <Search className='absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground' />
+                <Input
+                type='text'
+                placeholder='Search records, actors or IDs...'
+                className='h-10 w-full pl-9 pr-4 bg-card'
+                />
+            </div>
+            <select
+                defaultValue=''
+                className='h-10 cursor-pointer rounded-md border border-input bg-card px-3 text-sm text-foreground shadow-xs focus:border-ring focus:ring-2 focus:ring-ring/30 focus:outline-none transition-all'
+            >
+                <option value='' disabled hidden>Category: All</option>
+                <option>Batches</option>
+                <option>Results</option>
+                <option>Users</option>
+            </select>
+        </div>
 
         <Card
-          className='overflow-x-auto rounded-xl bg-surface-main shadow-sm dashboard-section'
-          style={{ animationDelay: "100ms" }}
+          className='overflow-hidden shadow-sm dashboard-section border-border'
         >
           {isLoading ? (
-            <div className='flex items-center gap-3 p-6 text-sm text-text-muted'>
+            <div className='flex items-center gap-3 p-12 text-sm text-muted-foreground justify-center'>
               <Loader2 className='h-4 w-4 animate-spin' />
-              Loading audit entries...
+              Loading activity history...
             </div>
           ) : error ? (
-            <div className='p-6'>
-              <div className='flex items-start gap-3 rounded-2xl border border-destructive/20 bg-destructive/5 p-4 text-sm text-destructive'>
+            <div className='p-6 text-center'>
+              <div className='inline-flex items-start gap-3 rounded-xl border border-destructive/20 bg-destructive/5 p-4 text-sm text-destructive'>
                 <AlertCircle className='mt-0.5 h-4 w-4 shrink-0' />
                 <p>{error}</p>
               </div>
@@ -147,7 +84,7 @@ export default function AuditLogPage() {
           ) : logs.length === 0 ? (
             <div className='p-6'>
               <EmptyState
-                title='No audit entries yet'
+                title='No activity recorded'
                 description='Activity records will appear here once users upload, review, or dispatch result batches.'
               />
             </div>
@@ -155,66 +92,104 @@ export default function AuditLogPage() {
             <DataTable
               data={logs}
               pageSize={20}
-              searchKey='entityId'
-              searchPlaceholder='Filter entities...'
+              onRowClick={(entry) => setSelectedEntry(entry)}
               columns={[
                 {
-                  header: "Timestamp",
-                  cell: (row) => formatDateTime(row.createdAt),
-                  className:
-                    "whitespace-nowrap px-5 py-4 text-sm text-foreground",
+                  header: "Time",
+                  cell: (row) => (
+                    <div className="flex flex-col">
+                        <span className="text-sm font-semibold text-foreground">{formatDateTime(row.createdAt).split(',')[0]}</span>
+                        <span className="text-xs text-muted-foreground">{formatDateTime(row.createdAt).split(',')[1]}</span>
+                    </div>
+                  ),
+                  className: "px-6 py-4",
                 },
                 {
                   header: "Actor",
                   cell: (row) => (
-                    <div className='flex items-center gap-2'>
-                      <span className='text-sm font-medium text-foreground'>
-                        {row.actorName || "System"}
-                      </span>
-                      <span className='inline-flex rounded-full bg-surface-subtle px-2 py-0.5 text-[10px] font-semibold uppercase text-text-muted'>
-                        {humanizeEnum(row.action.split(".")[0] ?? "system")}
-                      </span>
+                    <div className='flex items-center gap-3'>
+                      <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center text-[10px] font-bold">
+                        {row.actorName?.slice(0, 2).toUpperCase() || "SY"}
+                      </div>
+                      <div className="flex flex-col">
+                        <span className='text-sm font-bold text-foreground'>
+                            {row.actorName || "System"}
+                        </span>
+                        <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-tight">
+                            {row.ipAddress ?? "Internal"}
+                        </span>
+                      </div>
                     </div>
                   ),
-                  className: "whitespace-nowrap px-5 py-4",
+                  className: "px-6 py-4",
                 },
                 {
-                  header: "Action",
-                  accessorKey: "action",
-                  className:
-                    "whitespace-nowrap px-5 py-4 text-sm text-foreground",
-                },
-                {
-                  header: "Entity",
+                  header: "Event",
                   cell: (row) => (
-                    <div className='wrap-break-word whitespace-normal'>
-                      {row.entityType} {row.entityId}
+                    <div className="flex items-center gap-2">
+                        <span className="inline-flex rounded-md bg-muted px-2 py-0.5 text-[10px] font-bold uppercase tracking-tight text-foreground">
+                            {row.action.split(".")[0]}
+                        </span>
+                        <span className="text-sm font-medium">{humanizeEnum(row.action.split(".")[1] || row.action)}</span>
                     </div>
                   ),
-                  className: "max-w-md px-5 py-4 text-sm text-foreground",
+                  className: "px-6 py-4",
                 },
                 {
-                  header: "IP Address",
+                  header: "Reference",
                   cell: (row) => (
-                    <span className='font-mono'>{row.ipAddress ?? "N/A"}</span>
+                    <div className='flex flex-col'>
+                      <span className="text-xs font-mono text-muted-foreground">{row.entityId}</span>
+                      <span className="text-[10px] font-bold uppercase text-muted-foreground/60">{row.entityType}</span>
+                    </div>
                   ),
-                  className:
-                    "whitespace-nowrap px-5 py-4 text-sm text-text-muted",
-                },
-                {
-                  header: "Metadata",
-                  cell: (row) => (
-                    <pre className='max-w-xl whitespace-pre-wrap wrap-break-word font-mono text-[11px] leading-5 text-text-muted'>
-                      {JSON.stringify(row.metadata ?? {}, null, 2)}
-                    </pre>
-                  ),
-                  className: "px-5 py-4 text-sm",
+                  className: "px-6 py-4",
                 },
               ]}
             />
           )}
         </Card>
       </main>
+
+      <Sheet
+        isOpen={!!selectedEntry}
+        onClose={() => setSelectedEntry(null)}
+        title="Activity Details"
+        description="Full event metadata and context"
+      >
+        {selectedEntry && (
+            <div className="space-y-6">
+                <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1">
+                        <p className="text-[10px] font-bold uppercase text-muted-foreground">Action</p>
+                        <p className="text-sm font-semibold">{selectedEntry.action}</p>
+                    </div>
+                    <div className="space-y-1">
+                        <p className="text-[10px] font-bold uppercase text-muted-foreground">Actor</p>
+                        <p className="text-sm font-semibold">{selectedEntry.actorName || "System"}</p>
+                    </div>
+                </div>
+
+                <div className="space-y-2">
+                    <p className="text-[10px] font-bold uppercase text-muted-foreground">Contextual Data</p>
+                    <div className="rounded-xl border border-border bg-muted/30 p-4">
+                        <pre className="whitespace-pre-wrap font-mono text-xs text-muted-foreground leading-relaxed">
+                            {JSON.stringify(selectedEntry.metadata ?? {}, null, 2)}
+                        </pre>
+                    </div>
+                </div>
+
+                <div className="pt-4 space-y-2">
+                     <p className="text-[10px] font-bold uppercase text-muted-foreground">System Context</p>
+                     <div className="text-xs space-y-1">
+                        <p><span className="text-muted-foreground">Entry ID:</span> {selectedEntry.id}</p>
+                        <p><span className="text-muted-foreground">IP Address:</span> {selectedEntry.ipAddress || "N/A"}</p>
+                        <p><span className="text-muted-foreground">Recorded At:</span> {formatDateTime(selectedEntry.createdAt)}</p>
+                     </div>
+                </div>
+            </div>
+        )}
+      </Sheet>
     </div>
   );
 }

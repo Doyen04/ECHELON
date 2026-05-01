@@ -67,16 +67,16 @@ export default function BatchDetailPage({ params }: BatchPageProps) {
               breadcrumbs={
                 <Breadcrumbs
                   items={[
-                    { label: "Batches", href: "/admin/batches" },
+                    { label: "Result Batches", href: "/admin/batches" },
                     { label: batch.id },
                   ]}
                 />
               }
               action={
                 <div className='flex items-center gap-2'>
-                  {batch.status === "PENDING" || batch.status === "IN_REVIEW" ? (
+                  {(batch.status === "PENDING" || batch.status === "IN_REVIEW") && (
                     <ApproveDispatchButton batchId={batch.id} />
-                  ) : null}
+                  )}
                   <ExportButton
                     endpoint={`/api/batches/${batch.id}/export`}
                     filename={`batch-detail-${batch.id}.csv`}
@@ -84,156 +84,141 @@ export default function BatchDetailPage({ params }: BatchPageProps) {
                 </div>
               }
             />
-
-            <main className='mx-auto w-full max-w-7xl space-y-6 px-4 py-6 sm:px-6 lg:px-8 lg:py-8 pb-24'>
-              <Card className='rounded-3xl p-6 shadow-[0_25px_60px_-38px_rgba(2,23,23,0.75)] sm:p-8'>
-                <div className='flex flex-col gap-4 md:flex-row md:items-start md:justify-between'>
-                  <div>
-                    <p className='text-xs font-semibold uppercase tracking-[0.16em] text-(--text-muted)'>
-                      Batch Overview
+ 
+            <main className='mx-auto w-full max-w-7xl space-y-8 px-6 py-8 pb-24'>
+              <div className='flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between'>
+                <div className="space-y-2">
+                    <div className="flex items-center gap-3">
+                        <h1 className='text-3xl font-bold tracking-tight text-foreground'>
+                        {batch.department}
+                        </h1>
+                        <StatusBadge status={toBadgeStatus(batch.status)} />
+                    </div>
+                    <p className='text-sm text-muted-foreground'>
+                        {batch.session} • {semesterLabel(batch.semester)} Semester •
+                        Uploaded {relativeTimeFromNow(batch.uploadedAt)}
                     </p>
-                    <h1 className='mt-2 text-3xl font-semibold tracking-tight text-foreground'>
-                      {batch.department}
-                    </h1>
-                    <p className='mt-2 text-sm text-(--text-secondary)'>
-                      {batch.session} • {semesterLabel(batch.semester)} Semester •
-                      Uploaded {relativeTimeFromNow(batch.uploadedAt)}
-                    </p>
-                  </div>
-
-                  <div className='flex flex-wrap gap-2'>
-                    <StatusBadge status={toBadgeStatus(batch.status)} />
-                    <Badge
-                      variant='outline'
-                      className='rounded-full px-2.5 py-1 text-xs font-medium'
-                    >
-                      {batch.id}
-                    </Badge>
-                  </div>
                 </div>
+                <div className='flex items-center gap-2 rounded-lg bg-muted/50 px-3 py-1.5 border border-border'>
+                    <span className="text-xs font-bold text-muted-foreground uppercase tracking-tight">Batch ID:</span>
+                    <code className="text-xs font-mono font-bold text-foreground">{batch.id}</code>
+                </div>
+              </div>
 
-                <div className='mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4'>
+              <div className='grid gap-4 sm:grid-cols-2 xl:grid-cols-4'>
                   <SummaryCard
-                    title='Student Results'
-                    value={String(batch.studentResults.length)}
+                    title='Total Students'
+                    value={batch.studentResults.length}
+                    className="bg-card border-border shadow-xs"
                   />
                   <SummaryCard
                     title='Approved'
-                    value={String(approvedCount)}
-                    color='text-[var(--color-success)]'
+                    value={approvedCount}
+                    className="bg-emerald-50/50 border-emerald-100 shadow-xs"
+                    color='text-emerald-600'
                   />
                   <SummaryCard
                     title='Pending'
-                    value={String(pendingCount)}
-                    color='text-[var(--color-warning)]'
+                    value={pendingCount}
+                    className="bg-amber-50/50 border-amber-100 shadow-xs"
+                    color='text-amber-600'
                   />
                   <SummaryCard
                     title='Withheld'
-                    value={String(withheldCount)}
-                    color='text-[var(--color-danger)]'
+                    value={withheldCount}
+                    className="bg-rose-50/50 border-rose-100 shadow-xs"
+                    color='text-rose-600'
                   />
-                </div>
+              </div>
 
-                <div className='mt-6 grid gap-4 lg:grid-cols-[1.25fr_.75fr]'>
-                  <article className='rounded-2xl border border-(--border-subtle) bg-(--surface-soft) p-5'>
-                    <p className='text-xs font-semibold uppercase tracking-[0.16em] text-(--text-muted)'>
-                      Batch Details
-                    </p>
-                    <div className='mt-4 grid gap-3 text-sm text-(--text-secondary) sm:grid-cols-2'>
-                      <p>
-                        <span className='text-foreground font-medium'>
-                          Uploaded by:
-                        </span>{" "}
-                        {batch.uploadedBy?.name ?? "System"}
-                      </p>
-                      <p>
-                        <span className='text-foreground font-medium'>
-                          Approved by:
-                        </span>{" "}
-                        {batch.approvedBy?.name ?? "Pending"}
-                      </p>
-                      <p>
-                        <span className='text-foreground font-medium'>Source:</span>{" "}
-                        {String(batch.source).toUpperCase()}
-                      </p>
-                      <p>
-                        <span className='text-foreground font-medium'>
-                          Uploaded at:
-                        </span>{" "}
-                        {formatDateTime(batch.uploadedAt)}
-                      </p>
+              <div className='grid gap-8 lg:grid-cols-[1fr_350px]'>
+                <section className='space-y-4'>
+                    <div className="flex items-center justify-between px-1">
+                        <h2 className='text-sm font-bold uppercase tracking-widest text-muted-foreground'>
+                            Student Records
+                        </h2>
                     </div>
-                  </article>
+                    <Card className='overflow-hidden border-border shadow-sm'>
+                        {batch.studentResults.length > 0 ? (
+                        <div className='overflow-x-auto'>
+                            <DataTable
+                            data={batch.studentResults}
+                            className='border-0 shadow-none -mx-px'
+                            columns={columns}
+                            />
+                        </div>
+                        ) : (
+                        <div className='px-6 py-12 text-center text-sm text-muted-foreground'>
+                            No student results are stored for this batch yet.
+                        </div>
+                        )}
+                    </Card>
+                </section>
 
-                  <article className='rounded-2xl border border-(--border-subtle) bg-(--surface-soft) p-5'>
-                    <p className='text-xs font-semibold uppercase tracking-[0.16em] text-(--text-muted)'>
-                      Recent Dispatches
-                    </p>
-                    <div className='mt-4 space-y-3'>
-                      {batch.dispatches.length > 0 ? (
-                        batch.dispatches.map((dispatch: any) => (
-                          <div
-                            key={dispatch.id}
-                            className='rounded-xl border border-(--border-subtle) bg-(--surface-strong) p-4 text-sm'
-                          >
-                            <div className='flex items-center justify-between gap-3'>
-                              <div>
-                                <p className='font-medium text-foreground'>
-                                  {dispatch.id}
-                                </p>
-                                <p className='text-xs text-(--text-muted)'>
-                                  Triggered by{" "}
-                                  {dispatch.triggeredBy?.name ?? "System"}
-                                </p>
-                              </div>
-                              <StatusBadge status={toBadgeStatus(dispatch.status)} />
+                <aside className="space-y-8">
+                    <section className="space-y-4">
+                        <h2 className='text-xs font-bold uppercase tracking-widest text-muted-foreground px-1'>
+                            Batch Metadata
+                        </h2>
+                        <div className='rounded-xl border border-border bg-card p-5 space-y-4 shadow-sm'>
+                            <div className='grid gap-4 text-sm'>
+                                <div className="flex justify-between items-center">
+                                    <span className='text-muted-foreground'>Uploaded by:</span>
+                                    <span className="font-semibold text-foreground">{batch.uploadedBy?.name ?? "System"}</span>
+                                </div>
+                                <div className="flex justify-between items-center">
+                                    <span className='text-muted-foreground'>Source:</span>
+                                    <Badge variant="outline" className="font-bold">{String(batch.source).toUpperCase()}</Badge>
+                                </div>
+                                <div className="flex justify-between items-center border-t border-border/50 pt-4">
+                                    <span className='text-muted-foreground'>Time:</span>
+                                    <span className="text-xs font-medium">{formatDateTime(batch.uploadedAt)}</span>
+                                </div>
                             </div>
-                            <p className='mt-2 text-xs text-(--text-secondary)'>
-                              {dispatch._count.notificationLogs} notification logs
-                            </p>
-                            <Link
-                              href={`/admin/delivery/${dispatch.id}`}
-                              className='mt-2 inline-flex items-center gap-1 text-xs font-medium text-brand hover:underline'
+                        </div>
+                    </section>
+
+                    <section className="space-y-4">
+                        <h2 className='text-xs font-bold uppercase tracking-widest text-muted-foreground px-1'>
+                            Activity History
+                        </h2>
+                        <div className='space-y-3'>
+                        {batch.dispatches.length > 0 ? (
+                            batch.dispatches.map((dispatch: any) => (
+                            <div
+                                key={dispatch.id}
+                                className='rounded-xl border border-border bg-card p-4 shadow-sm transition-all hover:shadow-md'
                             >
-                              Open delivery log <ArrowRight className='h-3 w-3' />
-                            </Link>
-                          </div>
-                        ))
-                      ) : (
-                        <p className='text-sm text-(--text-secondary)'>
-                          No dispatches have been created for this batch yet.
-                        </p>
-                      )}
-                    </div>
-                  </article>
-                </div>
-              </Card>
-
-              <section className='overflow-hidden rounded-3xl border border-(--border-subtle) bg-(--surface-strong) shadow-[0_25px_60px_-38px_rgba(2,23,23,0.75)]'>
-                <div className='border-b border-(--border-subtle) px-6 py-4 sm:px-8'>
-                  <h2 className='text-lg font-semibold text-foreground'>
-                    Student Results
-                  </h2>
-                  <p className='mt-1 text-sm text-(--text-secondary)'>
-                    Stored result rows for this batch, including the latest portal
-                    token when available.
-                  </p>
-                </div>
-
-                {batch.studentResults.length > 0 ? (
-                  <div className='overflow-x-auto'>
-                    <DataTable
-                      data={batch.studentResults}
-                      className='border-0 shadow-none -mx-px'
-                      columns={columns}
-                    />
-                  </div>
-                ) : (
-                  <div className='px-6 py-10 text-sm text-(--text-secondary)'>
-                    No student results are stored for this batch yet.
-                  </div>
-                )}
-              </section>
+                                <div className='flex items-center justify-between gap-3'>
+                                    <div className="space-y-0.5">
+                                        <p className='text-xs font-bold font-mono text-foreground'>
+                                            {dispatch.id}
+                                        </p>
+                                        <p className='text-[10px] text-muted-foreground'>
+                                            via {dispatch.triggeredBy?.name ?? "System"}
+                                        </p>
+                                    </div>
+                                    <StatusBadge status={toBadgeStatus(dispatch.status)} />
+                                </div>
+                                <Link
+                                    href={`/admin/delivery/${dispatch.id}`}
+                                    className='mt-3 flex items-center justify-center gap-1.5 rounded-lg border border-border bg-muted/30 py-1.5 text-[10px] font-bold uppercase tracking-tight text-foreground transition-all hover:bg-muted'
+                                >
+                                    Review Logs <ArrowRight className='h-3 w-3' />
+                                </Link>
+                            </div>
+                            ))
+                        ) : (
+                            <div className="rounded-xl border border-dashed border-border p-6 text-center">
+                                <p className='text-xs text-muted-foreground'>
+                                    No dispatches recorded yet.
+                                </p>
+                            </div>
+                        )}
+                        </div>
+                    </section>
+                </aside>
+              </div>
             </main>
           </div>
         );

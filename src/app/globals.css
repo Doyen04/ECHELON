@@ -5,70 +5,65 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-    --color-bg: #F7F6F3;
+    --color-bg: #F9FAFB;
     --color-surface: #FFFFFF;
-    --color-surface-2: #F0EEE9;
-    --color-border: #E2DDD6;
-    --color-text-primary: #1A1714;
-    --color-text-secondary: #6B6560;
-    --color-accent: #1D4B8F;
-    --color-accent-hover: #163970;
-    --color-success: #1A7A4A;
-    --color-warning: #B45309;
-    --color-danger: #B91C1C;
+    --color-surface-2: #F3F4F6;
+    --color-border: #E5E7EB;
+    --color-text-primary: #111827;
+    --color-text-secondary: #4B5563;
+    --color-accent: #2563EB;
+    --color-accent-hover: #1D4ED8;
+    --color-success: #10B981;
+    --color-warning: #F59E0B;
+    --color-danger: #EF4444;
     --color-danger-soft: #FEF2F2;
-    --color-pending: #92400E;
+    --color-pending: #D97706;
     --color-pending-soft: #FFFBEB;
+    
     --surface-0: var(--color-bg);
     --surface-soft: var(--color-surface-2);
     --surface-strong: var(--color-surface);
-    --surface-muted: #E8E1D2;
+    --surface-muted: #F3F4F6;
+    
     --text-primary: var(--color-text-primary);
     --text-secondary: var(--color-text-secondary);
-    --text-muted: #6E7A82;
-    --border-subtle: rgba(26, 23, 20, 0.1);
-    --border-strong: rgba(26, 23, 20, 0.22);
-    --accent-soft: #1F8F86;
+    --text-muted: #6B7280;
+    
+    --border-subtle: rgba(0, 0, 0, 0.05);
+    --border-strong: rgba(0, 0, 0, 0.1);
+    
+    --accent-soft: #DBEAFE;
     --accent-strong: var(--color-accent);
-    --hero-deep: #112F3C;
-    --hero-mid: #0E5162;
-    --hero-accent: #166675;
-    --hero-text: #F6FAFB;
-    --hero-kicker: #C7E3E7;
-    --hero-subtle: #CFE6E9;
-    --accent-hover: var(--color-accent-hover);
-    --background: oklch(1 0 0);
-    --foreground: oklch(0.145 0 0);
-    --card: oklch(1 0 0);
-    --card-foreground: oklch(0.145 0 0);
-    --popover: oklch(1 0 0);
-    --popover-foreground: oklch(0.145 0 0);
-    --primary: oklch(0.496 0.265 301.924);
-    --primary-foreground: oklch(0.977 0.014 308.299);
-    --secondary: oklch(0.967 0.001 286.375);
-    --secondary-foreground: oklch(0.21 0.006 285.885);
-    --muted: oklch(0.97 0 0);
-    --muted-foreground: oklch(0.556 0 0);
-    --accent: oklch(0.97 0 0);
-    --accent-foreground: oklch(0.205 0 0);
-    --destructive: oklch(0.577 0.245 27.325);
-    --border: oklch(0.922 0 0);
-    --input: oklch(0.922 0 0);
-    --ring: oklch(0.708 0 0);
-    --chart-1: oklch(0.828 0.111 230.318);
-    --chart-2: oklch(0.685 0.169 237.323);
-    --chart-3: oklch(0.588 0.158 241.966);
-    --chart-4: oklch(0.5 0.134 242.749);
-    --chart-5: oklch(0.443 0.11 240.79);
-    --radius: 0.45rem;
-    --sidebar: oklch(0.985 0 0);
-    --sidebar-foreground: oklch(0.145 0 0);
-    --sidebar-primary: oklch(0.558 0.288 302.321);
-    --sidebar-primary-foreground: oklch(0.977 0.014 308.299);
-    --sidebar-accent: oklch(0.97 0 0);
-    --sidebar-accent-foreground: oklch(0.205 0 0);
-    --sidebar-border: oklch(0.922 0 0);
-    --sidebar-ring: oklch(0.708 0 0);
+    
+    --radius: 0.75rem;
+    
+    --background: #FFFFFF;
+    --foreground: #111827;
+    --card: #FFFFFF;
+    --card-foreground: #111827;
+    --popover: #FFFFFF;
+    --popover-foreground: #111827;
+    --primary: #2563EB;
+    --primary-foreground: #FFFFFF;
+    --secondary: #F3F4F6;
+    --secondary-foreground: #111827;
+    --muted: #F3F4F6;
+    --muted-foreground: #6B7280;
+    --accent: #F3F4F6;
+    --accent-foreground: #111827;
+    --destructive: #EF4444;
+    --border: #E5E7EB;
+    --input: #E5E7EB;
+    --ring: #3B82F6;
+    
+    --sidebar: #111827;
+    --sidebar-foreground: #F9FAFB;
+    --sidebar-primary: #3B82F6;
+    --sidebar-primary-foreground: #FFFFFF;
+    --sidebar-accent: #1F2937;
+    --sidebar-accent-foreground: #F9FAFB;
+    --sidebar-border: #1F2937;
+    --sidebar-ring: #3B82F6;
 }
 
 @theme inline {
@@ -134,10 +129,7 @@ html {
 }
 
 body {
-    background:
-        radial-gradient(circle at top left, rgba(29, 75, 143, 0.08), transparent 32%),
-        radial-gradient(circle at 88% 0%, rgba(184, 134, 11, 0.08), transparent 28%),
-        var(--color-bg);
+    background: var(--color-bg);
     color: var(--color-foreground);
     font-family: var(--font-sans);
 }
@@ -148,7 +140,8 @@ h3,
 h4,
 h5,
 h6 {
-    font-family: var(--font-serif);
+    font-family: var(--font-sans);
+    font-weight: 600;
 }
 
 .dashboard-root {
@@ -161,12 +154,12 @@ h6 {
     position: absolute;
     inset: 0;
     z-index: -1;
-    opacity: 0.22;
+    opacity: 0.1;
     background-image:
-        linear-gradient(rgba(29, 75, 143, 0.05) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(29, 75, 143, 0.05) 1px, transparent 1px);
-    background-size: 32px 32px;
-    mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 1), rgba(0, 0, 0, 0.12));
+        linear-gradient(var(--color-border) 1px, transparent 1px),
+        linear-gradient(90deg, var(--color-border) 1px, transparent 1px);
+    background-size: 40px 40px;
+    mask-image: radial-gradient(circle at center, black, transparent 80%);
 }
 
 .dashboard-card,

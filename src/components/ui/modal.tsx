@@ -3,6 +3,8 @@
 import { AlertTriangle, X } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
+import { Button } from "./button";
+import { Input } from "./input";
 
 type ModalProps = {
     isOpen: boolean;
@@ -68,7 +70,7 @@ export function Modal({ isOpen, onClose, title, children, icon }: ModalProps) {
                 <div className="flex items-center justify-between border-b border-border-subtle px-6 py-4">
                     <div className="flex items-center gap-3">
                         {icon && <div className="text-brand">{icon}</div>}
-                        <h2 className="font-serif text-xl text-foreground">
+                        <h2 className="font-sans text-lg font-semibold text-foreground">
                             {title}
                         </h2>
                     </div>
@@ -144,33 +146,31 @@ export function ConfirmModal({
                         <label className="block text-sm font-medium text-foreground">
                             Type "{requiredWord}" to confirm:
                         </label>
-                        <input
+                        <Input
                             type="text"
                             value={inputValue}
                             onChange={(e) => setInputValue(e.target.value)}
-                            className="w-full rounded border border-border-subtle bg-surface-subtle px-3 py-2 text-sm text-foreground outline-none focus:border-brand focus:ring-1 focus:ring-brand"
                             placeholder={requiredWord}
+                            className="bg-muted/50"
                         />
                     </div>
                 )}
 
                 <div className="flex items-center justify-end gap-3 pt-2">
-                    <button
+                    <Button
+                        variant="ghost"
                         onClick={onClose}
-                        className="rounded px-4 py-2 text-sm font-medium text-text-muted hover:text-foreground hover:bg-surface-subtle transition-colors"
+                        className="text-muted-foreground hover:text-foreground"
                     >
                         Cancel
-                    </button>
-                    <button
+                    </Button>
+                    <Button
                         onClick={handleConfirm}
                         disabled={!isValid}
-                        className={`rounded px-4 py-2 text-sm font-medium text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${isDestructive
-                                ? "bg-status-danger hover:bg-red-800"
-                                : "bg-brand hover:bg-brand-hover"
-                            }`}
+                        variant={isDestructive ? "destructive" : "default"}
                     >
                         {confirmText}
-                    </button>
+                    </Button>
                 </div>
             </div>
         </Modal>

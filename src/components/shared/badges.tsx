@@ -22,7 +22,7 @@ type StatusBadgeProps = {
 export function StatusBadge({ status }: StatusBadgeProps) {
     const configs: Record<StatusType, { variant: "default" | "secondary" | "outline" | "success" | "warning" | "destructive" | "info"; label: string }> = {
         pending: { variant: "warning", label: "Pending" },
-        in_review: { variant: "info", label: "In Review" },
+        in_review: { variant: "info", label: "Reviewing" },
         approved: { variant: "success", label: "Approved" },
         dispatched: { variant: "default", label: "Dispatched" },
         withheld: { variant: "destructive", label: "Withheld" },
@@ -31,13 +31,13 @@ export function StatusBadge({ status }: StatusBadgeProps) {
         queued: { variant: "secondary", label: "Queued" },
         processing: { variant: "info", label: "Processing" },
         complete: { variant: "success", label: "Complete" },
-        partial_failure: { variant: "warning", label: "Partial Failure" },
+        partial_failure: { variant: "warning", label: "Partial" },
     };
 
     const config = configs[status] || configs.pending;
 
     return (
-        <Badge variant={config.variant} className="rounded-full px-2.5 py-1 font-sans text-[11px] font-medium uppercase tracking-[0.08em]">
+        <Badge variant={config.variant} className="font-bold tracking-tight">
             {config.label}
         </Badge>
     );
@@ -53,7 +53,7 @@ export function ChannelBadge({ channel }: { channel: "whatsapp" | "email" | "sms
     const Icon = config.icon;
 
     return (
-        <Badge variant={config.variant} className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 font-sans text-[11px] font-medium uppercase tracking-[0.08em]">
+        <Badge variant={config.variant} className="inline-flex items-center gap-1.5 font-bold tracking-tight">
             <Icon className="h-3.5 w-3.5" />
             {config.label}
         </Badge>
