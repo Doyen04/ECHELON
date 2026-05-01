@@ -2,8 +2,8 @@
 
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { ArrowRight, Download } from "lucide-react";
-import { use } from "react";
+import { ArrowRight, Download, CheckCircle2 } from "lucide-react";
+import { use, useState } from "react";
 import { useApi } from "@/hooks/use-api";
 
 import { Badge } from "@/components/ui/badge";
@@ -34,12 +34,19 @@ type BatchPageProps = {
 
 export default function BatchDetailPage({ params }: BatchPageProps) {
   const { batchId } = use(params);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   const {
     data: batch,
     isLoading,
     error,
+    execute,
   } = useApi<any>(`/api/batches/${batchId}`, { immediate: true });
+
+  const handleApproveSuccess = () => {
+    setSuccessMessage("Batch approved and queued for parent delivery.");
+    execute();
+  };
 
   return (
     <ApiGate
@@ -74,9 +81,11 @@ export default function BatchDetailPage({ params }: BatchPageProps) {
               }
               action={
                 <div className='flex items-center gap-2'>
-                  {(batch.status === "PENDING" || batch.status === "IN_REVIEW") && (
-                    <ApproveDispatchButton batchId={batch.id} />
-                  )}
+                  <ApproveDispatchButton 
+                    batchId={batch.id} 
+                    disabled={!(batch.status === "PENDING" || batch.status === "IN_REVIEW")}
+                    onSuccess={handleApproveSuccess}
+                  />
                   <ExportButton
                     endpoint={`/api/batches/${batch.id}/export`}
                     filename={`batch-detail-${batch.id}.csv`}
@@ -184,6 +193,14 @@ export default function BatchDetailPage({ params }: BatchPageProps) {
                             Activity History
                         </h2>
                         <div className='space-y-3'>
+                        {successMessage && (
+                            <div className="rounded-xl border border-emerald-100 bg-emerald-50/50 p-4 shadow-sm flex items-start gap-3">
+                                <CheckCircle2 className="h-5 w-5 text-emerald-600 mt-0.5 shrink-0" />
+                                <p className="text-sm text-emerald-800 font-medium">
+                                    {successMessage}
+                                </p>
+                            </div>
+                        )}
                         {batch.dispatches.length > 0 ? (
                             batch.dispatches.map((dispatch: any) => (
                             <div

@@ -12,7 +12,7 @@ export async function GET(
         if (!token) {
             return NextResponse.json({ error: "Token missing" }, { status: 400 });
         }
-        
+
         const portalToken = await prisma.portalToken.findUnique({
             where: { token },
             include: {

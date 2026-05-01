@@ -5,16 +5,18 @@ import { useRouter } from "next/navigation";
 
 type ApproveDispatchButtonProps = {
     batchId: string;
+    disabled?: boolean;
+    onSuccess?: () => void;
 };
 
-export function ApproveDispatchButton({ batchId }: ApproveDispatchButtonProps) {
+export function ApproveDispatchButton({ batchId, disabled, onSuccess }: ApproveDispatchButtonProps) {
     const router = useRouter();
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [message, setMessage] = useState<string | null>(null);
     const [isError, setIsError] = useState(false);
+    const [message, setMessage] = useState<string | null>(null);
 
     const handleApprove = async () => {
-        if (isSubmitting) {
+        if (isSubmitting || disabled) {
             return;
         }
 
@@ -34,7 +36,7 @@ export function ApproveDispatchButton({ batchId }: ApproveDispatchButtonProps) {
                 return;
             }
 
-            setMessage("Batch approved and queued for parent delivery.");
+            if (onSuccess) onSuccess();
             router.refresh();
         } catch {
             setIsError(true);
@@ -49,13 +51,13 @@ export function ApproveDispatchButton({ batchId }: ApproveDispatchButtonProps) {
             <button
                 type="button"
                 onClick={handleApprove}
-                disabled={isSubmitting}
+                disabled={isSubmitting || disabled}
                 className="inline-flex items-center justify-center rounded-md bg-brand px-4 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-brand-hover disabled:cursor-not-allowed disabled:opacity-70"
             >
                 {isSubmitting ? "Approving..." : "Approve & Dispatch"}
             </button>
-            {message ? (
-                <p className={`text-xs ${isError ? "text-status-danger" : "text-status-success"}`}>
+            {isError && message ? (
+                <p className="text-xs text-status-danger">
                     {message}
                 </p>
             ) : null}
