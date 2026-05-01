@@ -15,7 +15,7 @@ export function SummaryMetrics({ metrics }: { metrics: SummaryMetric[] }) {
             {metrics.map((metric, index) => (
                 <Card
                     key={metric.label}
-                    className="dashboard-card group px-5 py-5 shadow-sm"
+                    className="dashboard-card group px-5 py-5"
                     style={{ animationDelay: `${index * 90}ms` }}
                 >
                     <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground/80">

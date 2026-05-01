@@ -41,7 +41,7 @@ export default function DashboardClient({ data }: Props) {
         <div className='grid gap-6 xl:grid-cols-[0.9fr_1.1fr]'>
           <DeliveryChannels channels={data.channelDelivery} />
 
-          <Card className='relative overflow-hidden border-none bg-[#1D4B8F] p-8 text-white shadow-lg'>
+          <Card className='relative overflow-hidden border-none bg-[#1D4B8F] p-8 text-white'>
             <div className='relative z-10'>
               <p className='text-xs font-bold uppercase tracking-[0.2em] text-blue-100/70'>
                 Operational Action

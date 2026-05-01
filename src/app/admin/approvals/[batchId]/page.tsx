@@ -8,161 +8,80 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { DataTable } from "@/components/shared/data-table";
+import { BatchCard } from "@/components/features/admin/batch-card";
 
 export default function ApprovalsPage() {
+  const pendingBatches = [
+    {
+      id: "BCH-8A92",
+      department: "Computer Science",
+      session: "2024/2025",
+      semester: 1,
+      uploadedBy: { name: "Registrar Adeyemi" },
+      uploadedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+      studentResults: new Array(247),
+      status: "PENDING",
+      source: "CSV"
+    },
+    {
+      id: "BCH-9M2P",
+      department: "Mathematics",
+      session: "2024/2025",
+      semester: 1,
+      uploadedBy: { name: "Registrar Adeyemi" },
+      uploadedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+      studentResults: new Array(86),
+      status: "PENDING",
+      source: "CSV"
+    }
+  ];
+
   return (
     <div className='flex flex-col h-full overflow-y-auto w-full bg-background dashboard-root'>
-      <PageHeader title='Approvals' breadcrumbs='4 batches pending review' />
+      <PageHeader title='Approvals' breadcrumbs='Review Queue' />
 
-      <div className='p-6 md:p-8 space-y-8 max-w-5xl w-full mx-auto'>
-        <Card className='space-y-4 p-6 shadow-sm'>
-          <h2 className='text-sm font-semibold uppercase tracking-widest text-text-muted border-b border-border-subtle pb-2 flex items-center gap-2'>
-            <Clock className='h-4 w-4' /> Action Required (4)
+      <main className='p-6 md:p-8 space-y-8 max-w-7xl w-full mx-auto'>
+        <div className='space-y-4'>
+          <h2 className='text-sm font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2 px-1'>
+            <Clock className='h-4 w-4' /> Action Required ({pendingBatches.length})
           </h2>
 
           <div className='grid gap-4'>
-            <PendingCard
-              id='BCH-8A92'
-              title='Computer Science   First Semester 2024/2025'
-              uploader='Registrar Adeyemi'
-              time='2 days ago'
-              students={247}
-              source='CSV'
-            />
-            <PendingCard
-              id='BCH-9M2P'
-              title='Mathematics   First Semester 2024/2025'
-              uploader='Registrar Adeyemi'
-              time='2 days ago'
-              students={86}
-              source='CSV'
-            />
-            <PendingCard
-              id='BCH-2N5A'
-              title='Biology   First Semester 2024/2025'
-              uploader='M. Eze'
-              time='1 week ago'
-              students={210}
-              source='CSV'
-            />
-            <PendingCard
-              id='BCH-5Y7K'
-              title='Medicine   First Semester 2023/2024'
-              uploader='Registrar Adeyemi'
-              time='2 weeks ago'
-              students={310}
-              source='API'
-            />
+            {pendingBatches.map((batch) => (
+              <BatchCard key={batch.id} batch={batch} />
+            ))}
           </div>
-        </Card>
+        </div>
 
-        <Card
-          className='pt-8 p-0 dashboard-section shadow-sm'
-          style={{ animationDelay: "150ms" }}
-        >
-          <details className='group rounded-xl border border-border-subtle bg-surface-main overflow-hidden'>
-            <summary className='flex cursor-pointer items-center justify-between p-5 list-none [&::-webkit-details-marker]:hidden bg-surface-subtle/30 hover:bg-surface-subtle/60 transition-colors'>
+        <Card className='p-0 shadow-sm overflow-hidden'>
+          <details className='group'>
+            <summary className='flex cursor-pointer items-center justify-between p-5 list-none [&::-webkit-details-marker]:hidden bg-muted/30 hover:bg-muted/50 transition-colors'>
               <div className='flex items-center gap-2'>
-                <CheckSquare className='h-5 w-5 text-status-success' />
-                <h3 className='font-medium text-foreground'>
-                  Reviewed Batches <span className='text-text-muted'>(12)</span>
+                <CheckSquare className='h-5 w-5 text-success' />
+                <h3 className='font-semibold text-foreground'>
+                  Recently Reviewed <span className='text-muted-foreground ml-1 font-medium'>(12)</span>
                 </h3>
               </div>
-              <ChevronDown className='h-5 w-5 text-text-muted transition-transform group-open:rotate-180' />
+              <ChevronDown className='h-5 w-5 text-muted-foreground transition-transform group-open:rotate-180' />
             </summary>
 
-            <div className='border-t border-border-subtle bg-white overflow-x-auto'>
+            <div className='border-t border-border bg-card overflow-x-auto'>
               <DataTable
                 data={[
-                  {
-                    id: "BCH-7F1X",
-                    session: "Physics   2024/2025",
-                    status: "approved",
-                  },
-                  {
-                    id: "BCH-4L8K",
-                    session: "Chemistry   2024/2025",
-                    status: "approved",
-                  },
-                  {
-                    id: "BCH-1P3V",
-                    session: "Accounting   2023/2024",
-                    status: "approved",
-                  },
+                  { id: "BCH-7F1X", department: "Physics", session: "2024/2025", status: "APPROVED" },
+                  { id: "BCH-4L8K", department: "Chemistry", session: "2024/2025", status: "APPROVED" }
                 ]}
                 className='border-0 shadow-none -mx-px'
                 columns={[
-                  {
-                    header: "Batch ID",
-                    accessorKey: "id",
-                    className: "px-5 py-4 text-sm font-mono text-text-muted",
-                  },
-                  {
-                    header: "Session/Dept",
-                    accessorKey: "session",
-                    className: "px-5 py-4 text-sm text-foreground",
-                  },
-                  {
-                    header: "Status",
-                    accessorKey: "status",
-                    className: "px-5 py-4",
-                    cell: (row: any) => <StatusBadge status={row.status} />,
-                  },
+                  { header: "Batch ID", accessorKey: "id", className: "px-6 font-mono text-xs text-muted-foreground" },
+                  { header: "Department", accessorKey: "department", className: "px-6 font-semibold" },
+                  { header: "Status", className: "px-6", cell: (row: any) => <StatusBadge status={row.status} /> }
                 ]}
               />
-              <div className='px-5 py-3 text-sm text-brand hover:underline cursor-pointer border-t border-border-subtle bg-surface-subtle/10 text-center font-medium'>
-                View all reviewed batches
-              </div>
             </div>
           </details>
         </Card>
-      </div>
+      </main>
     </div>
-  );
-}
-
-function PendingCard({ id, title, uploader, time, students, source }: any) {
-  return (
-    <Card className='rounded-xl border-l-4 border-status-warning bg-surface-main p-6 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-6 dashboard-card'>
-      <div className='space-y-3 flex-1'>
-        <div>
-          <h3 className='font-serif text-[1.1rem] text-foreground mb-1'>
-            {title}
-          </h3>
-          <p className='text-sm text-text-muted'>
-            Uploaded by {uploader} {time}
-          </p>
-        </div>
-
-        <div className='flex items-center gap-3'>
-          <Badge
-            variant='outline'
-            className='rounded-full px-2.5 py-0.5 text-xs font-medium text-text-muted'
-          >
-            {students} students
-          </Badge>
-          <Badge
-            variant='outline'
-            className='rounded-full px-2.5 py-0.5 text-xs font-medium text-text-muted uppercase'
-          >
-            {source} source
-          </Badge>
-          <StatusBadge status='pending' />
-        </div>
-      </div>
-
-      <div className='shrink-0 flex items-center self-start md:self-auto w-full md:w-auto'>
-        <Button
-          asChild
-          variant='outline'
-          className='flex w-full md:w-auto items-center justify-center gap-2 rounded-full border-brand text-brand shadow-sm hover:bg-brand/5 hover:border-brand-hover transition-colors group'
-        >
-          <Link href={`/admin/batches/${id}`}>
-            Begin Review{" "}
-            <ArrowRight className='h-4 w-4 group-hover:translate-x-0.5 transition-transform' />
-          </Link>
-        </Button>
-      </div>
-    </Card>
   );
 }

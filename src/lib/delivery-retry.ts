@@ -233,12 +233,16 @@ export async function getFailedSendPreview(dispatchId: string): Promise<FailedSe
     };
 }
 
-export async function retryFailedDispatchSends(dispatchId: string): Promise<RetryResult> {
+export async function retryFailedDispatchSends(dispatchId: string, logId?: string): Promise<RetryResult> {
     const db = prisma as any;
     const preview = await getFailedSendPreview(dispatchId);
 
-    if (!preview.canRetry) {
-        throw new Error("No failed sends have a resolvable contact for retry.");
+    const itemsToRetry = logId 
+        ? preview.items.filter(item => item.id === logId)
+        : preview.items.filter(item => !item.retryBlockedReason);
+
+    if (itemsToRetry.length === 0) {
+        throw new Error(logId ? "This specific log cannot be retried." : "No failed sends have a resolvable contact for retry.");
     }
 
     const dispatch = await db.notificationDispatch.findUnique({
@@ -261,7 +265,7 @@ export async function retryFailedDispatchSends(dispatchId: string): Promise<Retr
     const semesterLabel = `${dispatch.batch.session} ${dispatch.batch.semester}`;
     const retriedLogs: string[] = [];
 
-    for (const item of preview.items) {
+    for (const item of itemsToRetry) {
         if (!item.guardianName || (!item.guardianEmail && !item.guardianPhone)) {
             continue;
         }

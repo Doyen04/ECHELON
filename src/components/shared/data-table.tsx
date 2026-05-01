@@ -29,6 +29,7 @@ interface DataTableProps<TData, TValue> {
     pageSize?: number;
     className?: string;
     onRowClick?: (item: TData) => void;
+    hideCount?: boolean;
 }
 
 export function DataTable<TData, TValue>({
@@ -40,6 +41,7 @@ export function DataTable<TData, TValue>({
     pageSize = 10,
     className,
     onRowClick,
+    hideCount = false,
 }: DataTableProps<TData, TValue>) {
     const [searchQuery, setSearchQuery] = React.useState("");
     const [currentPage, setCurrentPage] = React.useState(1);
@@ -86,12 +88,14 @@ export function DataTable<TData, TValue>({
                     )}
                     {filters}
                 </div>
-                <div className="text-sm text-muted-foreground">
-                    Showing <span className="font-medium text-foreground">{filteredData.length}</span> results
-                </div>
+                {!hideCount && (
+                    <div className="text-sm text-muted-foreground">
+                        Showing <span className="font-medium text-foreground">{filteredData.length}</span> results
+                    </div>
+                )}
             </div>
 
-            <div className="rounded-xl border border-border/70 bg-card shadow-sm overflow-hidden">
+            <div className="rounded-xl border border-border/70 bg-card overflow-hidden">
                 <Table>
                     <TableHeader className="bg-muted/30">
                         <TableRow>

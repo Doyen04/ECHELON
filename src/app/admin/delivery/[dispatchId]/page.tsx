@@ -67,7 +67,7 @@ export default function DeliveryLogPage({ params }: DeliveryPageProps) {
   const successRate = total === 0 ? 0 : Math.round((sent / total) * 100);
 
   return (
-    <div className='dashboard-root min-h-screen bg-background'>
+    <div className='flex h-full w-full flex-col overflow-x-hidden overflow-y-auto bg-background'>
       <PageHeader
         title='Delivery Log'
         breadcrumbs={
@@ -79,222 +79,209 @@ export default function DeliveryLogPage({ params }: DeliveryPageProps) {
           />
         }
         action={
-          <ExportButton
-            endpoint={`/api/delivery/${dispatch.id}/export`}
-            filename={`delivery-${dispatch.id}.csv`}
-          />
+          <div className="flex items-center gap-3">
+             <RetryFailedSendsButton
+                dispatchId={dispatch.id}
+                failedCount={dispatch.failedCount ?? failed}
+            />
+            <ExportButton
+                endpoint={`/api/delivery/${dispatch.id}/export`}
+                filename={`delivery-${dispatch.id}.csv`}
+            />
+          </div>
         }
       />
 
-      <main className='mx-auto w-full max-w-6xl px-4 py-6 sm:px-6 lg:px-8 lg:py-8'>
-        <Card className='rounded-3xl p-6 shadow-[0_25px_60px_-38px_rgba(2,23,23,0.75)] sm:p-8'>
-          <div className='flex flex-col gap-4 md:flex-row md:items-start md:justify-between'>
-            <div>
-              <p className='text-xs font-semibold uppercase tracking-[0.16em] text-(--text-muted)'>
-                Dispatch Activity
-              </p>
-              <h1 className='mt-2 text-3xl font-semibold tracking-tight text-foreground'>
-                {dispatch.batch.department}
-              </h1>
-              <p className='mt-2 text-sm text-(--text-secondary)'>
-                {dispatch.batch.session} •{" "}
-                {String(dispatch.batch.semester).toLowerCase()} semester •
-                Triggered by {dispatch.triggeredBy?.name ?? "System"}
-              </p>
+      <main className='mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8 lg:py-8'>
+        <div className="grid gap-6">
+            <div className='rounded-xl border-border'>
+                <div className='flex flex-col gap-6 md:flex-row md:items-start md:justify-between'>
+                    <div className="space-y-1">
+                        <div className="flex items-center gap-3">
+                             <h1 className='text-2xl font-bold tracking-tight text-foreground'>
+                                {dispatch.batch.department}
+                            </h1>
+                            <StatusBadge
+                                status={String(dispatch.status).toLowerCase() as any}
+                            />
+                        </div>
+                        <p className='text-sm text-muted-foreground'>
+                            {dispatch.batch.session} • {dispatch.batch.semester} Semester • 
+                            Triggered by <span className="font-medium text-foreground">{dispatch.triggeredBy?.name ?? "System"}</span>
+                        </p>
+                    </div>
+
+                    <Badge variant='secondary' className='rounded-md px-2 py-0.5 font-mono text-[10px] text-muted-foreground'>
+                        ID: {dispatch.id}
+                    </Badge>
+                </div>
+
+                <div className='mt-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-4'>
+                    <SummaryCard title='Total Logs' value={total} />
+                    <SummaryCard
+                        title='Sent'
+                        value={sent}
+                        subvalue={`${successRate}% Success`}
+                        color='text-emerald-600'
+                    />
+                    <SummaryCard
+                        title='Failed'
+                        value={failed}
+                        color='text-destructive'
+                    />
+                    <SummaryCard title='Queued' value={queued} />
+                </div>
+
+                <div className='mt-8 rounded-xl border border-border bg-muted/30 p-6'>
+                    <div className='flex items-center justify-between gap-3 text-xs font-bold uppercase tracking-widest text-muted-foreground'>
+                        <span>Dispatch Progress</span>
+                        <span className="text-foreground">
+                            {processed} / {total} Processed
+                        </span>
+                    </div>
+                    <div className='mt-4 h-2 w-full overflow-hidden rounded-full bg-muted'>
+                        <div
+                            className='h-full bg-sidebar-primary transition-all duration-500'
+                            style={{ width: `${total === 0 ? 0 : (processed / total) * 100}%` }}
+                        />
+                    </div>
+                    <div className='mt-4 flex flex-wrap gap-6 text-[11px] font-bold uppercase tracking-tight text-muted-foreground'>
+                        <span className="flex items-center gap-1.5">
+                            <div className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                            Sent: {sent}
+                        </span>
+                        <span className="flex items-center gap-1.5">
+                            <div className="h-1.5 w-1.5 rounded-full bg-destructive" />
+                            Failed: {failed}
+                        </span>
+                        <span className="flex items-center gap-1.5">
+                            <div className="h-1.5 w-1.5 rounded-full bg-muted-foreground/30" />
+                            Queued: {queued}
+                        </span>
+                    </div>
+                </div>
             </div>
 
-            <div className='flex flex-wrap gap-2'>
-              <StatusBadge
-                status={String(dispatch.status).toLowerCase() as any}
-              />
-              <Badge
-                variant='outline'
-                className='rounded-full px-2.5 py-1 text-xs font-medium'
-              >
-                {dispatch.id}
-              </Badge>
-            </div>
-          </div>
+            <Card className='overflow-hidden rounded-xl border-border'>
+                <div className='border-b border-border bg-muted/20 px-6 py-4'>
+                    <h2 className='text-sm font-bold text-foreground uppercase tracking-widest'>
+                        Notification Logs
+                    </h2>
+                    <p className='mt-1 text-xs text-muted-foreground'>
+                        Detailed history of every guardian notification attempt for this dispatch job.
+                    </p>
+                </div>
 
-          <div className='mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4'>
-            <SummaryCard title='Total Logs' value={String(total)} />
-            <SummaryCard
-              title='Sent'
-              value={`${sent}`}
-              subvalue={`${successRate}%`}
-              color='text-[var(--color-success)]'
-            />
-            <SummaryCard
-              title='Failed'
-              value={String(failed)}
-              color='text-[var(--color-danger)]'
-            />
-            <SummaryCard title='Queued' value={String(queued)} />
-          </div>
-
-          <div className='mt-6 rounded-2xl border border-(--border-subtle) bg-(--surface-soft) p-5'>
-            <div className='flex items-center justify-between gap-3 text-sm font-medium'>
-              <span className='text-foreground'>Dispatch Progress</span>
-              <span className='text-(--text-secondary)'>
-                {processed} processed
-              </span>
-            </div>
-            <div className='mt-3 h-3 w-full overflow-hidden rounded-full bg-(--surface-muted)'>
-              <div
-                className='h-full bg-emerald-500'
-                style={{ width: `${total === 0 ? 0 : (sent / total) * 100}%` }}
-              />
-            </div>
-            <div className='mt-4 flex flex-wrap gap-4 text-xs font-medium'>
-              <span className='text-(--text-secondary)'>Sent: {sent}</span>
-              <span className='text-(--text-secondary)'>Failed: {failed}</span>
-              <span className='text-(--text-secondary)'>Queued: {queued}</span>
-            </div>
-          </div>
-
-          <div className='mt-6 grid gap-4 lg:grid-cols-[1.25fr_.75fr]'>
-            <article className='rounded-2xl border border-(--border-subtle) bg-(--surface-soft) p-5'>
-              <p className='text-xs font-semibold uppercase tracking-[0.16em] text-(--text-muted)'>
-                Dispatch Details
-              </p>
-              <div className='mt-4 space-y-3 text-sm text-(--text-secondary)'>
-                <p>
-                  <span className='text-foreground font-medium'>Batch:</span>{" "}
-                  {dispatch.batch.department}
-                </p>
-                <p>
-                  <span className='text-foreground font-medium'>
-                    Triggered:
-                  </span>{" "}
-                  {formatDateTime(dispatch.triggeredAt)}
-                </p>
-                <p>
-                  <span className='text-foreground font-medium'>
-                    Total Count:
-                  </span>{" "}
-                  {total}
-                </p>
-                <p>
-                  <span className='text-foreground font-medium'>
-                    Processed:
-                  </span>{" "}
-                  {processed}
-                </p>
-              </div>
-            </article>
-
-            <article className='rounded-2xl border border-(--border-subtle) bg-(--surface-soft) p-5'>
-              <p className='text-xs font-semibold uppercase tracking-[0.16em] text-(--text-muted)'>
-                Quick Actions
-              </p>
-              <div className='mt-4 flex flex-col gap-3'>
-                <RetryFailedSendsButton
-                  dispatchId={dispatch.id}
-                  failedCount={dispatch.failedCount ?? failed}
+                <div className='overflow-x-auto'>
+                <DataTable
+                    data={notificationLogs}
+                    hideCount={true}
+                    className='border-0 shadow-none'
+                    columns={[
+                    {
+                        header: "Student",
+                        accessorKey: "student",
+                        className: "px-6 py-4",
+                        cell: (row: any) => {
+                        const student = studentById.get(row.studentId) as
+                            | { fullName?: string; matricNumber?: string }
+                            | undefined;
+                        return (
+                            <div className="space-y-0.5">
+                                <div className='text-sm font-bold text-foreground'>
+                                    {student?.fullName ?? "Unknown student"}
+                                </div>
+                                <div className='text-[10px] font-mono text-muted-foreground'>
+                                    {student?.matricNumber ?? row.studentId}
+                                </div>
+                            </div>
+                        );
+                        },
+                    },
+                    {
+                        header: "Guardian",
+                        accessorKey: "guardian",
+                        className: "px-6 py-4 text-sm font-medium",
+                        cell: (row: any) => {
+                        const guardian = (
+                            row.guardianId ? guardianById.get(row.guardianId) : null
+                        ) as { name?: string } | null;
+                        return <>{guardian?.name ?? "Unknown guardian"}</>;
+                        },
+                    },
+                    {
+                        header: "Channel",
+                        accessorKey: "channel",
+                        className: "px-6 py-4",
+                        cell: (row: any) => (
+                        <ChannelBadge
+                            channel={String(row.channel).toLowerCase() as any}
+                        />
+                        ),
+                    },
+                    {
+                        header: "Status",
+                        accessorKey: "status",
+                        className: "px-6 py-4",
+                        cell: (row: any) => (
+                        <StatusBadge
+                            status={String(row.status).toLowerCase() as any}
+                        />
+                        ),
+                    },
+                    {
+                        header: "Attempted At",
+                        accessorKey: "attemptedAt",
+                        className: "px-6 py-4 text-xs font-medium text-muted-foreground",
+                        cell: (row: any) => <>{formatDateTime(row.attemptedAt)}</>,
+                    },
+                    {
+                        header: "Logs & Details",
+                        accessorKey: "details",
+                        className: "px-6 py-4 text-[11px] font-medium text-muted-foreground",
+                        cell: (row: any) => (
+                            <div className="max-w-[200px] truncate" title={row.failureReason ?? row.providerMessageId ?? "Delivered"}>
+                                {row.failureReason ??
+                                row.providerMessageId ??
+                                "Delivered successfully"}
+                            </div>
+                        ),
+                    },
+                    {
+                        header: "Actions",
+                        accessorKey: "actions",
+                        className: "px-6 py-4 text-right",
+                        cell: (row: any) => {
+                            if (row.status !== "FAILED") return null;
+                            return (
+                                <Button 
+                                    size="sm" 
+                                    variant="outline" 
+                                    className="h-8 rounded-md text-[10px] font-bold uppercase tracking-tight hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-200"
+                                    onClick={async () => {
+                                        try {
+                                            const response = await fetch(`/api/delivery/${dispatchId}/retry`, {
+                                                method: "POST",
+                                                body: JSON.stringify({ logId: row.id }),
+                                            });
+                                            if (response.ok) {
+                                                window.location.reload(); // Simple way to refresh for now
+                                            }
+                                        } catch (err) {
+                                            console.error("Retry failed", err);
+                                        }
+                                    }}
+                                >
+                                    Retry
+                                </Button>
+                            );
+                        },
+                    },
+                    ]}
                 />
-                <Button asChild className='rounded-full'>
-                  <Link href='/admin/delivery'>Back to dispatch list</Link>
-                </Button>
-              </div>
-            </article>
-          </div>
-        </Card>
-
-        <Card className='mt-6 overflow-hidden rounded-3xl shadow-[0_25px_60px_-38px_rgba(2,23,23,0.75)]'>
-          <div className='border-b border-(--border-subtle) px-6 py-4 sm:px-8'>
-            <h2 className='text-lg font-semibold text-foreground'>
-              Notification Logs
-            </h2>
-            <p className='mt-1 text-sm text-(--text-secondary)'>
-              Each row reflects one guardian notification attempt for this
-              dispatch.
-            </p>
-          </div>
-
-          {notificationLogs.length > 0 ? (
-            <div className='overflow-x-auto'>
-              <DataTable
-                data={notificationLogs}
-                className='border-0 shadow-none -mx-px'
-                columns={[
-                  {
-                    header: "Student",
-                    accessorKey: "student",
-                    className: "px-6 py-4 text-sm text-foreground",
-                    cell: (row: any) => {
-                      const student = studentById.get(row.studentId) as
-                        | { fullName?: string; matricNumber?: string }
-                        | undefined;
-                      return (
-                        <>
-                          <div className='font-medium'>
-                            {student?.fullName ?? "Unknown student"}
-                          </div>
-                          <div className='mt-1 text-xs text-(--text-muted)'>
-                            {student?.matricNumber ?? row.studentId}
-                          </div>
-                        </>
-                      );
-                    },
-                  },
-                  {
-                    header: "Guardian",
-                    accessorKey: "guardian",
-                    className: "px-6 py-4 text-sm text-foreground",
-                    cell: (row: any) => {
-                      const guardian = (
-                        row.guardianId ? guardianById.get(row.guardianId) : null
-                      ) as { name?: string } | null;
-                      return <>{guardian?.name ?? "Unknown guardian"}</>;
-                    },
-                  },
-                  {
-                    header: "Channel",
-                    accessorKey: "channel",
-                    className: "px-6 py-4",
-                    cell: (row: any) => (
-                      <ChannelBadge
-                        channel={String(row.channel).toLowerCase() as any}
-                      />
-                    ),
-                  },
-                  {
-                    header: "Status",
-                    accessorKey: "status",
-                    className: "px-6 py-4",
-                    cell: (row: any) => (
-                      <StatusBadge
-                        status={String(row.status).toLowerCase() as any}
-                      />
-                    ),
-                  },
-                  {
-                    header: "Attempted At",
-                    accessorKey: "attemptedAt",
-                    className: "px-6 py-4 text-sm text-(--text-secondary)",
-                    cell: (row: any) => <>{formatDateTime(row.attemptedAt)}</>,
-                  },
-                  {
-                    header: "Details",
-                    accessorKey: "details",
-                    className: "px-6 py-4 text-sm text-(--text-secondary)",
-                    cell: (row: any) => (
-                      <>
-                        {row.failureReason ??
-                          row.providerMessageId ??
-                          "Delivered successfully"}
-                      </>
-                    ),
-                  },
-                ]}
-              />
-            </div>
-          ) : (
-            <div className='px-6 py-10 text-sm text-(--text-secondary)'>
-              No notification logs are available for this dispatch yet.
-            </div>
-          )}
-        </Card>
+                </div>
+            </Card>
+        </div>
       </main>
     </div>
   );

@@ -18,7 +18,7 @@ export function PageHeader({ title, breadcrumbs, action }: PageHeaderProps) {
                             {breadcrumbs}
                         </div>
                     )}
-                    <h1 className="font-serif text-xl leading-none text-foreground">
+                    <h1 className="font-sans text-xl font-bold leading-none text-foreground">
                         {title}
                     </h1>
                 </div>
@@ -28,7 +28,7 @@ export function PageHeader({ title, breadcrumbs, action }: PageHeaderProps) {
                     </div>
                 )}
             </div>
-            <Separator className="bg-linear-to-r from-brand/25 via-border to-transparent" />
+            <Separator className="opacity-50" />
         </header>
     );
 }

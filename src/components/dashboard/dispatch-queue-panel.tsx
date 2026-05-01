@@ -73,7 +73,7 @@ export function DispatchQueuePanel({ queue }: { queue: DispatchQueueEntry[] }) {
 
                             <div className="mt-3 h-2.5 rounded-full bg-(--surface-muted)">
                                 <div
-                                    className="h-2.5 rounded-full bg-[linear-gradient(90deg,var(--accent-strong),var(--accent-soft))]"
+                                    className="h-2.5 rounded-full bg-[var(--accent-strong)]"
                                     style={{ width: `${completion}%` }}
                                 />
                             </div>

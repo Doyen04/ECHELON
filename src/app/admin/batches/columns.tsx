@@ -42,7 +42,7 @@ export const columns = [
         header: "Source",
         className: "w-20",
         cell: (batch: any) => (
-            <Badge variant="outline" className="rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+            <Badge variant="outline" className="font-bold">
                 {String(batch.source).toUpperCase()}
             </Badge>
         ),

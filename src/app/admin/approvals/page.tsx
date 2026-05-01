@@ -51,13 +51,10 @@ export default function ApprovalsPage() {
             />
 
             <main className='mx-auto w-full max-w-7xl space-y-8 px-4 py-6 sm:px-6 lg:px-8 lg:py-8'>
-              <Card className='space-y-6 p-6 dashboard-section shadow-sm'>
-                <h2 className='flex items-center gap-2 text-xl font-serif text-foreground'>
-                  <Clock className='h-5 w-5 text-status-warning' /> Action Required (
-                  {pendingBatches.length})
+              <div className='grid gap-4'>
+                <h2 className='flex items-center gap-2 px-1 text-sm font-bold uppercase tracking-widest text-muted-foreground'>
+                  <Clock className='h-4 w-4 text-warning' /> Action Required ({pendingBatches.length})
                 </h2>
-
-                <div className='grid gap-4'>
                   {pendingBatches.length > 0 ? (
                     pendingBatches.map((batch: any, index: number) => (
                       <BatchCard
@@ -72,58 +69,51 @@ export default function ApprovalsPage() {
                     </div>
                   )}
                 </div>
-              </Card>
 
               <Card
-                className='pt-4 p-6 dashboard-section shadow-sm'
-                style={{ animationDelay: "150ms" }}
+                className='p-0 overflow-hidden'
               >
-                <h2 className='mb-4 text-lg font-serif text-foreground'>
-                  Historical Approvals
-                </h2>
-                <details className='group overflow-hidden rounded-xl border border-border-subtle bg-surface-main shadow-sm'>
-                  <summary className='flex cursor-pointer list-none items-center justify-between bg-surface-subtle/20 p-5 transition-colors hover:bg-surface-subtle/40 [&::-webkit-details-marker]:hidden'>
+                <details className='group'>
+                  <summary className='flex cursor-pointer list-none items-center justify-between bg-muted/30 p-5 transition-colors hover:bg-muted/50 [&::-webkit-details-marker]:hidden'>
                     <div className='flex items-center gap-2'>
-                      <CheckSquare className='h-5 w-5 text-status-success' />
-                      <h3 className='font-medium text-foreground'>
-                        Recently Reviewed Batches{" "}
-                        <span className='ml-1 text-text-muted'>
+                      <CheckSquare className='h-5 w-5 text-success' />
+                      <h3 className='font-semibold text-foreground'>
+                        Recently Reviewed{" "}
+                        <span className='ml-1 text-muted-foreground font-medium'>
                           ({reviewedBatches.length} total)
                         </span>
                       </h3>
                     </div>
-                    <ChevronDown className='h-5 w-5 text-text-muted transition-transform group-open:rotate-180' />
+                    <ChevronDown className='h-5 w-5 text-muted-foreground transition-transform group-open:rotate-180' />
                   </summary>
 
-                  <div className='overflow-x-auto border-t border-border-subtle bg-surface-main'>
+                  <div className='overflow-x-auto border-t border-border bg-card'>
                     <DataTable
+                      hideCount
                       data={reviewedBatches}
                       className='border-0 shadow-none -mx-px'
                       columns={[
                         {
                           header: "Batch ID",
                           accessorKey: "id",
-                          className: "px-5 py-4 text-sm font-mono text-text-muted",
+                          className: "px-6 py-4 font-mono text-xs text-muted-foreground",
                         },
                         {
                           header: "Session & Department",
                           accessorKey: "department",
-                          className: "px-5 py-4 text-sm font-medium text-foreground",
+                          className: "px-6 py-4 font-semibold text-foreground",
                           cell: (row: any) => `${row.department} - ${row.session}`,
                         },
                         {
                           header: "Status",
                           accessorKey: "status",
-                          className: "px-5 py-4 text-right",
+                          className: "px-6 py-4 text-right",
                           cell: (row: any) => (
                             <StatusBadge status={toBadgeStatus(row.status)} />
                           ),
                         },
                       ]}
                     />
-                    <div className='border-t border-border-subtle bg-surface-subtle/5 px-5 py-4 text-center text-sm font-medium text-brand transition-colors hover:text-brand-hover hover:underline cursor-pointer'>
-                      View complete review history
-                    </div>
                   </div>
                 </details>
               </Card>

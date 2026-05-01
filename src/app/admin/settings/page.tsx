@@ -6,37 +6,51 @@ import {
   Save,
   UploadCloud,
   AlertTriangle,
-  MessageCircle,
   Mail,
   Phone,
   Plus,
   Trash2,
   ShieldAlert,
+  Building2,
+  BellRing,
+  Users2,
+  Info,
 } from "lucide-react";
 import { PageHeader } from "@/components/shared/page-header";
-
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { ExportButton } from "@/components/features/admin/export-button";
 import { DataTable } from "@/components/shared/data-table";
+import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
 
-type Tab = "institution" | "templates" | "users" | "danger";
+type Tab = "templates" | "users" | "danger";
 
 export default function SettingsPage() {
   const searchParams = useSearchParams();
-  const defaultTab = (searchParams.get("tab") as Tab) || "institution";
+  const defaultTab = (searchParams.get("tab") as Tab) || "templates";
   const [activeTab, setActiveTab] = useState<Tab>(defaultTab);
   const [hasChanges, setHasChanges] = useState(false);
 
+  const tabs = [
+    { id: "templates", label: "Notification Layouts", icon: BellRing },
+    { id: "users", label: "Admin Access", icon: Users2 },
+    {
+      id: "danger",
+      label: "System Control",
+      icon: ShieldAlert,
+      isDanger: true,
+    },
+  ];
+
   return (
-    <div className='flex flex-col h-full overflow-y-auto w-full bg-background dashboard-root'>
+    <div className='flex h-full w-full flex-col overflow-x-hidden overflow-y-auto bg-background'>
       <PageHeader
-        title='Settings'
+        title='System Settings'
         action={
           <Button
             disabled={!hasChanges}
             onClick={() => setHasChanges(false)}
-            className='inline-flex items-center gap-2 rounded-full disabled:opacity-50 disabled:cursor-not-allowed'
+            className='rounded-xl gap-2 bg-sidebar-primary '
           >
             <Save className='h-4 w-4' />
             Save Changes
@@ -44,73 +58,58 @@ export default function SettingsPage() {
         }
       />
 
-      <div className='p-6 md:p-8 space-y-6 max-w-6xl w-full mx-auto'>
-        <div className='flex flex-col lg:flex-row gap-8 items-start dashboard-section'>
-          {/* Vertical Tabs */}
-          <Card className='w-full lg:w-64 shrink-0 rounded-xl shadow-sm hidden lg:block overflow-hidden'>
-            <nav className='flex flex-col'>
-              <SidebarTab
-                id='institution'
-                label='Institution'
-                active={activeTab === "institution"}
-                onClick={() => setActiveTab("institution")}
-              />
-              <SidebarTab
-                id='templates'
-                label='Notification Templates'
-                active={activeTab === "templates"}
-                onClick={() => setActiveTab("templates")}
-              />
-              <SidebarTab
-                id='users'
-                label='Users & Roles'
-                active={activeTab === "users"}
-                onClick={() => setActiveTab("users")}
-              />
-              <SidebarTab
-                id='danger'
-                label='Danger Zone'
-                active={activeTab === "danger"}
-                onClick={() => setActiveTab("danger")}
-                isDanger
-              />
+      <main className='mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8 lg:py-8'>
+        <div className='flex flex-col lg:flex-row gap-8 items-start'>
+          {/* Sidebar Navigation */}
+          <Card className='w-full lg:w-72 shrink-0 rounded-xl border-border bg-card p-2 hidden lg:block'>
+            <nav className='space-y-1'>
+              {tabs.map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id as Tab)}
+                  className={cn(
+                    "w-full flex items-center gap-3 px-4 py-3 text-sm font-bold rounded-lg transition-all",
+                    activeTab === tab.id
+                      ? tab.isDanger
+                        ? "bg-destructive/5 text-destructive border border-destructive/20"
+                        : "bg-muted text-foreground border border-border"
+                      : "text-muted-foreground hover:bg-muted/50 hover:text-foreground",
+                  )}
+                >
+                  <tab.icon
+                    className={cn(
+                      "h-4 w-4",
+                      activeTab === tab.id ? "" : "opacity-70",
+                    )}
+                  />
+                  {tab.label}
+                </button>
+              ))}
             </nav>
           </Card>
 
           {/* Mobile Tabs */}
-          <div className='w-full lg:hidden flex overflow-x-auto border-b border-border-subtle no-scrollbar'>
-            <MobileTab
-              id='institution'
-              label='Institution'
-              active={activeTab === "institution"}
-              onClick={() => setActiveTab("institution")}
-            />
-            <MobileTab
-              id='templates'
-              label='Templates'
-              active={activeTab === "templates"}
-              onClick={() => setActiveTab("templates")}
-            />
-            <MobileTab
-              id='users'
-              label='Users'
-              active={activeTab === "users"}
-              onClick={() => setActiveTab("users")}
-            />
-            <MobileTab
-              id='danger'
-              label='Danger Zone'
-              active={activeTab === "danger"}
-              onClick={() => setActiveTab("danger")}
-              isDanger
-            />
+          <div className='w-full lg:hidden flex gap-2 overflow-x-auto pb-4 no-scrollbar'>
+            {tabs.map((tab) => (
+              <Button
+                key={tab.id}
+                variant={activeTab === tab.id ? "secondary" : "ghost"}
+                onClick={() => setActiveTab(tab.id as Tab)}
+                className={cn(
+                  "rounded-xl h-10 px-4 text-xs font-bold gap-2 whitespace-nowrap",
+                  activeTab === tab.id &&
+                    tab.isDanger &&
+                    "text-destructive bg-destructive/5",
+                )}
+              >
+                <tab.icon className='h-3.5 w-3.5' />
+                {tab.label}
+              </Button>
+            ))}
           </div>
 
           {/* Content Area */}
-          <div className='flex-1 w-full relative'>
-            {activeTab === "institution" && (
-              <InstitutionTab onChange={() => setHasChanges(true)} />
-            )}
+          <div className='flex-1 w-full'>
             {activeTab === "templates" && (
               <TemplatesTab onChange={() => setHasChanges(true)} />
             )}
@@ -118,98 +117,13 @@ export default function SettingsPage() {
             {activeTab === "danger" && <DangerTab />}
           </div>
         </div>
-      </div>
+      </main>
     </div>
   );
 }
 
-// ---- TABS LAYOUT COMPONENTS ---- //
-
-function InstitutionTab({ onChange }: { onChange: () => void }) {
-  return (
-    <Card className='rounded-xl shadow-sm page-transition-enter'>
-      <div className='p-6 border-b border-border-subtle'>
-        <h2 className='text-lg font-serif text-foreground'>
-          Institution Identity
-        </h2>
-        <p className='text-sm text-text-muted mt-1'>
-          Configure your branding and academic format settings.
-        </p>
-      </div>
-      <div className='p-6 space-y-8'>
-        <div className='space-y-4'>
-          <label className='block text-sm font-medium text-foreground'>
-            Institution Logo
-          </label>
-          <div className='flex items-center gap-6'>
-            <div className='w-24 h-24 rounded border border-border-subtle bg-surface-subtle flex items-center justify-center p-2'>
-              <div className='text-xs text-text-muted text-center'>
-                No logo set
-              </div>
-            </div>
-            <div
-              className='flex-1 border-2 border-dashed border-border-subtle rounded-xl bg-surface-subtle/30 p-6 flex flex-col items-center justify-center hover:bg-surface-subtle/60 transition-colors cursor-pointer'
-              onClick={onChange}
-            >
-              <UploadCloud className='h-6 w-6 text-text-muted mb-2' />
-              <div className='text-sm font-medium text-foreground'>
-                Upload new logo
-              </div>
-              <div className='text-xs text-text-muted mt-1'>
-                PNG, JPG up to 2MB. Square recommended.
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className='grid gap-6 md:grid-cols-2'>
-          <div className='space-y-2'>
-            <label className='block text-sm font-medium text-foreground'>
-              Institution Name
-            </label>
-            <input
-              type='text'
-              defaultValue='University of Technology'
-              className='w-full h-10 rounded-md border border-border-subtle bg-transparent px-3 text-sm focus:border-brand focus:ring-1 focus:ring-brand outline-none'
-              onChange={onChange}
-            />
-          </div>
-          <div className='space-y-2'>
-            <label className='block text-sm font-medium text-foreground'>
-              GPA Scale
-            </label>
-            <select
-              className='w-full h-10 rounded-md border border-border-subtle bg-transparent px-3 text-sm focus:border-brand focus:ring-1 focus:ring-brand outline-none'
-              onChange={onChange}
-            >
-              <option value='5.0'>5.0 Scale</option>
-              <option value='4.0'>4.0 Scale</option>
-            </select>
-          </div>
-          <div className='space-y-2 md:col-span-2'>
-            <label className='block text-sm font-medium text-foreground'>
-              Default Contact Email
-            </label>
-            <input
-              type='email'
-              defaultValue='registry@university.edu.ng'
-              className='w-full h-10 rounded-md border border-border-subtle bg-transparent px-3 text-sm focus:border-brand focus:ring-1 focus:ring-brand outline-none'
-              onChange={onChange}
-            />
-            <p className='text-xs text-text-muted'>
-              This will be shown in the footer of the parent portal for queries.
-            </p>
-          </div>
-        </div>
-      </div>
-    </Card>
-  );
-}
-
 function TemplatesTab({ onChange }: { onChange: () => void }) {
-  const [subTab, setSubTab] = useState<"whatsapp" | "email" | "sms">(
-    "whatsapp",
-  );
+  const [subTab, setSubTab] = useState<"email" | "sms">("email");
   const [template, setTemplate] = useState(
     "Hello {{guardian_name}}, the {{semester}} results for {{student_name}} ({{matric_number}}) have been officially released.\n\nGPA: {{gpa}}\n\nView full details here: {{result_link}}",
   );
@@ -220,85 +134,66 @@ function TemplatesTab({ onChange }: { onChange: () => void }) {
   };
 
   return (
-    <Card className='rounded-xl shadow-sm overflow-hidden page-transition-enter'>
-      <div className='p-6 border-b border-border-subtle'>
-        <h2 className='text-lg font-serif text-foreground'>
+    <Card className='rounded-xl border-border bg-card overflow-hidden animate-in fade-in duration-500'>
+      <div className='p-6 border-b border-border bg-muted/20'>
+        <h2 className='text-sm font-bold text-foreground uppercase tracking-wider'>
           Notification Templates
         </h2>
-        <p className='text-sm text-text-muted mt-1'>
-          Customize the messages sent to parents. Use brackets for dynamic data.
+        <p className='text-xs text-muted-foreground mt-1'>
+          Configure the automated messages sent to parents and guardians.
         </p>
       </div>
 
-      <div className='flex border-b border-border-subtle bg-surface-subtle/30'>
-        <button
-          onClick={() => setSubTab("whatsapp")}
-          className={`flex-1 flex justify-center items-center gap-2 py-3 text-sm font-medium border-b-2 transition-colors ${subTab === "whatsapp" ? "border-brand text-foreground bg-background" : "border-transparent text-text-muted hover:text-foreground"}`}
-        >
-          <MessageCircle className='h-4 w-4' /> WhatsApp
-        </button>
-        <button
-          onClick={() => setSubTab("email")}
-          className={`flex-1 flex justify-center items-center gap-2 py-3 text-sm font-medium border-b-2 transition-colors ${subTab === "email" ? "border-brand text-foreground bg-background" : "border-transparent text-text-muted hover:text-foreground"}`}
-        >
-          <Mail className='h-4 w-4' /> Email
-        </button>
-        <button
-          onClick={() => setSubTab("sms")}
-          className={`flex-1 flex justify-center items-center gap-2 py-3 text-sm font-medium border-b-2 transition-colors ${subTab === "sms" ? "border-brand text-foreground bg-background" : "border-transparent text-text-muted hover:text-foreground"}`}
-        >
-          <Phone className='h-4 w-4' /> SMS
-        </button>
+      <div className='flex p-1 bg-muted/30 border-b border-border'>
+        {[
+          { id: "email", label: "Official Email", icon: Mail },
+          { id: "sms", label: "Standard SMS", icon: Phone },
+        ].map((t) => (
+          <button
+            key={t.id}
+            onClick={() => setSubTab(t.id as any)}
+            className={cn(
+              "flex-1 flex items-center justify-center gap-2 py-2.5 text-[11px] font-bold uppercase tracking-tight rounded-lg transition-all",
+              subTab === t.id
+                ? "bg-card text-foreground shadow-sm border border-border"
+                : "text-muted-foreground hover:text-foreground",
+            )}
+          >
+            <t.icon className='h-3.5 w-3.5' /> {t.label}
+          </button>
+        ))}
       </div>
 
       <div className='p-6 space-y-6'>
-        {subTab === "whatsapp" && (
-          <div className='rounded-lg border border-(--color-warning)/40 bg-status-warning/10 p-4 flex gap-3 text-status-warning'>
-            <AlertTriangle className='h-5 w-5 shrink-0 mt-0.5' />
-            <p className='text-sm'>
-              <span className='font-semibold block mb-1'>
-                Meta Approval Required
-              </span>
-              WhatsApp templates must be submitted to Meta for approval before
-              use. Changes here do not auto-update your Meta template â€” manual
-              re-submission in your provider dashboard is required to avoid
-              delivery failures.
-            </p>
-          </div>
-        )}
-
         <div className='grid grid-cols-1 xl:grid-cols-2 gap-8'>
           <div className='space-y-4'>
             <div className='flex items-center justify-between'>
-              <label className='block text-sm font-medium text-foreground'>
-                Message Body
+              <label className='text-[10px] font-bold uppercase tracking-widest text-muted-foreground'>
+                Message Content
               </label>
               <button
-                className='text-xs text-brand hover:underline'
-                onClick={() => {
-                  onChange();
-                }}
+                className='text-[10px] font-bold text-sidebar-primary hover:underline uppercase'
+                onClick={onChange}
               >
-                Reset to default
+                Reset
               </button>
             </div>
 
             <textarea
               value={template}
               onChange={handleTemplateChange}
-              className='w-full h-48 rounded-md border border-border-subtle bg-surface-subtle/30 p-3 text-sm font-mono focus:border-brand focus:ring-1 focus:ring-brand outline-none resize-none leading-relaxed'
+              className='w-full h-48 rounded-xl border border-border bg-muted/10 p-4 text-[13px] font-mono focus:ring-1 focus:ring-sidebar-primary outline-none resize-none leading-relaxed'
             />
 
-            <div className='space-y-2'>
-              <div className='text-xs font-semibold uppercase tracking-widest text-text-muted'>
-                Available Variables
+            <div className='space-y-3'>
+              <div className='text-[10px] font-bold uppercase tracking-widest text-muted-foreground'>
+                Insert Dynamic Variables
               </div>
-              <div className='flex flex-wrap gap-2'>
+              <div className='flex flex-wrap gap-1.5'>
                 {[
                   "{{guardian_name}}",
                   "{{student_name}}",
                   "{{matric_number}}",
-                  "{{session}}",
                   "{{semester}}",
                   "{{gpa}}",
                   "{{cgpa}}",
@@ -306,7 +201,7 @@ function TemplatesTab({ onChange }: { onChange: () => void }) {
                 ].map((v) => (
                   <button
                     key={v}
-                    className='bg-surface-subtle border border-border-subtle hover:border-brand text-text-muted text-xs font-mono px-2 py-1 rounded transition-colors'
+                    className='bg-muted/50 border border-border hover:border-sidebar-primary text-foreground text-[10px] font-bold px-2 py-1 rounded-md transition-all'
                     onClick={() => {
                       setTemplate((prev) => prev + " " + v);
                       onChange();
@@ -320,29 +215,43 @@ function TemplatesTab({ onChange }: { onChange: () => void }) {
           </div>
 
           <div className='space-y-4'>
-            <label className='block text-sm font-medium text-foreground'>
-              Preview
+            <label className='text-[10px] font-bold uppercase tracking-widest text-muted-foreground'>
+              Real-time Preview
             </label>
             <div
-              className={`rounded-xl border border-border-subtle p-4 text-sm leading-relaxed ${subTab === "whatsapp" ? "bg-[#e1f5c4]/30" : "bg-surface-subtle/20"}`}
+              className={cn(
+                "rounded-2xl border border-border p-5 text-[13px] leading-relaxed relative overflow-hidden bg-muted/5",
+              )}
             >
-              Hello{" "}
-              <span className='font-medium text-blue-600'>Mrs. Folake</span>,
-              the{" "}
-              <span className='font-medium text-blue-600'>First Semester</span>{" "}
-              results for{" "}
-              <span className='font-medium text-blue-600'>John Adeyemi</span> (
-              <span className='font-medium text-blue-600'>CSC/2021/001</span>)
-              have been officially released.
-              <br />
-              <br />
-              GPA: <span className='font-medium text-blue-600'>4.21</span>
-              <br />
-              <br />
-              View full details here:{" "}
-              <span className='text-blue-500 underline break-all'>
-                https://results.university.edu.ng/view?token=abc123xyz
-              </span>
+              <p className='relative z-10'>
+                Hello{" "}
+                <span className='font-bold text-sidebar-primary'>
+                  Mrs. Folake
+                </span>
+                , the{" "}
+                <span className='font-bold text-sidebar-primary'>
+                  First Semester
+                </span>{" "}
+                results for{" "}
+                <span className='font-bold text-sidebar-primary'>
+                  John Adeyemi
+                </span>{" "}
+                (
+                <span className='font-bold text-sidebar-primary'>
+                  CSC/2021/001
+                </span>
+                ) have been officially released.
+                <br />
+                <br />
+                GPA:{" "}
+                <span className='font-bold text-sidebar-primary'>4.21</span>
+                <br />
+                <br />
+                View full details here:{" "}
+                <span className='text-blue-500 underline break-all font-medium'>
+                  https://results.mountaintopuniversity.edu.ng/view?token=...
+                </span>
+              </p>
             </div>
           </div>
         </div>
@@ -355,87 +264,89 @@ function UsersTab() {
   const MOCK_USERS = [
     {
       id: 1,
-      name: "System Admin",
-      email: "admin@university.edu.ng",
+      name: "Registry Admin",
+      email: "admin@unitech.edu.ng",
       role: "Super Admin",
-      roleColor: "bg-[#B8860B]",
       status: "Active",
     },
-    {
-      id: 2,
-      name: "Prof. A. Okoye",
-      email: "senate@university.edu.ng",
-      role: "Senate Officer",
-      roleColor: "bg-teal-600",
-      status: "Active",
-    },
+    { id: 2, name: "Exams & Records", row: "Exams Officer", status: "Active" },
     {
       id: 3,
-      name: "Registrar Adeyemi",
-      email: "registry@university.edu.ng",
-      role: "Registrar",
-      roleColor: "bg-slate-600",
+      name: "Senate Secretary",
+      email: "senate@unitech.edu.ng",
+      role: "Reviewer",
       status: "Active",
     },
   ];
 
   return (
-    <Card className='rounded-xl shadow-sm overflow-hidden page-transition-enter'>
-      <div className='p-6 border-b border-border-subtle flex items-center justify-between'>
+    <Card className='rounded-xl border-border bg-card overflow-hidden animate-in fade-in duration-500'>
+      <div className='p-6 border-b border-border bg-muted/20 flex items-center justify-between'>
         <div>
-          <h2 className='text-lg font-serif text-foreground'>System Users</h2>
-          <p className='text-sm text-text-muted mt-1'>
-            Manage who has access to the admin dashboard.
+          <h2 className='text-sm font-bold text-foreground uppercase tracking-wider'>
+            Admin Access
+          </h2>
+          <p className='text-xs text-muted-foreground mt-1'>
+            Manage academic officers and their system permissions.
           </p>
         </div>
-        <Button className='inline-flex items-center gap-2 rounded-full'>
-          <Plus className='h-4 w-4' /> Add User
+        <Button
+          size='sm'
+          className='rounded-xl font-bold uppercase tracking-tight text-[10px] h-9'
+        >
+          <Plus className='h-3.5 w-3.5 mr-1.5' /> New Admin
         </Button>
       </div>
 
       <DataTable
-        className='border-0 shadow-none -mx-px'
+        className='border-0'
+        hideCount
         data={MOCK_USERS}
         columns={[
           {
-            header: "Name & Email",
+            header: "User Detail",
+            className: "px-6 py-4",
             cell: (row) => (
-              <>
-                <div className='font-medium text-foreground'>{row.name}</div>
-                <div className='text-sm text-text-muted'>{row.email}</div>
-              </>
+              <div className='flex flex-col'>
+                <span className='text-sm font-bold text-foreground'>
+                  {row.name}
+                </span>
+                <span className='text-[10px] font-medium text-muted-foreground'>
+                  {row.email || "No email assigned"}
+                </span>
+              </div>
             ),
-            className: "whitespace-nowrap px-6 py-4",
           },
           {
-            header: "Role",
+            header: "System Role",
+            className: "px-6 py-4",
             cell: (row) => (
-              <span
-                className={`inline-flex rounded-full ${row.roleColor} px-2 py-0.5 text-xs font-medium text-white`}
+              <Badge
+                variant='outline'
+                className='h-5 rounded-md px-1.5 text-[9px] font-bold uppercase tracking-tight'
               >
-                {row.role}
-              </span>
+                {row.role || "Officer"}
+              </Badge>
             ),
-            className: "whitespace-nowrap px-6 py-4",
           },
           {
             header: "Status",
+            className: "px-6 py-4",
             cell: (row) => (
-              <span className='inline-flex items-center gap-1.5 text-sm text-foreground'>
-                <div className='w-2 h-2 rounded-full bg-status-success'></div>{" "}
+              <div className='flex items-center gap-1.5 text-[10px] font-bold uppercase text-emerald-600'>
+                <div className='w-1.5 h-1.5 rounded-full bg-emerald-500'></div>{" "}
                 {row.status}
-              </span>
+              </div>
             ),
-            className: "whitespace-nowrap px-6 py-4",
           },
           {
             header: "",
+            className: "px-6 py-4 text-right",
             cell: () => (
-              <button className='text-sm text-text-muted hover:text-foreground'>
-                Edit
+              <button className='text-[10px] font-bold text-muted-foreground hover:text-foreground uppercase'>
+                Manage
               </button>
             ),
-            className: "whitespace-nowrap px-6 py-4 text-right w-[100px]",
           },
         ]}
       />
@@ -445,84 +356,53 @@ function UsersTab() {
 
 function DangerTab() {
   return (
-    <Card className='rounded-xl border border-status-danger/50 shadow-sm overflow-hidden page-transition-enter'>
-      <div className='p-6 border-b border-status-danger/20 bg-status-danger/5'>
-        <h2 className='text-lg font-serif text-status-danger flex items-center gap-2'>
-          <ShieldAlert className='h-5 w-5' /> Danger Zone
+    <Card className='rounded-xl border-destructive/20 bg-card overflow-hidden animate-in fade-in duration-500'>
+      <div className='p-6 border-b border-destructive/10 bg-destructive/5'>
+        <h2 className='text-sm font-bold text-destructive uppercase tracking-wider flex items-center gap-2'>
+          <ShieldAlert className='h-4 w-4' /> System Control
         </h2>
-        <p className='text-sm text-status-danger/80 mt-1'>
-          Destructive actions and system-wide resets.
+        <p className='text-xs text-destructive/70 mt-1'>
+          Permanent administrative actions and data management.
         </p>
       </div>
 
-      <div className='p-6 space-y-6'>
-        <div className='flex flex-col sm:flex-row sm:items-center justify-between gap-4 py-4 border-b border-border-subtle'>
-          <div>
-            <div className='font-medium text-foreground'>Export completely</div>
-            <div className='text-sm text-text-muted mt-1'>
-              Download a unified CSV of all uploaded results, approvals, and
-              logs across the system.
-            </div>
+      <div className='p-6 space-y-2'>
+        <div className='flex flex-col sm:flex-row sm:items-center justify-between gap-4 py-4 border-b border-border'>
+          <div className='space-y-1'>
+            <p className='text-sm font-bold text-foreground'>
+              Complete Data Backup
+            </p>
+            <p className='text-xs text-muted-foreground'>
+              Export all student records, results, and system logs to a secure
+              archive.
+            </p>
           </div>
-          <ExportButton
-            endpoint='/api/settings/export-all'
-            filename={`full-export-${new Date().toISOString().split("T")[0]}.zip`}
-            label='Export All Data'
-          />
+          <Button
+            variant='outline'
+            className='rounded-xl h-9 text-[10px] font-bold uppercase tracking-tight'
+          >
+            Export Archive
+          </Button>
         </div>
 
         <div className='flex flex-col sm:flex-row sm:items-center justify-between gap-4 py-4'>
-          <div>
-            <div className='font-medium text-status-danger'>
-              Reset notification logs
-            </div>
-            <div className='text-sm text-text-muted mt-1'>
-              Permanently delete all delivery logs. Student results and contacts
-              are not affected.
-            </div>
+          <div className='space-y-1'>
+            <p className='text-sm font-bold text-destructive'>
+              Reset System Logs
+            </p>
+            <p className='text-xs text-muted-foreground'>
+              Permanently clear all notification delivery logs to optimize
+              storage.
+            </p>
           </div>
           <Button
             variant='destructive'
-            className='shrink-0 rounded-full px-4 py-2 text-sm font-medium flex items-center gap-2'
+            className='rounded-xl h-9 text-[10px] font-bold uppercase tracking-tight'
           >
-            <Trash2 className='h-4 w-4' /> Reset Logs
+            <Trash2 className='h-3.5 w-3.5 mr-1.5' /> Reset Logs
           </Button>
         </div>
       </div>
     </Card>
-  );
-}
-
-function SidebarTab({ id, label, active, onClick, isDanger }: any) {
-  return (
-    <button
-      onClick={onClick}
-      className={`flex items-center px-4 py-3 text-sm font-medium text-left border-l-4 transition-colors ${
-        active
-          ? isDanger
-            ? "border-status-danger bg-status-danger/5 text-status-danger"
-            : "border-brand bg-surface-subtle/50 text-brand"
-          : "border-transparent text-text-muted hover:bg-surface-subtle/30 hover:text-foreground"
-      }`}
-    >
-      {label}
-    </button>
-  );
-}
-
-function MobileTab({ id, label, active, onClick, isDanger }: any) {
-  return (
-    <button
-      onClick={onClick}
-      className={`px-4 py-3 text-sm font-medium whitespace-nowrap border-b-2 transition-colors ${
-        active
-          ? isDanger
-            ? "border-status-danger text-status-danger"
-            : "border-brand text-brand"
-          : "border-transparent text-text-muted hover:text-foreground"
-      }`}
-    >
-      {label}
-    </button>
   );
 }

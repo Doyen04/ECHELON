@@ -77,7 +77,7 @@ export function AdminSidebar({ email, name, role }: AdminSidebarProps) {
 
     return (
         <aside
-            className={`fixed inset-y-0 left-0 z-50 overflow-visible border-r border-white/10 bg-brand text-white transition-all duration-300 ease-out 
+            className={`fixed inset-y-0 left-0 z-50 overflow-visible border-r border-sidebar-border bg-sidebar text-sidebar-foreground transition-all duration-300 ease-out 
                 ${isMobileOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"}
                 ${isCollapsed ? "md:w-16" : "md:w-60"}
                 w-60
@@ -88,7 +88,7 @@ export function AdminSidebar({ email, name, role }: AdminSidebarProps) {
                 <button
                     type="button"
                     onClick={toggleSidebar}
-                    className="absolute left-full top-16 hidden h-6 w-6 items-center justify-center rounded-none bg-brand text-white opacity-100 shadow-lg transition-colors duration-150 hover:bg-brand md:flex z-50"
+                    className="absolute left-full top-16 hidden h-6 w-6 items-center justify-center rounded-none bg-sidebar text-sidebar-foreground opacity-100 shadow-lg transition-colors duration-150 hover:bg-sidebar md:flex z-50"
                     aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
                     title={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
                 >
@@ -105,7 +105,7 @@ export function AdminSidebar({ email, name, role }: AdminSidebarProps) {
                         className={`min-w-0 transition-all duration-200 ${isCollapsed ? "h-0 w-0 opacity-0 pointer-events-none overflow-hidden" : "w-auto opacity-100"
                             }`}
                     >
-                        <h1 className="truncate font-serif text-xl tracking-tight text-white">Echelon Registry</h1>
+                        <h1 className="truncate font-sans text-lg font-bold tracking-tight text-white">Echelon Registry</h1>
                     </div>
 
                     {/* Close Mobile Menu Button */}
@@ -145,13 +145,13 @@ export function AdminSidebar({ email, name, role }: AdminSidebarProps) {
                                                     key={item.href}
                                                     href={item.href}
                                                     onClick={closeMobileMenu}
-                                                    className={`flex h-11 items-center rounded-xl border border-transparent px-3 text-sm transition-all duration-200 relative group/link ${isCollapsed ? "justify-center" : "gap-3"
+                                                    className={`flex h-10 items-center rounded-lg px-3 text-sm transition-all duration-200 relative group/link ${isCollapsed ? "justify-center" : "gap-3"
                                                         } ${active
-                                                            ? "border-white/10 bg-white/12 text-white shadow-sm"
-                                                            : "text-white/60 hover:bg-white/5 hover:text-white"
+                                                            ? "bg-sidebar-accent text-sidebar-primary shadow-xs"
+                                                            : "text-sidebar-foreground/60 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
                                                         }`}
                                                 >
-                                                    <Icon className={`h-5 w-5 shrink-0 transition-transform group-hover/link:scale-110 ${active ? "text-white" : "text-white/70"}`} />
+                                                    <Icon className={`h-5 w-5 shrink-0 transition-transform group-hover/link:scale-105 ${active ? "text-sidebar-primary" : "text-sidebar-foreground/40"}`} />
                                                     <span
                                                         className={`min-w-0 truncate font-medium transition-all duration-300 ${isCollapsed ? "w-0 opacity-0 pointer-events-none" : "w-auto opacity-100"
                                                             }`}
@@ -159,7 +159,7 @@ export function AdminSidebar({ email, name, role }: AdminSidebarProps) {
                                                         {item.label}
                                                     </span>
                                                     {!isCollapsed && active && (
-                                                        <div className="ml-auto h-1.5 w-1.5 rounded-full bg-white shadow-[0_0_8px_rgba(255,255,255,0.8)]" />
+                                                        <div className="ml-auto h-1 w-1 rounded-full bg-sidebar-primary shadow-[0_0_8px_rgba(59,130,246,0.5)]" />
                                                     )}
                                                 </Link>
                                             );
@@ -177,31 +177,31 @@ export function AdminSidebar({ email, name, role }: AdminSidebarProps) {
                                 }`}
                         >
                             <div className="relative flex shrink-0 items-center justify-center">
-                                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/15 text-[12px] font-bold text-white shadow-inner">
-                                    {userInitials}
-                                </div>
-                                <div className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-brand bg-emerald-500 shadow-sm" />
+                                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-sidebar-accent text-[12px] font-bold text-sidebar-foreground shadow-inner">
+                                     {userInitials}
+                                 </div>
+                                 <div className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-sidebar bg-emerald-500 shadow-sm" />
                             </div>
-
+ 
                             <div
                                 className={`transition-all duration-300 ${isCollapsed ? "h-0 w-0 flex-none opacity-0 pointer-events-none overflow-hidden" : "min-w-0 flex-1 opacity-100"
                                     }`}
                             >
                                 <p className="truncate text-sm font-semibold tracking-tight text-white leading-tight">{name ?? "User"}</p>
                                 <div className="flex items-center gap-1.5 mt-1">
-                                    <span className="inline-flex rounded-full bg-amber-500/90 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-white shadow-sm">
+                                    <span className="inline-flex rounded-full bg-sidebar-primary/20 border border-sidebar-primary/30 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-sidebar-primary shadow-sm">
                                         {roleLabel}
                                     </span>
                                 </div>
                             </div>
-
+ 
                             <SignOutButton
                                 compact
-                                className={`flex items-center justify-center rounded-full text-white/75 transition-all duration-200 hover:bg-white/10 hover:text-white active:scale-95 ${isCollapsed ? "h-9 w-9" : "ml-auto h-9 w-9"
+                                className={`flex items-center justify-center rounded-full text-sidebar-foreground/50 transition-all duration-200 hover:bg-sidebar-accent hover:text-white active:scale-95 ${isCollapsed ? "h-9 w-9" : "ml-auto h-9 w-9"
                                     }`}
                                 title="Log out"
                             >
-                                <LogOut className="h-4.5 w-4.5" />
+                                <LogOut className="h-4 w-4" />
                             </SignOutButton>
                         </div>
                     </div>

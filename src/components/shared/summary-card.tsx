@@ -19,24 +19,24 @@ export function SummaryCard({
   return (
     <article
       className={cn(
-        "flex flex-col justify-between rounded-2xl border border-(--border-subtle) bg-(--surface-soft) p-5 shadow-sm",
+        "flex flex-col justify-between rounded-xl border border-border bg-card p-5 transition-all",
         className
       )}
     >
-      <div className="mb-2 text-xs font-semibold uppercase tracking-widest text-text-muted">
+      <div className="mb-2 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
         {title}
       </div>
       <div className="flex items-baseline gap-2">
         <span
           className={cn(
-            "text-3xl font-serif text-foreground",
+            "text-2xl font-bold text-foreground tracking-tight",
             color
           )}
         >
           {value}
         </span>
         {subvalue && (
-          <span className="text-sm font-medium text-text-muted">
+          <span className="text-xs font-semibold text-muted-foreground">
             {subvalue}
           </span>
         )}
