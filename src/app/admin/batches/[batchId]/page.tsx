@@ -7,8 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/page-header";
 import { StatusBadge } from "@/components/ui/badges";
-import { DataTable } from "@/components/ui/data-table";
-import type { DataTableColumn } from "@/components/ui/data-table";
+import { BatchDetailClient, type StudentResultRow } from "./batch-detail-client";
 import { ApproveDispatchButton } from "@/components/admin/approve-dispatch-button";
 import { ExportButton } from "@/components/admin/export-button";
 import { prisma } from "@/lib/db";
@@ -25,15 +24,7 @@ export const metadata: Metadata = {
     description: "Live result batch overview and student result records.",
 };
 
-type StudentResultRow = {
-    id: string;
-    fullName: string;
-    matricNumber: string;
-    status: string;
-    gpa: string;
-    token: string | null;
-    courseCount: number;
-};
+
 
 export default async function BatchDetailPage({ params }: BatchPageProps) {
     const db = prisma as any;
@@ -87,43 +78,7 @@ export default async function BatchDetailPage({ params }: BatchPageProps) {
         courseCount: Array.isArray(result.courses) ? result.courses.length : 0,
     }));
 
-    const resultColumns: DataTableColumn<StudentResultRow>[] = [
-        {
-            header: "Student",
-            cell: (row) => (
-                <div>
-                    <div className="font-medium text-foreground">{row.fullName}</div>
-                    <div className="mt-0.5 text-xs text-text-muted">{row.matricNumber}</div>
-                </div>
-            ),
-        },
-        {
-            header: "Status",
-            cell: (row) => <StatusBadge status={toBadgeStatus(row.status)} />,
-        },
-        {
-            header: "GPA",
-            cell: (row) => <span className="text-foreground">{row.gpa}</span>,
-            hideOnMobile: true,
-        },
-        {
-            header: "Token",
-            cell: (row) =>
-                row.token ? (
-                    <Link href={`/results/view?token=${row.token}`} target="_blank" className="text-brand hover:underline">
-                        View portal link
-                    </Link>
-                ) : (
-                    <span className="text-text-muted">Not generated</span>
-                ),
-            hideOnMobile: true,
-        },
-        {
-            header: "Courses",
-            cell: (row) => <span>{row.courseCount} courses</span>,
-            hideOnMobile: true,
-        },
-    ];
+
 
     return (
         <div className="dashboard-root flex h-full w-full flex-col overflow-y-auto bg-background">
@@ -228,13 +183,7 @@ export default async function BatchDetailPage({ params }: BatchPageProps) {
                             Stored result rows for this batch, including the latest portal token when available.
                         </p>
                     </div>
-                    <DataTable
-                        columns={resultColumns}
-                        data={studentResults}
-                        rowKey={(row) => row.id}
-                        emptyMessage="No student results are stored for this batch yet."
-                        className="shadow-sm"
-                    />
+                    <BatchDetailClient studentResults={studentResults} />
                 </div>
             </main>
         </div>

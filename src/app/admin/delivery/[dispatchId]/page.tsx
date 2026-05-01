@@ -8,9 +8,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/page-header";
-import { StatusBadge, ChannelBadge } from "@/components/ui/badges";
-import { DataTable } from "@/components/ui/data-table";
-import type { DataTableColumn } from "@/components/ui/data-table";
+import { StatusBadge } from "@/components/ui/badges";
+import { DeliveryLogClient, type NotificationLogRow } from "./delivery-log-client";
 import { prisma } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
@@ -32,16 +31,7 @@ function formatDateTime(value: Date | string | null | undefined) {
     return date.toLocaleString([], { dateStyle: "medium", timeStyle: "short" });
 }
 
-type NotificationLogRow = {
-    id: string;
-    studentName: string;
-    matricNumber: string;
-    guardianName: string;
-    channel: string;
-    status: string;
-    attemptedAt: Date | string | null;
-    detail: string;
-};
+
 
 export default async function DeliveryLogPage({ params }: DeliveryPageProps) {
     const db = prisma as any;
@@ -101,40 +91,7 @@ export default async function DeliveryLogPage({ params }: DeliveryPageProps) {
         };
     });
 
-    const logColumns: DataTableColumn<NotificationLogRow>[] = [
-        {
-            header: "Student",
-            cell: (row) => (
-                <div>
-                    <div className="font-medium text-foreground">{row.studentName}</div>
-                    <div className="mt-0.5 text-xs text-text-muted">{row.matricNumber}</div>
-                </div>
-            ),
-        },
-        {
-            header: "Guardian",
-            cell: (row) => <span className="text-foreground">{row.guardianName}</span>,
-        },
-        {
-            header: "Channel",
-            cell: (row) => <ChannelBadge channel={row.channel as any} />,
-            hideOnMobile: true,
-        },
-        {
-            header: "Status",
-            cell: (row) => <StatusBadge status={row.status as any} />,
-        },
-        {
-            header: "Attempted At",
-            cell: (row) => <span className="text-muted-foreground">{formatDateTime(row.attemptedAt)}</span>,
-            hideOnMobile: true,
-        },
-        {
-            header: "Details",
-            cell: (row) => <span className="text-muted-foreground">{row.detail}</span>,
-            hideOnMobile: true,
-        },
-    ];
+
 
     return (
         <div className="flex h-full w-full flex-col overflow-y-auto bg-background">
@@ -236,13 +193,7 @@ export default async function DeliveryLogPage({ params }: DeliveryPageProps) {
                             Each row reflects one guardian notification attempt for this dispatch.
                         </p>
                     </div>
-                    <DataTable
-                        columns={logColumns}
-                        data={logRows}
-                        rowKey={(row) => row.id}
-                        emptyMessage="No notification logs are available for this dispatch yet."
-                        className="shadow-sm"
-                    />
+                    <DeliveryLogClient logRows={logRows} />
                 </div>
             </main>
         </div>

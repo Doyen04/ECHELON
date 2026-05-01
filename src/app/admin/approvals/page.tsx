@@ -7,8 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/page-header";
 import { StatusBadge } from "@/components/ui/badges";
-import { DataTable } from "@/components/ui/data-table";
-import type { DataTableColumn } from "@/components/ui/data-table";
+import { ApprovalsClient, type ReviewedBatchRow } from "./approvals-client";
 import { ApproveDispatchButton } from "@/components/admin/approve-dispatch-button";
 import { prisma } from "@/lib/db";
 import { relativeTimeFromNow, semesterLabel, toBadgeStatus } from "@/lib/admin-format";
@@ -18,12 +17,7 @@ export const metadata: Metadata = {
     description: "Result batch review queue and approval history.",
 };
 
-type ReviewedBatchRow = {
-    id: string;
-    department: string;
-    session: string;
-    status: string;
-};
+
 
 export default async function ApprovalsPage() {
     const db = prisma as any;
@@ -55,21 +49,7 @@ export default async function ApprovalsPage() {
         status: batch.status,
     }));
 
-    const reviewedColumns: DataTableColumn<ReviewedBatchRow>[] = [
-        {
-            header: "Batch ID",
-            cell: (row) => <span className="font-mono text-text-muted">{row.id}</span>,
-        },
-        {
-            header: "Session & Department",
-            cell: (row) => <span className="font-medium text-foreground">{row.department} — {row.session}</span>,
-        },
-        {
-            header: "Status",
-            cell: (row) => <StatusBadge status={toBadgeStatus(row.status)} />,
-            align: "right",
-        },
-    ];
+
 
     return (
         <div className="flex h-full w-full flex-col overflow-y-auto bg-background">
@@ -165,13 +145,7 @@ export default async function ApprovalsPage() {
                         </summary>
 
                         <div className="border-t border-border-subtle">
-                            <DataTable
-                                columns={reviewedColumns}
-                                data={reviewedRows}
-                                rowKey={(row) => row.id}
-                                emptyMessage="No reviewed batches yet."
-                                className="border-0 rounded-none shadow-none"
-                            />
+                            <ApprovalsClient reviewedRows={reviewedRows} />
                             <div className="border-t border-border-subtle bg-surface-subtle/5 px-5 py-4 text-center text-sm font-medium text-brand transition-colors hover:text-brand-hover hover:underline cursor-pointer">
                                 View complete review history
                             </div>
