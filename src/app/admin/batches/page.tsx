@@ -17,6 +17,7 @@ import {
 } from "@/lib/admin-format";
 import { useApi } from "@/lib/api";
 import { LoadingState } from "@/components/ui/loading-state";
+import { ApiGate } from "@/components/ui/api-gate";
 
 import { columns } from "./columns";
 import { DataTable } from "@/components/ui/data-table";
@@ -28,62 +29,66 @@ export default function BatchesPage() {
     error,
   } = useApi<any[]>("/api/batches", { immediate: true });
 
-  if (isLoading) {
-    return <LoadingState title='Loading batches...' />;
-  }
-
-  if (error) {
-    return <div className='p-8 text-center text-status-danger'>{error}</div>;
-  }
-
-  const sessions: string[] = Array.from(
-    new Set((batches || []).map((b: any) => b.session as string)),
-  ).filter(Boolean) as string[];
-  const departments: string[] = Array.from(
-    new Set((batches || []).map((b: any) => b.department as string)),
-  ).filter(Boolean) as string[];
-
   return (
-    <div className='flex h-full w-full flex-col overflow-x-hidden overflow-y-auto bg-background'>
-      <PageHeader
-        title='Result Batches'
-        action={
-          <div className='flex items-center gap-3'>
-            <ExportButton
-              endpoint='/api/batches/export'
-              filename={`batches-${new Date().toISOString().split("T")[0]}.csv`}
-            />
-            <Button
-              asChild
-              className='rounded-full page-transition-enter bg-brand hover:bg-brand-hover'
-            >
-              <Link href='/admin/batches/upload'>
-                <Upload className='h-4 w-4' />
-                Upload Batch
-              </Link>
-            </Button>
-          </div>
-        }
-      />
+    <ApiGate
+      data={batches}
+      isLoading={isLoading}
+      error={error}
+      loadingTitle="Loading batches..."
+      errorMessage="Failed to load batches"
+    >
+      {(batches) => {
+        const sessions: string[] = Array.from(
+          new Set((batches || []).map((b: any) => b.session as string)),
+        ).filter(Boolean) as string[];
+        const departments: string[] = Array.from(
+          new Set((batches || []).map((b: any) => b.department as string)),
+        ).filter(Boolean) as string[];
 
-      <main className='mx-auto w-full max-w-7xl min-w-0 px-4 py-6 sm:px-6 lg:px-8 lg:py-8'>
-        <DataTable
-          data={batches || []}
-          columns={columns}
-          searchKey='department'
-          searchPlaceholder='Search by department...'
-          filters={
-            <div className='flex flex-wrap items-center gap-3'>
-              <FilterSelect placeholder='Session: All' options={sessions} />
-              <FilterSelect
-                placeholder='Department: All'
-                options={departments}
+        return (
+          <div className='flex h-full w-full flex-col overflow-x-hidden overflow-y-auto bg-background'>
+            <PageHeader
+              title='Result Batches'
+              action={
+                <div className='flex items-center gap-3'>
+                  <ExportButton
+                    endpoint='/api/batches/export'
+                    filename={`batches-${new Date().toISOString().split("T")[0]}.csv`}
+                  />
+                  <Button
+                    asChild
+                    className='rounded-full page-transition-enter bg-brand hover:bg-brand-hover'
+                  >
+                    <Link href='/admin/batches/upload'>
+                      <Upload className='h-4 w-4' />
+                      Upload Batch
+                    </Link>
+                  </Button>
+                </div>
+              }
+            />
+
+            <main className='mx-auto w-full max-w-7xl min-w-0 px-4 py-6 sm:px-6 lg:px-8 lg:py-8'>
+              <DataTable
+                data={batches || []}
+                columns={columns}
+                searchKey='department'
+                searchPlaceholder='Search by department...'
+                filters={
+                  <div className='flex flex-wrap items-center gap-3'>
+                    <FilterSelect placeholder='Session: All' options={sessions} />
+                    <FilterSelect
+                      placeholder='Department: All'
+                      options={departments}
+                    />
+                  </div>
+                }
               />
-            </div>
-          }
-        />
-      </main>
-    </div>
+            </main>
+          </div>
+        );
+      }}
+    </ApiGate>
   );
 }
 

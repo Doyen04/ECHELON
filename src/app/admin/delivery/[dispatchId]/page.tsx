@@ -14,6 +14,11 @@ import { Card } from "@/components/ui/card";
 import { DataTable } from "@/components/ui/data-table";
 import { PageHeader } from "@/components/ui/page-header";
 import { StatusBadge, ChannelBadge } from "@/components/ui/badges";
+import { SummaryCard } from "@/components/ui/summary-card";
+import { Breadcrumbs } from "@/components/ui/breadcrumbs";
+import {
+  formatDateTime,
+} from "@/lib/admin-format";
 
 type DeliveryPageProps = {
   params: Promise<{
@@ -21,17 +26,7 @@ type DeliveryPageProps = {
   }>;
 };
 
-function formatDateTime(value: Date | string | null | undefined) {
-  if (!value) {
-    return "N/A";
-  }
 
-  const date = value instanceof Date ? value : new Date(value);
-  return date.toLocaleString([], {
-    dateStyle: "medium",
-    timeStyle: "short",
-  });
-}
 
 export default function DeliveryLogPage({ params }: DeliveryPageProps) {
   const { dispatchId } = use(params);
@@ -76,16 +71,12 @@ export default function DeliveryLogPage({ params }: DeliveryPageProps) {
       <PageHeader
         title='Delivery Log'
         breadcrumbs={
-          <div className='flex items-center gap-1'>
-            <Link
-              href='/admin/delivery'
-              className='hover:text-foreground transition-colors'
-            >
-              Delivery
-            </Link>
-            <span>/</span>
-            <span className='text-foreground'>{dispatch.id}</span>
-          </div>
+          <Breadcrumbs
+            items={[
+              { label: "Delivery", href: "/admin/delivery" },
+              { label: dispatch.id },
+            ]}
+          />
         }
         action={
           <ExportButton
@@ -309,24 +300,4 @@ export default function DeliveryLogPage({ params }: DeliveryPageProps) {
   );
 }
 
-function SummaryCard({ title, value, subvalue, color }: any) {
-  return (
-    <div className='rounded-2xl border border-(--border-subtle) bg-(--surface-soft) p-5 shadow-sm flex flex-col justify-between'>
-      <div className='text-xs font-semibold uppercase tracking-widest text-text-muted mb-2'>
-        {title}
-      </div>
-      <div className='flex items-baseline gap-2'>
-        <span
-          className={`text-3xl font-serif ${color ? color : "text-foreground"}`}
-        >
-          {value}
-        </span>
-        {subvalue && (
-          <span className='text-sm font-medium text-text-muted'>
-            {subvalue}
-          </span>
-        )}
-      </div>
-    </div>
-  );
-}
+

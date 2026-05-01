@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/page-header";
 import { StatusBadge } from "@/components/ui/badges";
+import { SummaryCard } from "@/components/ui/summary-card";
 import {
   formatDateTime,
   relativeTimeFromNow,
@@ -227,23 +228,4 @@ export default function BatchDispatchPage({ params }: BatchDispatchPageProps) {
   );
 }
 
-function SummaryCard({
-  title,
-  value,
-  color,
-}: {
-  title: string;
-  value: string;
-  color?: string;
-}) {
-  return (
-    <article className='flex flex-col justify-between rounded-2xl border border-(--border-subtle) bg-(--surface-soft) p-5 shadow-sm'>
-      <div className='mb-2 text-xs font-semibold uppercase tracking-widest text-text-muted'>
-        {title}
-      </div>
-      <div className={`text-3xl font-serif text-foreground ${color ?? ""}`}>
-        {value}
-      </div>
-    </article>
-  );
-}
+
