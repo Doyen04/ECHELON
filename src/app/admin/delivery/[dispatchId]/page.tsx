@@ -7,6 +7,7 @@ import { RetryFailedSendsButton } from "@/components/admin/retry-failed-sends-bu
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { DataTable } from "@/components/ui/data-table";
 import { PageHeader } from "@/components/ui/page-header";
 import { StatusBadge, ChannelBadge } from "@/components/ui/badges";
 import { prisma } from "@/lib/db";
@@ -123,7 +124,7 @@ export default async function DeliveryLogPage({ params }: DeliveryPageProps) {
           </div>
         }
         action={
-          <ExportButton 
+          <ExportButton
             endpoint={`/api/delivery/${dispatch.id}/export`}
             filename={`delivery-${dispatch.id}.csv`}
           />
@@ -257,77 +258,81 @@ export default async function DeliveryLogPage({ params }: DeliveryPageProps) {
 
           {notificationLogs.length > 0 ? (
             <div className='overflow-x-auto'>
-              <table className='min-w-full divide-y divide-border-subtle'>
-                <thead className='bg-surface-subtle/40'>
-                  <tr>
-                    <th className='px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-text-muted'>
-                      Student
-                    </th>
-                    <th className='px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-text-muted'>
-                      Guardian
-                    </th>
-                    <th className='px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-text-muted'>
-                      Channel
-                    </th>
-                    <th className='px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-text-muted'>
-                      Status
-                    </th>
-                    <th className='px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-text-muted'>
-                      Attempted At
-                    </th>
-                    <th className='px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-text-muted'>
-                      Details
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className='divide-y divide-border-subtle bg-surface-main'>
-                  {notificationLogs.map((log: any) => {
-                    const student = studentById.get(log.studentId) as
-                      | { fullName?: string; matricNumber?: string }
-                      | undefined;
-                    const guardian = (
-                      log.guardianId ? guardianById.get(log.guardianId) : null
-                    ) as { name?: string } | null;
-
-                    return (
-                      <tr
-                        key={log.id}
-                        className='hover:bg-surface-subtle/30 transition-colors'
-                      >
-                        <td className='px-6 py-4 text-sm text-foreground'>
+              <DataTable
+                data={notificationLogs}
+                className='border-0 shadow-none -mx-px'
+                columns={[
+                  {
+                    header: "Student",
+                    accessorKey: "student",
+                    className: "px-6 py-4 text-sm text-foreground",
+                    cell: (row: any) => {
+                      const student = studentById.get(row.studentId) as
+                        | { fullName?: string; matricNumber?: string }
+                        | undefined;
+                      return (
+                        <>
                           <div className='font-medium'>
                             {student?.fullName ?? "Unknown student"}
                           </div>
                           <div className='mt-1 text-xs text-(--text-muted)'>
-                            {student?.matricNumber ?? log.studentId}
+                            {student?.matricNumber ?? row.studentId}
                           </div>
-                        </td>
-                        <td className='px-6 py-4 text-sm text-foreground'>
-                          {guardian?.name ?? "Unknown guardian"}
-                        </td>
-                        <td className='px-6 py-4'>
-                          <ChannelBadge
-                            channel={String(log.channel).toLowerCase() as any}
-                          />
-                        </td>
-                        <td className='px-6 py-4'>
-                          <StatusBadge
-                            status={String(log.status).toLowerCase() as any}
-                          />
-                        </td>
-                        <td className='px-6 py-4 text-sm text-(--text-secondary)'>
-                          {formatDateTime(log.attemptedAt)}
-                        </td>
-                        <td className='px-6 py-4 text-sm text-(--text-secondary)'>
-                          {log.failureReason ??
-                            log.providerMessageId ??
-                            "Delivered successfully"}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
+                        </>
+                      );
+                    },
+                  },
+                  {
+                    header: "Guardian",
+                    accessorKey: "guardian",
+                    className: "px-6 py-4 text-sm text-foreground",
+                    cell: (row: any) => {
+                      const guardian = (
+                        row.guardianId ? guardianById.get(row.guardianId) : null
+                      ) as { name?: string } | null;
+                      return <>{guardian?.name ?? "Unknown guardian"}</>;
+                    },
+                  },
+                  {
+                    header: "Channel",
+                    accessorKey: "channel",
+                    className: "px-6 py-4",
+                    cell: (row: any) => (
+                      <ChannelBadge
+                        channel={String(row.channel).toLowerCase() as any}
+                      />
+                    ),
+                  },
+                  {
+                    header: "Status",
+                    accessorKey: "status",
+                    className: "px-6 py-4",
+                    cell: (row: any) => (
+                      <StatusBadge
+                        status={String(row.status).toLowerCase() as any}
+                      />
+                    ),
+                  },
+                  {
+                    header: "Attempted At",
+                    accessorKey: "attemptedAt",
+                    className: "px-6 py-4 text-sm text-(--text-secondary)",
+                    cell: (row: any) => <>{formatDateTime(row.attemptedAt)}</>,
+                  },
+                  {
+                    header: "Details",
+                    accessorKey: "details",
+                    className: "px-6 py-4 text-sm text-(--text-secondary)",
+                    cell: (row: any) => (
+                      <>
+                        {row.failureReason ??
+                          row.providerMessageId ??
+                          "Delivered successfully"}
+                      </>
+                    ),
+                  },
+                ]}
+              />
             </div>
           ) : (
             <div className='px-6 py-10 text-sm text-(--text-secondary)'>

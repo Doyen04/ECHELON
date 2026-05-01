@@ -7,6 +7,7 @@ import { PageHeader } from "@/components/ui/page-header";
 import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/dashboard";
 import { Input } from "@/components/ui/input";
+import { DataTable } from "@/components/ui/data-table";
 import { formatDateTime, humanizeEnum } from "@/lib/admin-format";
 import { ExportButton } from "@/components/admin/export-button";
 
@@ -151,69 +152,66 @@ export default function AuditLogPage() {
               />
             </div>
           ) : (
-            <table className='min-w-full divide-y divide-border-subtle'>
-              <thead className='bg-surface-subtle/40'>
-                <tr>
-                  <th className='px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-text-muted'>
-                    Timestamp
-                  </th>
-                  <th className='px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-text-muted'>
-                    Actor
-                  </th>
-                  <th className='px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-text-muted'>
-                    Action
-                  </th>
-                  <th className='px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-text-muted'>
-                    Entity
-                  </th>
-                  <th className='px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-text-muted'>
-                    IP Address
-                  </th>
-                  <th className='px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-text-muted'>
-                    Metadata
-                  </th>
-                </tr>
-              </thead>
-              <tbody className='divide-y divide-border-subtle bg-surface-main'>
-                {logs.map((log, index) => (
-                  <tr
-                    key={log.id}
-                    className='table-row-enter hover:bg-surface-subtle/40 transition-colors'
-                    style={{ animationDelay: `${index * 20}ms` }}
-                  >
-                    <td className='px-5 py-4 whitespace-nowrap text-sm text-foreground'>
-                      {formatDateTime(log.createdAt)}
-                    </td>
-                    <td className='px-5 py-4 whitespace-nowrap'>
-                      <div className='flex items-center gap-2'>
-                        <span className='text-sm font-medium text-foreground'>
-                          {log.actorName || "System"}
-                        </span>
-                        <span className='inline-flex rounded-full bg-surface-subtle px-2 py-0.5 text-[10px] font-semibold uppercase text-text-muted'>
-                          {humanizeEnum(log.action.split(".")[0] ?? "system")}
-                        </span>
-                      </div>
-                    </td>
-                    <td className='px-5 py-4 whitespace-nowrap text-sm text-foreground'>
-                      {log.action}
-                    </td>
-                    <td className='max-w-md px-5 py-4 text-sm text-foreground'>
-                      <div className='wrap-break-word whitespace-normal'>
-                        {log.entityType} {log.entityId}
-                      </div>
-                    </td>
-                    <td className='px-5 py-4 whitespace-nowrap text-sm font-mono text-text-muted'>
-                      {log.ipAddress ?? "N/A"}
-                    </td>
-                    <td className='px-5 py-4 text-sm text-text-muted'>
-                      <pre className='max-w-xl whitespace-pre-wrap wrap-break-word font-mono text-[11px] leading-5'>
-                        {JSON.stringify(log.metadata ?? {}, null, 2)}
-                      </pre>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+            <DataTable
+              data={logs}
+              pageSize={20}
+              searchKey='entityId'
+              searchPlaceholder='Filter entities...'
+              columns={[
+                {
+                  header: "Timestamp",
+                  cell: (row) => formatDateTime(row.createdAt),
+                  className:
+                    "whitespace-nowrap px-5 py-4 text-sm text-foreground",
+                },
+                {
+                  header: "Actor",
+                  cell: (row) => (
+                    <div className='flex items-center gap-2'>
+                      <span className='text-sm font-medium text-foreground'>
+                        {row.actorName || "System"}
+                      </span>
+                      <span className='inline-flex rounded-full bg-surface-subtle px-2 py-0.5 text-[10px] font-semibold uppercase text-text-muted'>
+                        {humanizeEnum(row.action.split(".")[0] ?? "system")}
+                      </span>
+                    </div>
+                  ),
+                  className: "whitespace-nowrap px-5 py-4",
+                },
+                {
+                  header: "Action",
+                  accessorKey: "action",
+                  className:
+                    "whitespace-nowrap px-5 py-4 text-sm text-foreground",
+                },
+                {
+                  header: "Entity",
+                  cell: (row) => (
+                    <div className='wrap-break-word whitespace-normal'>
+                      {row.entityType} {row.entityId}
+                    </div>
+                  ),
+                  className: "max-w-md px-5 py-4 text-sm text-foreground",
+                },
+                {
+                  header: "IP Address",
+                  cell: (row) => (
+                    <span className='font-mono'>{row.ipAddress ?? "N/A"}</span>
+                  ),
+                  className:
+                    "whitespace-nowrap px-5 py-4 text-sm text-text-muted",
+                },
+                {
+                  header: "Metadata",
+                  cell: (row) => (
+                    <pre className='max-w-xl whitespace-pre-wrap wrap-break-word font-mono text-[11px] leading-5 text-text-muted'>
+                      {JSON.stringify(row.metadata ?? {}, null, 2)}
+                    </pre>
+                  ),
+                  className: "px-5 py-4 text-sm",
+                },
+              ]}
+            />
           )}
         </Card>
       </main>
