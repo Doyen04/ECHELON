@@ -330,6 +330,14 @@ export default function BatchUploadPage() {
         setIsSubmitting(true);
         setSubmitError(null);
         setSubmitSuccess(null);
+        setUploadProgress(10);
+        
+        const progressInterval = setInterval(() => {
+            setUploadProgress(prev => {
+                if (prev >= 90) return prev;
+                return prev + 10;
+            });
+        }, 500);
 
         try {
             const payload = new FormData();
@@ -344,8 +352,11 @@ export default function BatchUploadPage() {
                 body: payload,
             });
 
+            clearInterval(progressInterval);
+
             const responseBody = await response.json().catch(() => null);
             if (!response.ok) {
+                setUploadProgress(0);
                 setSubmitError(
                     responseBody?.error ?? "Upload failed. Please try again.",
                 );
@@ -361,6 +372,7 @@ export default function BatchUploadPage() {
                 students: Number(responseBody.students ?? 0),
                 autoDispatched: Boolean(responseBody.dispatch?.dispatchId),
             });
+            setUploadProgress(100);
 
             if (responseBody.dispatch?.dispatchId) {
                 toast.success("Upload and Dispatch Successful", {
@@ -372,6 +384,8 @@ export default function BatchUploadPage() {
                 });
             }
         } catch {
+            clearInterval(progressInterval);
+            setUploadProgress(0);
             setSubmitError("Network error while uploading batch.");
             toast.error("Network Error", {
                 description: "An error occurred while uploading. Check your connection.",
@@ -809,6 +823,17 @@ export default function BatchUploadPage() {
                                 <ArrowRight className='h-4 w-4' />
                             </Button>
                         </div>
+                        {isSubmitting && uploadProgress > 0 && (
+                            <div className="my-4">
+                                <div className="flex justify-between items-center mb-1">
+                                    <span className="text-xs font-medium text-foreground">Uploading...</span>
+                                    <span className="text-xs font-mono text-muted-foreground">{uploadProgress}%</span>
+                                </div>
+                                <div className="w-full bg-muted rounded-full h-1.5 overflow-hidden">
+                                    <div className="bg-sidebar-primary h-1.5 rounded-full transition-all duration-300 ease-out" style={{ width: `${uploadProgress}%` }}></div>
+                                </div>
+                            </div>
+                        )}
                     </div>
 
                     <div className='xl:sticky xl:top-24 h-fit space-y-6'>

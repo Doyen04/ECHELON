@@ -5,6 +5,7 @@ import { sendEmail } from "@/lib/notifications/email-provider";
 import { sendWhatsApp } from "@/lib/notifications/whatsapp-provider";
 import { sendSms } from "@/lib/notifications/sms-provider";
 import { buildResultNotificationEmailTemplate } from "@/lib/result-email-template";
+import { buildStudentScopedPdfAttachment } from "@/lib/result-email-pdf";
 
 type RetryContact = {
     id: string;
@@ -126,6 +127,7 @@ async function sendRetryEmail(input: {
     matricNumber: string;
     semesterLabel: string;
     portalLink: string;
+    rawFileUrl: string | null;
 }) {
     const emailTemplate = buildResultNotificationEmailTemplate({
         parentName: input.guardianName,
@@ -135,10 +137,17 @@ async function sendRetryEmail(input: {
         portalLink: input.portalLink,
     });
 
+    const attachments = [] as any[];
+    if (input.rawFileUrl && input.rawFileUrl.toLowerCase().endsWith(".pdf")) {
+        const attach = await buildStudentScopedPdfAttachment(input.rawFileUrl, input.matricNumber).catch(() => null);
+        if (attach) attachments.push(attach);
+    }
+
     const response = await sendEmail({
         to: input.guardianEmail,
         subject: emailTemplate.subject,
         text: emailTemplate.text,
+        attachments: attachments.length > 0 ? attachments : undefined,
     });
 
     if (!response.ok) {
@@ -286,6 +295,7 @@ export async function retryFailedDispatchSends(dispatchId: string, logId?: strin
                     matricNumber: item.matricNumber,
                     semesterLabel,
                     portalLink,
+                    rawFileUrl: dispatch.batch.rawFileUrl,
                 });
                 successChannel = "EMAIL";
             } catch (error) {
