@@ -331,7 +331,7 @@ export default function BatchUploadPage() {
         setSubmitError(null);
         setSubmitSuccess(null);
         setUploadProgress(10);
-        
+
         const progressInterval = setInterval(() => {
             setUploadProgress(prev => {
                 if (prev >= 90) return prev;

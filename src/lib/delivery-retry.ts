@@ -246,7 +246,7 @@ export async function retryFailedDispatchSends(dispatchId: string, logId?: strin
     const db = prisma as any;
     const preview = await getFailedSendPreview(dispatchId);
 
-    const itemsToRetry = logId 
+    const itemsToRetry = logId
         ? preview.items.filter(item => item.id === logId)
         : preview.items.filter(item => !item.retryBlockedReason);
 
