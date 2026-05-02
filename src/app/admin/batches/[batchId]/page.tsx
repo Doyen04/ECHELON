@@ -47,7 +47,7 @@ export default function BatchDetailPage({ params }: BatchPageProps) {
     const handleApproveSuccess = () => {
         setSuccessMessage("Batch approved and queued for parent delivery.");
         toast.success("Dispatch Started", {
-           description: "Batch approved and queued for parent delivery."
+            description: "Batch approved and queued for parent delivery."
         });
         execute();
     };

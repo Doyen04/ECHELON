@@ -105,7 +105,7 @@ export function RetryFailedSendsButton({ dispatchId, failedCount }: RetryFailedS
                 if (payload?.retriedCount === 0) {
                     setLoadError("The retry attempt failed repeatedly. Please check your provider settings.");
                     toast.error("Retry Failed", { description: "Message(s) could not be delivered." });
-                    
+
                     if (logId) {
                         const previewResponse = await fetch(`/api/delivery/${dispatchId}/retry`);
                         const previewData = await previewResponse.json();
@@ -194,8 +194,8 @@ export function RetryFailedSendsButton({ dispatchId, failedCount }: RetryFailedS
                     {preview ? (
                         <div className="max-h-[50vh] space-y-4 overflow-y-auto pr-2 custom-scrollbar">
                             {preview.items.map((item) => (
-                                <article 
-                                    key={item.id} 
+                                <article
+                                    key={item.id}
                                     className={cn(
                                         "rounded-xl border p-5 transition-all",
                                         item.retryBlockedReason ? "border-border bg-muted/10 opacity-75" : "border-border bg-card hover:border-sidebar-primary/20"
@@ -211,11 +211,11 @@ export function RetryFailedSendsButton({ dispatchId, failedCount }: RetryFailedS
                                             </div>
                                             <p className="text-[11px] font-mono text-muted-foreground tracking-tight">{item.matricNumber}</p>
                                         </div>
-                                        
+
                                         {!item.retryBlockedReason && (
-                                            <Button 
-                                                size="sm" 
-                                                variant="outline" 
+                                            <Button
+                                                size="sm"
+                                                variant="outline"
                                                 disabled={isRetrying}
                                                 onClick={() => retryFailedSends(item.id)}
                                                 className="h-8 rounded-md text-[10px] font-bold uppercase tracking-tight bg-white hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-200"
@@ -264,10 +264,10 @@ export function RetryFailedSendsButton({ dispatchId, failedCount }: RetryFailedS
                     ) : null}
 
                     <div className="flex flex-col-reverse sm:flex-row items-center justify-between gap-4 pt-4 border-t border-border">
-                        <Button 
-                            type="button" 
-                            variant="ghost" 
-                            onClick={closeModal} 
+                        <Button
+                            type="button"
+                            variant="ghost"
+                            onClick={closeModal}
                             className="text-muted-foreground hover:text-foreground w-full sm:w-auto"
                         >
                             Cancel

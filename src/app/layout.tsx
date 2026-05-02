@@ -8,9 +8,9 @@ import { AppSessionProvider } from "@/components/auth/session-provider";
 import "./globals.css";
 import { cn } from "@/lib/utils";
 
-const robotoHeading = Roboto({subsets:['latin'],variable:'--font-heading'});
+const robotoHeading = Roboto({ subsets: ['latin'], variable: '--font-heading' });
 
-const ibmPlexSans = IBM_Plex_Sans({subsets:['latin'],variable:'--font-sans'});
+const ibmPlexSans = IBM_Plex_Sans({ subsets: ['latin'], variable: '--font-sans' });
 
 const bodyFont = DM_Sans({
     variable: "--font-body",

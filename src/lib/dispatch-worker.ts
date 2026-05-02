@@ -81,6 +81,7 @@ async function sendNotification(
         matricNumber: string;
         semesterLabel: string;
         portalLink: string;
+        batchId: string;
     },
 ) {
     if (channelSelection.channel === "EMAIL") {
@@ -263,6 +264,7 @@ async function sendGuardianNotifications(
             matricNumber: studentResult.student.matricNumber,
             semesterLabel: `${studentResult.batch.session} ${studentResult.batch.semester}`,
             portalLink,
+            batchId: studentResult.batchId,
         });
 
         await db.notificationLog.create({
