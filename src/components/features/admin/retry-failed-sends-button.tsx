@@ -4,6 +4,7 @@ import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { AlertTriangle, RefreshCw } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/ui/modal";
@@ -96,8 +97,26 @@ export function RetryFailedSendsButton({ dispatchId, failedCount }: RetryFailedS
                 const payload = await response.json().catch(() => null);
                 if (!response.ok) {
                     setLoadError(payload?.error ?? "Failed to retry failed sends.");
+                    toast.error("Retry Failed", { description: payload?.error ?? "Failed to retry failed sends." });
+                    setRetryingLogId(null);
                     return;
                 }
+
+                if (payload?.retriedCount === 0) {
+                    setLoadError("The retry attempt failed repeatedly. Please check your provider settings.");
+                    toast.error("Retry Failed", { description: "Message(s) could not be delivered." });
+                    
+                    if (logId) {
+                        const previewResponse = await fetch(`/api/delivery/${dispatchId}/retry`);
+                        const previewData = await previewResponse.json();
+                        setPreview(previewData);
+                    }
+                    setRetryingLogId(null);
+                    router.refresh();
+                    return;
+                }
+
+                toast.success("Retry Successful", { description: `Successfully resent ${payload?.retriedCount ?? 0} message(s).` });
 
                 if (logId) {
                     // Just refresh the preview if it was a single retry
@@ -256,7 +275,7 @@ export function RetryFailedSendsButton({ dispatchId, failedCount }: RetryFailedS
                         <Button
                             type="button"
                             onClick={() => retryFailedSends()}
-                            className="rounded-xl w-full sm:w-auto min-w-[200px] gap-2 bg-sidebar-primary shadow-md shadow-sidebar-primary/20"
+                            className="rounded-xl w-full sm:w-auto min-w-50 gap-2 bg-sidebar-primary shadow-md shadow-sidebar-primary/20"
                             disabled={!preview?.canRetry || isRetrying || isLoading || !preview}
                         >
                             <RefreshCw className={cn("h-4 w-4", isRetrying && "animate-spin")} />

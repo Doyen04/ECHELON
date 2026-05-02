@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 type ApproveDispatchButtonProps = {
     batchId: string;
@@ -33,6 +34,7 @@ export function ApproveDispatchButton({ batchId, disabled, onSuccess }: ApproveD
             if (!response.ok) {
                 setIsError(true);
                 setMessage(body?.error ?? "Approval failed.");
+                toast.error("Approval Failed", { description: body?.error ?? "Approval failed." });
                 return;
             }
 
@@ -41,6 +43,7 @@ export function ApproveDispatchButton({ batchId, disabled, onSuccess }: ApproveD
         } catch {
             setIsError(true);
             setMessage("Network error while approving batch.");
+            toast.error("Network Error", { description: "Network error while approving batch." });
         } finally {
             setIsSubmitting(false);
         }

@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { PageHeader } from "@/components/shared/page-header";
 import { DataTable } from "@/components/shared/data-table";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -346,6 +347,9 @@ export default function BatchUploadPage() {
         setSubmitError(
           responseBody?.error ?? "Upload failed. Please try again.",
         );
+        toast.error("Upload failed", {
+          description: responseBody?.error ?? "Please try again.",
+        });
         return;
       }
 
@@ -355,8 +359,21 @@ export default function BatchUploadPage() {
         students: Number(responseBody.students ?? 0),
         autoDispatched: Boolean(responseBody.dispatch?.dispatchId),
       });
+
+      if (responseBody.dispatch?.dispatchId) {
+        toast.success("Upload and Dispatch Successful", {
+            description: `Batch ${responseBody.batchId} uploaded and emails are sending.`,
+        });
+      } else {
+        toast.success("Upload Successful", {
+            description: `Batch ${responseBody.batchId} saved to pending review.`,
+        });
+      }
     } catch {
       setSubmitError("Network error while uploading batch.");
+      toast.error("Network Error", {
+          description: "An error occurred while uploading. Check your connection.",
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -784,7 +801,7 @@ export default function BatchUploadPage() {
                     (!showPreview || hasValidationErrors))
                 }
                 size="lg"
-                className='min-w-[160px] gap-2 rounded-xl bg-sidebar-primary transition-all hover:translate-y-[-1px] active:translate-y-0 disabled:opacity-50 disabled:cursor-not-allowed'
+                className='min-w-40 gap-2 rounded-xl bg-sidebar-primary transition-all hover:-translate-y-px active:translate-y-0 disabled:opacity-50 disabled:cursor-not-allowed'
               >
                 {isSubmitting ? "Processing..." : "Complete Upload"}
                 <ArrowRight className='h-4 w-4' />

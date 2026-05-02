@@ -16,6 +16,7 @@ import { PageHeader } from "@/components/shared/page-header";
 import { StatusBadge, ChannelBadge } from "@/components/shared/badges";
 import { SummaryCard } from "@/components/shared/summary-card";
 import { Breadcrumbs } from "@/components/shared/breadcrumbs";
+import { toast } from "sonner";
 import {
   formatDateTime,
 } from "@/lib/admin-format";
@@ -240,7 +241,7 @@ export default function DeliveryLogPage({ params }: DeliveryPageProps) {
                         accessorKey: "details",
                         className: "px-6 py-4 text-[11px] font-medium text-muted-foreground",
                         cell: (row: any) => (
-                            <div className="max-w-[200px] truncate" title={row.failureReason ?? row.providerMessageId ?? "Delivered"}>
+                            <div className="max-w-50 truncate" title={row.failureReason ?? row.providerMessageId ?? "Delivered"}>
                                 {row.failureReason ??
                                 row.providerMessageId ??
                                 "Delivered successfully"}
@@ -264,10 +265,21 @@ export default function DeliveryLogPage({ params }: DeliveryPageProps) {
                                                 method: "POST",
                                                 body: JSON.stringify({ logId: row.id }),
                                             });
+                                            const body = await response.json().catch(() => null);
+                                            
                                             if (response.ok) {
-                                                window.location.reload(); // Simple way to refresh for now
+                                                if (body?.retriedCount === 0) {
+                                                    toast.error("Retry Failed", { description: "Message could not be delivered. Check provider settings." });
+                                                    setTimeout(() => window.location.reload(), 1500); 
+                                                } else {
+                                                    toast.success("Retry Successful", { description: "The message was successfully resent." });
+                                                    setTimeout(() => window.location.reload(), 1000);
+                                                }
+                                            } else {
+                                                toast.error("Retry Failed", { description: body?.error ?? "Unable to retry message." });
                                             }
                                         } catch (err) {
+                                            toast.error("Network Error", { description: "Failed to connect to the server." });
                                             console.error("Retry failed", err);
                                         }
                                     }}

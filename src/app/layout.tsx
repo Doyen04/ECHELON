@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { DM_Sans, DM_Serif_Display, JetBrains_Mono, IBM_Plex_Sans, Roboto } from "next/font/google";
 
+import { Toaster } from "sonner";
+
 import { AppSessionProvider } from "@/components/auth/session-provider";
 
 import "./globals.css";
@@ -47,6 +49,7 @@ export default function RootLayout({
         >
             <body className="min-h-full bg-background text-foreground font-sans page-transition-enter">
                 <AppSessionProvider>{children}</AppSessionProvider>
+                <Toaster position="top-center" richColors />
             </body>
         </html>
     );

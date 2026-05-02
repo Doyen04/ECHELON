@@ -18,6 +18,7 @@ import { ExportButton } from "@/components/features/admin/export-button";
 import { ApiGate } from "@/components/shared/api-gate";
 import { columns } from "./columns";
 import { Breadcrumbs } from "@/components/shared/breadcrumbs";
+import { toast } from "sonner";
 
 import {
     formatDateTime,
@@ -45,6 +46,9 @@ export default function BatchDetailPage({ params }: BatchPageProps) {
 
     const handleApproveSuccess = () => {
         setSuccessMessage("Batch approved and queued for parent delivery.");
+        toast.success("Dispatch Started", {
+           description: "Batch approved and queued for parent delivery."
+        });
         execute();
     };
 

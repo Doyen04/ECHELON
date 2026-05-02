@@ -40,8 +40,8 @@ function getTransporter(): nodemailer.Transporter {
     const host = process.env.SMTP_HOST;
     const port = parseSmtpPort(process.env.SMTP_PORT);
     const secure = parseSmtpSecure(process.env.SMTP_SECURE, port);
-    const user = process.env.SMTP_USERNAME;
-    const pass = process.env.SMTP_PASSWORD;
+    const user = process.env.SMTP_USER || process.env.SMTP_USERNAME;
+    const pass = process.env.SMTP_PASS || process.env.SMTP_PASSWORD;
 
     if (!host) {
         throw new Error("SMTP_HOST is not configured.");
