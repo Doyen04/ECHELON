@@ -30,14 +30,18 @@ export async function GET(
 
         const studentIds = [
             ...new Set(
-                notificationLogs.map((log) => log.studentId).filter(Boolean),
+                notificationLogs
+                    .map((log: { studentId: string | null }) => log.studentId)
+                    .filter((id): id is string => Boolean(id)),
             ),
-        ] as string[];
+        ];
         const guardianIds = [
             ...new Set(
-                notificationLogs.map((log) => log.guardianId).filter(Boolean),
+                notificationLogs
+                    .map((log: { guardianId: string | null }) => log.guardianId)
+                    .filter((id): id is string => Boolean(id)),
             ),
-        ] as string[];
+        ];
 
         const [students, guardians] = await Promise.all([
             listStudentsByIds(studentIds),

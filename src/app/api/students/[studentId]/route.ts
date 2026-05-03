@@ -14,7 +14,7 @@ export async function GET(
     try {
         const p = await params;
         const studentId = p.studentId;
-        
+
         const student = await findStudentDetails(studentId);
 
         if (!student) {
