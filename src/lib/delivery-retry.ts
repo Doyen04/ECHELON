@@ -5,7 +5,7 @@ import { sendEmail } from "@/lib/notifications/email-provider";
 import { sendWhatsApp } from "@/lib/notifications/whatsapp-provider";
 import { sendSms } from "@/lib/notifications/sms-provider";
 import { buildResultNotificationEmailTemplate } from "@/lib/result-email-template";
-import { buildStudentScopedPdfAttachment } from "@/lib/result-email-pdf";
+import { buildStudentResultPdfAttachment } from "@/lib/result-email-pdf";
 
 type RetryContact = {
     id: string;
@@ -123,24 +123,37 @@ async function getOrCreatePortalToken(studentResultId: string) {
 async function sendRetryEmail(input: {
     guardianName: string;
     guardianEmail: string;
-    studentName: string;
-    matricNumber: string;
-    semesterLabel: string;
+    studentResult: any;
     portalLink: string;
-    rawFileUrl: string | null;
 }) {
     const emailTemplate = buildResultNotificationEmailTemplate({
         parentName: input.guardianName,
-        studentName: input.studentName,
-        matricNumber: input.matricNumber,
-        semesterLabel: input.semesterLabel,
+        studentName: input.studentResult.student.fullName,
+        matricNumber: input.studentResult.student.matricNumber,
+        semesterLabel: `${input.studentResult.batch.session} ${input.studentResult.batch.semester}`,
         portalLink: input.portalLink,
     });
 
     const attachments = [] as any[];
-    if (input.rawFileUrl && input.rawFileUrl.toLowerCase().endsWith(".pdf")) {
-        const attach = await buildStudentScopedPdfAttachment(input.rawFileUrl, input.matricNumber).catch(() => null);
-        if (attach) attachments.push(attach);
+    try {
+        const courseRows = Array.isArray(input.studentResult?.courses)
+            ? input.studentResult.courses
+            : [];
+        const attachment = await buildStudentResultPdfAttachment({
+            studentName: input.studentResult.student.fullName,
+            matricNumber: input.studentResult.student.matricNumber,
+            department: input.studentResult.student.department ?? "General",
+            faculty: input.studentResult.student.faculty ?? "General",
+            level: Number(input.studentResult.student.level ?? 100),
+            session: String(input.studentResult.batch.session ?? "Unknown"),
+            semester: String(input.studentResult.batch.semester ?? "Unknown"),
+            gpa: Number(input.studentResult.gpa ?? 0),
+            cgpa: input.studentResult.cgpa ?? null,
+            courses: courseRows,
+        });
+        attachments.push(attachment);
+    } catch {
+        // Continue retry without attachment when generation fails.
     }
 
     const response = await sendEmail({
@@ -261,7 +274,6 @@ export async function retryFailedDispatchSends(dispatchId: string, logId?: strin
                 select: {
                     session: true,
                     semester: true,
-                    rawFileUrl: true,
                 },
             },
         },
@@ -288,14 +300,39 @@ export async function retryFailedDispatchSends(dispatchId: string, logId?: strin
 
         if (item.guardianEmail) {
             try {
+                const studentResult = await db.studentResult.findUnique({
+                    where: { id: item.studentResultId },
+                    select: {
+                        gpa: true,
+                        cgpa: true,
+                        courses: true,
+                        student: {
+                            select: {
+                                fullName: true,
+                                matricNumber: true,
+                                department: true,
+                                faculty: true,
+                                level: true,
+                            },
+                        },
+                        batch: {
+                            select: {
+                                session: true,
+                                semester: true,
+                            },
+                        },
+                    },
+                });
+
+                if (!studentResult) {
+                    throw new Error("Student result not found for retry attachment generation.");
+                }
+
                 providerMessageId = await sendRetryEmail({
                     guardianName: item.guardianName,
                     guardianEmail: item.guardianEmail,
-                    studentName: item.studentName,
-                    matricNumber: item.matricNumber,
-                    semesterLabel,
+                    studentResult,
                     portalLink,
-                    rawFileUrl: dispatch.batch.rawFileUrl,
                 });
                 successChannel = "EMAIL";
             } catch (error) {

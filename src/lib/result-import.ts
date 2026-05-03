@@ -380,6 +380,48 @@ function extractPdfCourseRows(text: string) {
     return rows;
 }
 
+function escapeRegexValue(value: string): string {
+    return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function extractCourseUnitsFromText(
+    text: string,
+    courseCodes: string[],
+): Map<string, number> {
+    const compactText = text.replace(/\s+/g, " ").trim();
+    const units = new Map<string, number>();
+
+    for (const code of courseCodes) {
+        const normalizedCode = code.replace(/\s+/g, "").toUpperCase();
+        const prefix = normalizedCode.match(/^[A-Z]{2,4}/)?.[0] ?? "";
+        const suffix = normalizedCode.slice(prefix.length);
+
+        if (!prefix || !suffix) {
+            continue;
+        }
+
+        const codePattern = `${escapeRegexValue(prefix)}\\s?${escapeRegexValue(suffix)}`;
+        const verbosePattern = new RegExp(
+            `${codePattern}\\s+.+?\\s+(\\d{1,2})\\s+(?:\\d{1,3}\\s+)?[A-FP](?:[+-])?`,
+            "i",
+        );
+        const compactPattern = new RegExp(
+            `${codePattern}\\s+(\\d{1,2})\\s+(?:\\d{1,3}\\s+)?[A-FP](?:[+-])?`,
+            "i",
+        );
+
+        const verboseMatch = compactText.match(verbosePattern);
+        const compactMatch = compactText.match(compactPattern);
+        const parsed = Number(verboseMatch?.[1] ?? compactMatch?.[1] ?? "");
+
+        if (Number.isFinite(parsed) && parsed >= 0) {
+            units.set(normalizedCode, parsed);
+        }
+    }
+
+    return units;
+}
+
 function extractCourseCodesFromTable(lines: string[]): string[] {
     const startIndex = lines.findIndex((line) => /course\s*codes/i.test(line));
     if (startIndex < 0) {
@@ -504,13 +546,20 @@ function parseStudentRowsFromTabularPdf(lines: string[], fallbackDepartment: str
                 : gradeScorePairs;
 
         const limitedPairs = courseCodes.length > 0 ? orderedPairs.slice(0, courseCodes.length) : orderedPairs;
+        const inferredUnits = extractCourseUnitsFromText(merged, courseCodes);
         const courses = (
             courseCodes.length > 0
                 ? courseCodes
                 : limitedPairs.map((_, i) => `CRS${String(i + 1).padStart(3, "0")}`)
         ).map((code, idx) => {
             const pair = limitedPairs[idx];
-            return { code, title: "Imported From PDF", unit: 0, grade: pair?.grade ?? "N/A", score: pair?.score ?? null };
+            return {
+                code,
+                title: "Imported From PDF",
+                unit: inferredUnits.get(code.replace(/\s+/g, "").toUpperCase()) ?? 0,
+                grade: pair?.grade ?? "N/A",
+                score: pair?.score ?? null,
+            };
         });
 
         students.push({

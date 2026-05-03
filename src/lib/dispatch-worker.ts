@@ -5,7 +5,7 @@ import { sendEmail } from "@/lib/notifications/email-provider";
 import { sendWhatsApp } from "@/lib/notifications/whatsapp-provider";
 import { sendSms } from "@/lib/notifications/sms-provider";
 import { buildResultNotificationEmailTemplate } from "@/lib/result-email-template";
-import { buildStudentScopedPdfAttachment } from "@/lib/result-email-pdf";
+import { buildStudentResultPdfAttachment } from "@/lib/result-email-pdf";
 import type { NotifyJobPayload } from "@/lib/queue";
 
 type DispatchWorkerResult = {
@@ -81,7 +81,7 @@ async function sendNotification(
         matricNumber: string;
         semesterLabel: string;
         portalLink: string;
-        batchId: string;
+        studentResult: any;
     },
 ) {
     if (channelSelection.channel === "EMAIL") {
@@ -94,30 +94,27 @@ async function sendNotification(
                 portalLink: payload.portalLink,
             });
 
-            // Try to attach a per-student PDF slice when available.
             const attachments = [] as any[];
             try {
-                // studentResult batch rawFileUrl may exist on the batch in the DB; lookup is done by caller.
-                // If the caller provides batch.rawFileUrl on payload, use it; otherwise attempt to read via DB.
-                // Here payload doesn't include rawFileUrl, so attempt best-effort via studentResult reference.
+                const courseRows = Array.isArray(payload.studentResult?.courses)
+                    ? payload.studentResult.courses
+                    : [];
+                const attachment = await buildStudentResultPdfAttachment({
+                    studentName: payload.studentName,
+                    matricNumber: payload.matricNumber,
+                    department: payload.studentResult?.student?.department ?? "General",
+                    faculty: payload.studentResult?.student?.faculty ?? "General",
+                    level: Number(payload.studentResult?.student?.level ?? 100),
+                    session: String(payload.studentResult?.batch?.session ?? "Unknown"),
+                    semester: String(payload.studentResult?.batch?.semester ?? "Unknown"),
+                    gpa: Number(payload.studentResult?.gpa ?? 0),
+                    cgpa: payload.studentResult?.cgpa ?? null,
+                    courses: courseRows,
+                });
+                attachments.push(attachment);
             } catch {
-                // ignore
+                // Best-effort attachment generation should not block notifications.
             }
-
-            // Build attachment using batch rawFileUrl if present on the studentResult object
-            try {
-                // payload doesn't include batch info here; but the caller passes `studentResult` as the payload's context when invoking.
-            } catch { }
-
-            // If we can access the batch rawFileUrl via closure, prefer it. As a pragmatic approach, try reading from the DB now.
-            try {
-                const db = prisma as any;
-                const batch = await db.resultBatch.findUnique({ where: { id: (payload as any).batchId ?? null }, select: { rawFileUrl: true } }).catch(() => null);
-                if (batch?.rawFileUrl) {
-                    const attach = await buildStudentScopedPdfAttachment(batch.rawFileUrl, payload.matricNumber).catch(() => null);
-                    if (attach) attachments.push(attach);
-                }
-            } catch { }
 
             const response = await sendEmail({
                 to: channelSelection.destination,
@@ -264,7 +261,7 @@ async function sendGuardianNotifications(
             matricNumber: studentResult.student.matricNumber,
             semesterLabel: `${studentResult.batch.session} ${studentResult.batch.semester}`,
             portalLink,
-            batchId: studentResult.batchId,
+            studentResult,
         });
 
         await db.notificationLog.create({
