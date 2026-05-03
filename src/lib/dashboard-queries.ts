@@ -8,7 +8,7 @@ import {
     type SummaryMetric,
     type TrendDirection,
 } from "@/lib/dashboard-data";
-import { prisma } from "@/lib/db";
+import { getDashboardSnapshot } from "@/lib/repositories/notification-repository";
 
 export type DashboardViewData = {
     summaryMetrics: SummaryMetric[];
@@ -119,7 +119,6 @@ function fallbackDashboardData(): DashboardViewData {
 }
 
 export async function getDashboardViewData(): Promise<DashboardViewData> {
-    const db = prisma as any;
     const dashboardWindowHours = 24;
     const dashboardWindowStart = new Date(Date.now() - dashboardWindowHours * 60 * 60 * 1000);
 
