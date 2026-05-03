@@ -22,9 +22,19 @@ export async function GET() {
 
     const recentBatches = await prisma.resultBatch.findMany({
       where: batchFilter,
-      include: { program: true },
       orderBy: { uploadedAt: "desc" },
       take: 5,
+      select: {
+        id: true,
+        session: true,
+        semester: true,
+        level: true,
+        status: true,
+        uploadedAt: true,
+        program: {
+          select: { name: true }
+        }
+      }
     });
 
     return NextResponse.json({

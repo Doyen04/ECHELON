@@ -130,9 +130,8 @@ export async function getDashboardViewData(): Promise<DashboardViewData> {
             sentCount,
             failedCount,
             dispatchRows,
-            notificationRows,
             activityRows,
-            dispatchFailureRows,
+            channelStats,
         ] = await Promise.all([
             db.studentResult.count({ where: { status: "PENDING" } }),
             db.studentResult.count({ where: { status: "APPROVED" } }),
@@ -149,20 +148,19 @@ export async function getDashboardViewData(): Promise<DashboardViewData> {
                 },
             }),
             db.notificationDispatch.findMany({
-                take: 3,
+                take: 8,
                 orderBy: { triggeredAt: "desc" },
-                include: {
+                select: {
+                    id: true,
+                    status: true,
+                    totalCount: true,
+                    sentCount: true,
+                    failedCount: true,
+                    triggeredAt: true,
                     batch: {
                         select: { department: true, session: true, semester: true },
                     },
-                    notificationLogs: {
-                        select: { status: true },
-                    },
                 },
-            }),
-            db.notificationLog.findMany({
-                where: { attemptedAt: { gte: dashboardWindowStart } },
-                select: { studentResultId: true, channel: true, status: true },
             }),
             db.auditLog.findMany({
                 take: 4,
@@ -173,17 +171,10 @@ export async function getDashboardViewData(): Promise<DashboardViewData> {
                     },
                 },
             }),
-            db.notificationDispatch.findMany({
-                take: 8,
-                orderBy: { triggeredAt: "desc" },
-                include: {
-                    batch: {
-                        select: { department: true, session: true, semester: true },
-                    },
-                    notificationLogs: {
-                        select: { status: true },
-                    },
-                },
+            db.notificationLog.groupBy({
+                by: ["channel", "status"],
+                where: { attemptedAt: { gte: dashboardWindowStart } },
+                _count: { _all: true },
             }),
         ]);
 
@@ -220,27 +211,22 @@ export async function getDashboardViewData(): Promise<DashboardViewData> {
 
 
 
-        const dispatchRowsMapped: DispatchQueueEntry[] = dispatchRows.map(
+        const dispatchRowsMapped: DispatchQueueEntry[] = dispatchRows.slice(0, 3).map(
             (dispatch: any) => {
-                const attempted = dispatch.notificationLogs.filter(
-                    (log: any) => log.status !== "QUEUED",
-                ).length;
-                const successful = dispatch.notificationLogs.filter(
-                    (log: any) => log.status === "SENT",
-                ).length;
+                const attempted = dispatch.sentCount + dispatch.failedCount;
+                const successful = dispatch.sentCount;
                 const successRate =
                     attempted === 0
                         ? 0
                         : Number(((successful / attempted) * 100).toFixed(1));
 
                 const status = toDispatchStatus(dispatch.status);
-                const processedStudents = dispatch.sentCount + dispatch.failedCount;
 
                 return {
                     id: dispatch.id,
                     batchLabel: `${dispatch.batch.department} | ${dispatch.batch.session} | ${dispatch.batch.semester}`,
                     totalStudents: dispatch.totalCount,
-                    processedStudents,
+                    processedStudents: attempted,
                     successRate,
                     eta:
                         status === "complete"
@@ -254,44 +240,16 @@ export async function getDashboardViewData(): Promise<DashboardViewData> {
         );
 
         const channelMap: Record<"whatsapp" | "email" | "sms", ChannelDelivery> = {
-            whatsapp: {
-                channel: "whatsapp",
-                queued: 0,
-                sent: 0,
-                failed: 0,
-            },
-            email: {
-                channel: "email",
-                queued: 0,
-                sent: 0,
-                failed: 0,
-            },
-            sms: {
-                channel: "sms",
-                queued: 0,
-                sent: 0,
-                failed: 0,
-            },
+            whatsapp: { channel: "whatsapp", queued: 0, sent: 0, failed: 0 },
+            email: { channel: "email", queued: 0, sent: 0, failed: 0 },
+            sms: { channel: "sms", queued: 0, sent: 0, failed: 0 },
         };
 
-        const channelPriority: Record<"email" | "whatsapp" | "sms", number> = {
-            email: 3,
-            whatsapp: 2,
-            sms: 1,
-        };
-
-        notificationRows.forEach((row: any) => {
-            const channel = row.channel.toLowerCase() as "whatsapp" | "email" | "sms";
-            const status = row.status.toLowerCase();
-            if (status === "queued") {
-                channelMap[channel].queued += 1;
-                return;
-            } else if (status === "sent") {
-                channelMap[channel].sent += 1;
-                return;
-            } else if (status === "failed") {
-                channelMap[channel].failed += 1;
-                return;
+        channelStats.forEach((stat: any) => {
+            const channel = stat.channel.toLowerCase() as "whatsapp" | "email" | "sms";
+            const status = stat.status.toLowerCase() as "queued" | "sent" | "failed";
+            if (channelMap[channel]) {
+                channelMap[channel][status] = stat._count._all;
             }
         });
 
@@ -307,11 +265,10 @@ export async function getDashboardViewData(): Promise<DashboardViewData> {
             }),
         }));
 
-        const notifications: DashboardNotification[] = dispatchFailureRows
+        const notifications: DashboardNotification[] = dispatchRows
             .map((dispatch: any) => {
-                const logs = dispatch.notificationLogs as Array<{ status: string }>;
-                const attempts = logs.filter((log) => log.status !== "QUEUED").length;
-                const failed = logs.filter((log) => log.status === "FAILED").length;
+                const attempts = dispatch.sentCount + dispatch.failedCount;
+                const failed = dispatch.failedCount;
 
                 if (attempts === 0 || failed === 0) {
                     return null;
