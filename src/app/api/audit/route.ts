@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { getSuperAdminSession } from "@/lib/super-admin-session";
 
-export async function GET() {
+export async function GET(request: Request) {
     const session = await getSuperAdminSession();
     if (!session) {
         return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -26,14 +26,23 @@ export async function GET() {
         return NextResponse.json({ error: "Authenticated user not found." }, { status: 404 });
     }
 
-    const auditLogs = await db.auditLog.findMany({
-        where: { institutionId: actor.institutionId },
-        orderBy: { createdAt: "desc" },
-        take: 200,
-        include: {
-            actor: { select: { name: true } },
-        },
-    });
+    const { searchParams } = new URL(request.url);
+    const page = parseInt(searchParams.get("page") || "1");
+    const limit = parseInt(searchParams.get("limit") || "50");
+    const skip = (page - 1) * limit;
+
+    const [auditLogs, total] = await Promise.all([
+        db.auditLog.findMany({
+            where: { institutionId: actor.institutionId },
+            orderBy: { createdAt: "desc" },
+            take: limit,
+            skip: skip,
+            include: {
+                actor: { select: { name: true } },
+            },
+        }),
+        db.auditLog.count({ where: { institutionId: actor.institutionId } })
+    ]);
 
     return NextResponse.json({
         logs: auditLogs.map((log: any) => ({
@@ -46,5 +55,11 @@ export async function GET() {
             ipAddress: log.ipAddress ?? null,
             metadata: log.metadata ?? null,
         })),
+        pagination: {
+            total,
+            pages: Math.ceil(total / limit),
+            currentPage: page,
+            limit
+        }
     });
 }

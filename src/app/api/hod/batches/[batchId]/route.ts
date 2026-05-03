@@ -27,18 +27,35 @@ export async function GET(
           select: { name: true, email: true }
         },
         studentResults: {
-          include: {
-            student: true,
+          select: {
+            id: true,
+            gpa: true,
+            cgpa: true,
+            status: true,
+            withheldReason: true,
+            student: {
+              select: {
+                fullName: true,
+                matricNumber: true,
+                level: true,
+              }
+            },
             reviewedBy: {
               select: { name: true }
             }
           }
         },
         dispatches: {
-            include: {
-                triggeredBy: { select: { name: true } }
-            },
-            orderBy: { triggeredAt: "desc" }
+          select: {
+            id: true,
+            status: true,
+            triggeredAt: true,
+            totalCount: true,
+            sentCount: true,
+            failedCount: true,
+            triggeredBy: { select: { name: true } }
+          },
+          orderBy: { triggeredAt: "desc" }
         }
       }
     });

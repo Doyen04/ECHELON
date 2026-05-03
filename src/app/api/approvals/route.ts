@@ -14,18 +14,34 @@ export async function GET() {
             prisma.resultBatch.findMany({
                 where: { status: { in: ["PENDING", "IN_REVIEW"] } },
                 orderBy: { uploadedAt: "desc" },
-                include: {
+                select: {
+                    id: true,
+                    status: true,
+                    session: true,
+                    semester: true,
+                    department: true,
+                    uploadedAt: true,
+                    level: true,
                     uploadedBy: { select: { name: true } },
-                    studentResults: { select: { status: true } },
+                    _count: { select: { studentResults: true } },
+                    program: { select: { name: true } }
                 },
             }),
             prisma.resultBatch.findMany({
                 where: { status: { in: ["APPROVED", "DISPATCHED"] } },
                 orderBy: { approvedAt: "desc" },
                 take: 12,
-                include: {
+                select: {
+                    id: true,
+                    status: true,
+                    session: true,
+                    semester: true,
+                    department: true,
+                    approvedAt: true,
+                    level: true,
                     approvedBy: { select: { name: true } },
-                    studentResults: { select: { status: true } },
+                    _count: { select: { studentResults: true } },
+                    program: { select: { name: true } }
                 },
             }),
         ]);

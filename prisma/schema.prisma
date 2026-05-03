@@ -120,6 +120,7 @@ model Student {
     notificationLogs NotificationLog[]
 
     @@index([institutionId, department])
+    @@index([fullName])
 }
 
 model Guardian {
@@ -135,6 +136,8 @@ model Guardian {
     notificationLogs NotificationLog[]
 
     @@index([studentId])
+    @@index([phone])
+    @@index([email])
 }
 
 model ResultBatch {
@@ -164,6 +167,7 @@ model ResultBatch {
 
     @@unique([programId, session, semester, level])
     @@index([institutionId, status])
+    @@index([institutionId, uploadedAt])
     @@index([uploadedAt])
     @@index([programId, status])
 }
@@ -253,4 +257,5 @@ model AuditLog {
     createdAt     DateTime    @default(now())
 
     @@index([institutionId, createdAt])
+    @@index([actorId])
 }

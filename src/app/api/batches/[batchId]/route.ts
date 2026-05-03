@@ -22,18 +22,31 @@ export async function GET(
                 approvedBy: { select: { name: true } },
                 studentResults: {
                     orderBy: { id: "desc" },
-                    include: {
+                    take: 100,
+                    select: {
+                        id: true,
+                        gpa: true,
+                        cgpa: true,
+                        status: true,
+                        withheldReason: true,
                         student: { select: { fullName: true, matricNumber: true } },
                         portalTokens: {
                             orderBy: { createdAt: "desc" },
                             take: 1,
+                            select: { token: true, expiresAt: true, createdAt: true }
                         },
                     },
                 },
                 dispatches: {
                     orderBy: { triggeredAt: "desc" },
                     take: 5,
-                    include: {
+                    select: {
+                        id: true,
+                        status: true,
+                        triggeredAt: true,
+                        totalCount: true,
+                        sentCount: true,
+                        failedCount: true,
                         triggeredBy: { select: { name: true } },
                         _count: { select: { notificationLogs: true } },
                     },

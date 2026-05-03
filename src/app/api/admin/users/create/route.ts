@@ -49,9 +49,18 @@ export async function POST(request: Request) {
 
   const passwordHash = await bcrypt.hash(password, 12);
 
+  const actor = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: { institutionId: true }
+  });
+
+  if (!actor) {
+    return NextResponse.json({ error: "Authenticated user not found" }, { status: 404 });
+  }
+
   const user = await prisma.user.create({
     data: {
-      institutionId: session.user.institutionId,
+      institutionId: actor.institutionId,
       name,
       email,
       passwordHash,

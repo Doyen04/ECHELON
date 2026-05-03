@@ -9,8 +9,17 @@ export async function GET() {
   }
 
   try {
+    const user = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { institutionId: true }
+    });
+
+    if (!user) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+
     const departments = await prisma.department.findMany({
-      where: { institutionId: session.user.institutionId },
+      where: { institutionId: user.institutionId },
       orderBy: { name: "asc" },
     });
 

@@ -15,15 +15,33 @@ export async function GET(
 
         const portalToken = await prisma.portalToken.findUnique({
             where: { token },
-            include: {
+            select: {
+                id: true,
+                invalidated: true,
+                expiresAt: true,
+                viewedAt: true,
                 studentResult: {
-                    include: {
+                    select: {
+                        id: true,
+                        gpa: true,
+                        cgpa: true,
+                        courses: true, // Needed for display
+                        status: true,
                         student: {
-                            include: {
-                                guardians: true,
+                            select: {
+                                fullName: true,
+                                matricNumber: true,
+                                department: true,
+                                level: true,
                             },
                         },
-                        batch: true,
+                        batch: {
+                            select: {
+                                session: true,
+                                semester: true,
+                                program: { select: { name: true } }
+                            }
+                        },
                     },
                 },
             },

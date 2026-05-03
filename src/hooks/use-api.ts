@@ -5,7 +5,7 @@ interface ApiRequestOptions {
     method?: "GET" | "POST" | "PUT" | "DELETE" | "PATCH";
     body?: unknown;
     headers?: Record<string, string>;
-    immediate?: boolean; // If true, fires the request immediately on mount (useful for GET)
+    immediate?: boolean;
 }
 
 export function useApi<TData = unknown>(
@@ -67,31 +67,25 @@ export function useApi<TData = unknown>(
         [endpoint, options.method, options.body, options.headers]
     );
 
-    // Auto-fetch if immediate is set to true
     useEffect(() => {
         if (options.immediate) {
-            // catch attached here since errors are also stored in state
-            // Wrap in setTimeout to avoid synchronous setState warning in effect
             const timer = setTimeout(() => {
                 execute().catch(() => { });
             }, 0);
             return () => clearTimeout(timer);
         }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [options.immediate]);
+    }, [options.immediate, endpoint, execute]);
 
     return {
         data,
         error,
         isLoading,
         execute,
-        mutate: setData, // helpful for optimistic updates
+        mutate: setData,
     };
 }
 
-/**
- * Basic fetch wrapper for non-React contexts or instances where a hook isn't suitable.
- */
+
 export async function fetchApi<T = unknown>(endpoint: string, options: ApiRequestOptions = {}): Promise<T> {
     const response = await fetch(endpoint, {
         method: options.method || 'GET',

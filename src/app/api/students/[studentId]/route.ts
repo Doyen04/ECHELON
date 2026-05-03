@@ -17,15 +17,32 @@ export async function GET(
         
         const student = await prisma.student.findUnique({
             where: { id: studentId },
-            include: {
+            select: {
+                id: true,
+                fullName: true,
+                matricNumber: true,
+                department: true,
+                faculty: true,
+                level: true,
                 guardians: true,
                 studentResults: {
                     orderBy: { id: "desc" },
-                    include: {
-                        batch: true,
+                    select: {
+                        id: true,
+                        gpa: true,
+                        cgpa: true,
+                        status: true,
+                        batchId: true,
+                        batch: {
+                            select: {
+                                session: true,
+                                semester: true,
+                            }
+                        },
                         portalTokens: {
                             orderBy: { createdAt: "desc" },
                             take: 1,
+                            select: { token: true, expiresAt: true }
                         },
                     },
                 },

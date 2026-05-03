@@ -30,18 +30,23 @@ import { columns } from "./columns";
 import { DataTable } from "@/components/shared/data-table";
 
 export default function BatchesPage() {
+  const [selectedDept, setSelectedDept] = useState("");
+  const [selectedProgram, setSelectedProgram] = useState("");
+  const [selectedLevel, setSelectedLevel] = useState("");
+  const [departments, setDepartments] = useState<any[]>([]);
+  const [programs, setPrograms] = useState<any[]>([]);
+  const [isLoadingPrograms, setIsLoadingPrograms] = useState(false);
+
+  const queryParams = new URLSearchParams();
+  if (selectedDept) queryParams.append("departmentId", selectedDept);
+  if (selectedProgram) queryParams.append("programId", selectedProgram);
+  if (selectedLevel) queryParams.append("level", selectedLevel);
+
   const {
     data: batches = [],
     isLoading,
     error,
-  } = useApi<any[]>("/api/batches", { immediate: true });
-
-  const [departments, setDepartments] = useState<any[]>([]);
-  const [selectedDept, setSelectedDept] = useState("");
-  const [selectedProgram, setSelectedProgram] = useState("");
-  const [selectedLevel, setSelectedLevel] = useState("");
-  const [programs, setPrograms] = useState<any[]>([]);
-  const [isLoadingPrograms, setIsLoadingPrograms] = useState(false);
+  } = useApi<any[]>(`/api/batches?${queryParams.toString()}`, { immediate: true });
 
   useEffect(() => {
     fetch("/api/admin/departments")
@@ -62,20 +67,7 @@ export default function BatchesPage() {
     }
   }, [selectedDept]);
 
-  const filteredBatches = useMemo(() => {
-    return (batches || []).filter((b: any) => {
-      const matchesDept =
-        !selectedDept ||
-        b.program?.department?.id === selectedDept ||
-        b.department === departments.find((d) => d.id === selectedDept)?.name;
-      const matchesProg =
-        !selectedProgram ||
-        b.programId === selectedProgram ||
-        b.program?.id === selectedProgram;
-      const matchesLevel = !selectedLevel || String(b.level) === selectedLevel;
-      return matchesDept && matchesProg && matchesLevel;
-    });
-  }, [batches, selectedDept, selectedProgram, selectedLevel, departments]);
+  const filteredBatches = batches || [];
 
   const sessions = Array.from(
     new Set((batches || []).map((b: any) => b.session)),
