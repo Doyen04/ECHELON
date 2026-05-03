@@ -1,5 +1,8 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/db";
+import {
+    findPortalTokenDetails,
+    updatePortalTokenViewedAt,
+} from "@/lib/repositories/admin-repository";
 
 export async function GET(
     request: Request,
@@ -13,21 +16,7 @@ export async function GET(
             return NextResponse.json({ error: "Token missing" }, { status: 400 });
         }
 
-        const portalToken = await prisma.portalToken.findUnique({
-            where: { token },
-            include: {
-                studentResult: {
-                    include: {
-                        student: {
-                            include: {
-                                guardians: true,
-                            },
-                        },
-                        batch: true,
-                    },
-                },
-            },
-        });
+        const portalToken = await findPortalTokenDetails(token);
 
         if (!portalToken) {
             return NextResponse.json({ type: "not_found", error: "Token not found" }, { status: 404 });
@@ -39,10 +28,7 @@ export async function GET(
 
         if (!portalToken.viewedAt) {
             const now = new Date();
-            await prisma.portalToken.update({
-                where: { token },
-                data: { viewedAt: now },
-            });
+            await updatePortalTokenViewedAt(token, now);
             portalToken.viewedAt = now;
         }
 

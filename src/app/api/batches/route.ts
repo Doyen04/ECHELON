@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/db";
+import { listBatchesSummary } from "@/lib/repositories/admin-repository";
 import { getSuperAdminSession } from "@/lib/super-admin-session";
 
 export async function GET() {
@@ -9,25 +9,7 @@ export async function GET() {
     }
 
     try {
-        const batches = await prisma.resultBatch.findMany({
-            orderBy: { uploadedAt: "desc" },
-            take: 100,
-            select: {
-                id: true,
-                session: true,
-                semester: true,
-                department: true,
-                source: true,
-                status: true,
-                uploadedAt: true,
-                uploadedBy: { select: { name: true } },
-                _count: {
-                    select: {
-                        studentResults: true,
-                    },
-                },
-            },
-        });
+        const batches = await listBatchesSummary();
 
         return NextResponse.json(batches);
     } catch (error) {

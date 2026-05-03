@@ -1,11 +1,20 @@
 import { randomUUID } from "node:crypto";
 
-import { prisma } from "@/lib/db";
 import { sendEmail } from "@/lib/notifications/email-provider";
 import { sendWhatsApp } from "@/lib/notifications/whatsapp-provider";
 import { sendSms } from "@/lib/notifications/sms-provider";
+import {
+    countNotificationLogsByStatus,
+    createPortalToken,
+    findDispatchBatchSessionSemester,
+    findStudentResultForRetry,
+    findValidPortalToken,
+    listFailedNotificationLogs,
+    updateNotificationDispatchCounts,
+    updateNotificationLog,
+} from "@/lib/repositories/notification-repository";
 import { buildResultNotificationEmailTemplate } from "@/lib/result-email-template";
-import { buildStudentResultPdfAttachment } from "@/lib/result-email-pdf";
+import { buildStudentResultPdfAttachment } from "./result-email-pdf";
 
 type RetryContact = {
     id: string;
@@ -89,17 +98,9 @@ function chooseRetryContact(log: FailedSendLog) {
 }
 
 async function getOrCreatePortalToken(studentResultId: string) {
-    const db = prisma as any;
     const now = new Date();
 
-    const existingToken = await db.portalToken.findFirst({
-        where: {
-            studentResultId,
-            invalidated: false,
-            expiresAt: { gt: now },
-        },
-        orderBy: { createdAt: "desc" },
-    });
+    const existingToken = await findValidPortalToken(studentResultId, now);
 
     if (existingToken) {
         return existingToken.token as string;
@@ -109,12 +110,10 @@ async function getOrCreatePortalToken(studentResultId: string) {
     const expiryDays = Number(process.env.TOKEN_EXPIRY_DAYS ?? "30");
     const expiresAt = new Date(now.getTime() + expiryDays * 24 * 60 * 60 * 1000);
 
-    await db.portalToken.create({
-        data: {
-            studentResultId,
-            token,
-            expiresAt,
-        },
+    await createPortalToken({
+        studentResultId,
+        token,
+        expiresAt,
     });
 
     return token;
@@ -150,6 +149,9 @@ async function sendRetryEmail(input: {
             gpa: Number(input.studentResult.gpa ?? 0),
             cgpa: input.studentResult.cgpa ?? null,
             courses: courseRows,
+            institutionName: input.studentResult.batch.institution?.name ?? input.studentResult.student.institution?.name ?? "Mountain Top University",
+            logoUrl: input.studentResult.batch.institution?.logoUrl ?? input.studentResult.student.institution?.logoUrl ?? null,
+            submissionId: input.studentResult.batch.id ?? null,
         });
         attachments.push(attachment);
     } catch {
@@ -171,47 +173,7 @@ async function sendRetryEmail(input: {
 }
 
 export async function getFailedSendPreview(dispatchId: string): Promise<FailedSendPreview> {
-    const db = prisma as any;
-
-    const failedLogsRaw = await db.notificationLog.findMany({
-        where: {
-            dispatchId,
-            status: "FAILED",
-        },
-        orderBy: { attemptedAt: "desc" },
-        select: {
-            id: true,
-            dispatchId: true,
-            studentResultId: true,
-            failureReason: true,
-            attemptedAt: true,
-            student: {
-                select: {
-                    fullName: true,
-                    matricNumber: true,
-                    guardians: {
-                        orderBy: { createdAt: "desc" },
-                        select: {
-                            id: true,
-                            name: true,
-                            email: true,
-                            phone: true,
-                            relationship: true,
-                        },
-                    },
-                },
-            },
-            guardian: {
-                select: {
-                    id: true,
-                    name: true,
-                    email: true,
-                    phone: true,
-                    relationship: true,
-                },
-            },
-        },
-    });
+    const failedLogsRaw = await listFailedNotificationLogs(dispatchId);
 
     const failedLogs: FailedSendLog[] = failedLogsRaw.map((log: any) => ({
         id: log.id,
@@ -256,7 +218,6 @@ export async function getFailedSendPreview(dispatchId: string): Promise<FailedSe
 }
 
 export async function retryFailedDispatchSends(dispatchId: string, logId?: string): Promise<RetryResult> {
-    const db = prisma as any;
     const preview = await getFailedSendPreview(dispatchId);
 
     const itemsToRetry = logId
@@ -267,17 +228,7 @@ export async function retryFailedDispatchSends(dispatchId: string, logId?: strin
         throw new Error(logId ? "This specific log cannot be retried." : "No failed sends have a resolvable contact for retry.");
     }
 
-    const dispatch = await db.notificationDispatch.findUnique({
-        where: { id: dispatchId },
-        select: {
-            batch: {
-                select: {
-                    session: true,
-                    semester: true,
-                },
-            },
-        },
-    });
+    const dispatch = await findDispatchBatchSessionSemester(dispatchId);
 
     if (!dispatch) {
         throw new Error("Dispatch not found.");
@@ -300,29 +251,7 @@ export async function retryFailedDispatchSends(dispatchId: string, logId?: strin
 
         if (item.guardianEmail) {
             try {
-                const studentResult = await db.studentResult.findUnique({
-                    where: { id: item.studentResultId },
-                    select: {
-                        gpa: true,
-                        cgpa: true,
-                        courses: true,
-                        student: {
-                            select: {
-                                fullName: true,
-                                matricNumber: true,
-                                department: true,
-                                faculty: true,
-                                level: true,
-                            },
-                        },
-                        batch: {
-                            select: {
-                                session: true,
-                                semester: true,
-                            },
-                        },
-                    },
-                });
+                const studentResult = await findStudentResultForRetry(item.studentResultId);
 
                 if (!studentResult) {
                     throw new Error("Student result not found for retry attachment generation.");
@@ -367,46 +296,30 @@ export async function retryFailedDispatchSends(dispatchId: string, logId?: strin
         }
 
         if (successChannel && providerMessageId) {
-            await db.notificationLog.update({
-                where: { id: item.id },
-                data: {
-                    status: "SENT",
-                    channel: successChannel,
-                    providerMessageId,
-                    failureReason: null,
-                    deliveredAt: new Date(),
-                    attemptedAt: new Date(),
-                },
+            await updateNotificationLog(item.id, {
+                status: "SENT",
+                channel: successChannel,
+                providerMessageId,
+                failureReason: null,
+                deliveredAt: new Date(),
+                attemptedAt: new Date(),
             });
             retriedLogs.push(item.id);
         } else {
-            await db.notificationLog.update({
-                where: { id: item.id },
-                data: {
-                    attemptedAt: new Date(),
-                    failureReason: failureReason ?? "Retry failed across all available channels.",
-                },
+            await updateNotificationLog(item.id, {
+                attemptedAt: new Date(),
+                failureReason: failureReason ?? "Retry failed across all available channels.",
             });
         }
     }
 
     // Recalculate the dispatch counters based on current log statuses
-    const sentCount = await db.notificationLog.count({
-        where: { dispatchId, status: "SENT" },
-    });
+    const sentCount = await countNotificationLogsByStatus(dispatchId, "SENT");
 
-    const failedCount = await db.notificationLog.count({
-        where: { dispatchId, status: "FAILED" },
-    });
+    const failedCount = await countNotificationLogsByStatus(dispatchId, "FAILED");
 
     // Update the dispatch with new counters
-    await db.notificationDispatch.update({
-        where: { id: dispatchId },
-        data: {
-            sentCount,
-            failedCount,
-        },
-    });
+    await updateNotificationDispatchCounts(dispatchId, sentCount, failedCount);
 
     return {
         dispatchId,

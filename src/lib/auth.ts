@@ -4,7 +4,7 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
 
-import { prisma } from "@/lib/db";
+import { findAuthUserByEmail } from "@/lib/repositories/admin-repository";
 
 const credentialsSchema = z.object({
     email: z.email().transform((value) => value.toLowerCase().trim()),
@@ -28,16 +28,7 @@ export const authOptions: NextAuthOptions = {
                     return null;
                 }
 
-                const user = await prisma.user.findUnique({
-                    where: { email: parsed.data.email },
-                    select: {
-                        id: true,
-                        name: true,
-                        email: true,
-                        role: true,
-                        passwordHash: true,
-                    },
-                });
+                const user = await findAuthUserByEmail(parsed.data.email);
 
                 if (!user || user.role !== "super_admin") {
                     return null;

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/db";
+import { listGuardiansWithStudent } from "@/lib/repositories/admin-repository";
 import { getSuperAdminSession } from "@/lib/super-admin-session";
 
 export async function GET() {
@@ -9,21 +9,7 @@ export async function GET() {
     }
 
     try {
-        const guardians = await prisma.guardian.findMany({
-            orderBy: { createdAt: "desc" },
-            include: {
-                student: {
-                    select: {
-                        id: true,
-                        fullName: true,
-                        matricNumber: true,
-                        department: true,
-                        faculty: true,
-                        level: true,
-                    },
-                },
-            },
-        });
+        const guardians = await listGuardiansWithStudent();
 
         return NextResponse.json({ guardians });
     } catch (error) {

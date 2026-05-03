@@ -124,7 +124,8 @@ export async function getDashboardViewData(): Promise<DashboardViewData> {
     const dashboardWindowStart = new Date(Date.now() - dashboardWindowHours * 60 * 60 * 1000);
 
     try {
-        const [
+        const snapshot = await getDashboardSnapshot(dashboardWindowStart);
+        const {
             pendingReviewCount,
             approvedResultCount,
             sentCount,
@@ -133,59 +134,7 @@ export async function getDashboardViewData(): Promise<DashboardViewData> {
             notificationRows,
             activityRows,
             dispatchFailureRows,
-        ] = await Promise.all([
-            db.studentResult.count({ where: { status: "PENDING" } }),
-            db.studentResult.count({ where: { status: "APPROVED" } }),
-            db.notificationLog.count({
-                where: {
-                    attemptedAt: { gte: dashboardWindowStart },
-                    status: "SENT",
-                },
-            }),
-            db.notificationLog.count({
-                where: {
-                    attemptedAt: { gte: dashboardWindowStart },
-                    status: "FAILED",
-                },
-            }),
-            db.notificationDispatch.findMany({
-                take: 3,
-                orderBy: { triggeredAt: "desc" },
-                include: {
-                    batch: {
-                        select: { department: true, session: true, semester: true },
-                    },
-                    notificationLogs: {
-                        select: { status: true },
-                    },
-                },
-            }),
-            db.notificationLog.findMany({
-                where: { attemptedAt: { gte: dashboardWindowStart } },
-                select: { studentResultId: true, channel: true, status: true },
-            }),
-            db.auditLog.findMany({
-                take: 4,
-                orderBy: { createdAt: "desc" },
-                include: {
-                    actor: {
-                        select: { name: true },
-                    },
-                },
-            }),
-            db.notificationDispatch.findMany({
-                take: 8,
-                orderBy: { triggeredAt: "desc" },
-                include: {
-                    batch: {
-                        select: { department: true, session: true, semester: true },
-                    },
-                    notificationLogs: {
-                        select: { status: true },
-                    },
-                },
-            }),
-        ]);
+        } = snapshot;
 
         const totalAttempted = sentCount + failedCount;
         const deliveryRate =

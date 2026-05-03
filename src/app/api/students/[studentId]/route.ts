@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/db";
+import { findStudentDetails } from "@/lib/repositories/admin-repository";
 import { getSuperAdminSession } from "@/lib/super-admin-session";
 
 export async function GET(
@@ -15,28 +15,7 @@ export async function GET(
         const p = await params;
         const studentId = p.studentId;
         
-        const student = await prisma.student.findUnique({
-            where: { id: studentId },
-            include: {
-                guardians: true,
-                studentResults: {
-                    orderBy: { id: "desc" },
-                    include: {
-                        batch: true,
-                        portalTokens: {
-                            orderBy: { createdAt: "desc" },
-                            take: 1,
-                        },
-                    },
-                },
-                notificationLogs: {
-                    orderBy: {
-                        attemptedAt: "desc",
-                    },
-                    take: 20,
-                },
-            },
-        });
+        const student = await findStudentDetails(studentId);
 
         if (!student) {
             return NextResponse.json({ error: "Student not found" }, { status: 404 });

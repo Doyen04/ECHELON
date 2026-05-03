@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/db";
+import { listPendingAndReviewedBatches } from "@/lib/repositories/admin-repository";
 import { getSuperAdminSession } from "@/lib/super-admin-session";
 
 export async function GET() {
@@ -10,25 +10,7 @@ export async function GET() {
 
     try {
 
-        const [pendingBatches, reviewedBatches] = await Promise.all([
-            prisma.resultBatch.findMany({
-                where: { status: { in: ["PENDING", "IN_REVIEW"] } },
-                orderBy: { uploadedAt: "desc" },
-                include: {
-                    uploadedBy: { select: { name: true } },
-                    studentResults: { select: { status: true } },
-                },
-            }),
-            prisma.resultBatch.findMany({
-                where: { status: { in: ["APPROVED", "DISPATCHED"] } },
-                orderBy: { approvedAt: "desc" },
-                take: 12,
-                include: {
-                    approvedBy: { select: { name: true } },
-                    studentResults: { select: { status: true } },
-                },
-            }),
-        ]);
+        const [pendingBatches, reviewedBatches] = await listPendingAndReviewedBatches();
 
         return NextResponse.json({ pendingBatches, reviewedBatches });
     } catch (error) {

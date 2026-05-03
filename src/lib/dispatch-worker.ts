@@ -1,9 +1,17 @@
 import { randomBytes } from "node:crypto";
 
-import { prisma } from "@/lib/db";
 import { sendEmail } from "@/lib/notifications/email-provider";
 import { sendWhatsApp } from "@/lib/notifications/whatsapp-provider";
 import { sendSms } from "@/lib/notifications/sms-provider";
+import {
+    createNotificationLog,
+    createPortalToken,
+    findNotificationDispatchById,
+    findStudentResultForDispatch,
+    findValidPortalToken,
+    incrementDispatchProgress,
+    updateDispatchStatus,
+} from "@/lib/repositories/notification-repository";
 import { buildResultNotificationEmailTemplate } from "@/lib/result-email-template";
 import { buildStudentResultPdfAttachment } from "@/lib/result-email-pdf";
 import type { NotifyJobPayload } from "@/lib/queue";
@@ -42,17 +50,9 @@ function selectChannels(guardian: any): ChannelSelection[] {
 }
 
 async function getOrCreatePortalToken(studentResultId: string) {
-    const db = prisma as any;
     const now = new Date();
 
-    const existingToken = await db.portalToken.findFirst({
-        where: {
-            studentResultId,
-            invalidated: false,
-            expiresAt: { gt: now },
-        },
-        orderBy: { createdAt: "desc" },
-    });
+    const existingToken = await findValidPortalToken(studentResultId, now);
 
     if (existingToken) {
         return existingToken.token as string;
@@ -62,12 +62,10 @@ async function getOrCreatePortalToken(studentResultId: string) {
     const expiryDays = Number(process.env.TOKEN_EXPIRY_DAYS ?? "30");
     const expiresAt = new Date(now.getTime() + expiryDays * 24 * 60 * 60 * 1000);
 
-    await db.portalToken.create({
-        data: {
-            studentResultId,
-            token,
-            expiresAt,
-        },
+    await createPortalToken({
+        studentResultId,
+        token,
+        expiresAt,
     });
 
     return token;
@@ -110,6 +108,9 @@ async function sendNotification(
                     gpa: Number(payload.studentResult?.gpa ?? 0),
                     cgpa: payload.studentResult?.cgpa ?? null,
                     courses: courseRows,
+                    institutionName: payload.studentResult?.batch?.institution?.name ?? payload.studentResult?.student?.institution?.name ?? "Mountain Top University",
+                    logoUrl: payload.studentResult?.batch?.institution?.logoUrl ?? payload.studentResult?.student?.institution?.logoUrl ?? null,
+                    submissionId: payload.studentResult?.batch?.id ?? null,
                 });
                 attachments.push(attachment);
             } catch {
@@ -226,11 +227,10 @@ async function sendGuardianNotifications(
     studentResult: any,
     portalLink: string,
 ) {
-    const db = prisma as any;
     const channelSelections = selectChannels(guardian);
 
     if (channelSelections.length === 0) {
-        await db.notificationLog.create({
+        await createNotificationLog({
             data: {
                 dispatchId: studentResult.dispatchId,
                 studentResultId: studentResult.id,
@@ -264,7 +264,7 @@ async function sendGuardianNotifications(
             studentResult,
         });
 
-        await db.notificationLog.create({
+        await createNotificationLog({
             data: {
                 dispatchId: studentResult.dispatchId,
                 studentResultId: studentResult.id,
@@ -295,18 +295,9 @@ async function sendGuardianNotifications(
 }
 
 async function markDispatchProgress(dispatchId: string, ok: boolean) {
-    const db = prisma as any;
+    await incrementDispatchProgress(dispatchId, ok);
 
-    await db.notificationDispatch.update({
-        where: { id: dispatchId },
-        data: {
-            status: "PROCESSING",
-            sentCount: { increment: ok ? 1 : 0 },
-            failedCount: { increment: ok ? 0 : 1 },
-        },
-    });
-
-    const dispatch = await db.notificationDispatch.findUnique({ where: { id: dispatchId } });
+    const dispatch = await findNotificationDispatchById(dispatchId);
 
     if (!dispatch) {
         return;
@@ -317,29 +308,12 @@ async function markDispatchProgress(dispatchId: string, ok: boolean) {
         return;
     }
 
-    await db.notificationDispatch.update({
-        where: { id: dispatchId },
-        data: {
-            status: dispatch.failedCount > 0 ? "PARTIAL_FAILURE" : "COMPLETE",
-        },
-    });
+    await updateDispatchStatus(dispatchId, dispatch.failedCount > 0 ? "PARTIAL_FAILURE" : "COMPLETE");
 }
 
 export async function processNotifyJob(payload: NotifyJobPayload): Promise<DispatchWorkerResult> {
-    const db = prisma as any;
-
     try {
-        const studentResult = await db.studentResult.findUnique({
-            where: { id: payload.studentResultId },
-            include: {
-                student: {
-                    include: {
-                        guardians: true,
-                    },
-                },
-                batch: true,
-            },
-        });
+        const studentResult = await findStudentResultForDispatch(payload.studentResultId);
 
         if (!studentResult) {
             await markDispatchProgress(payload.dispatchId, false);
@@ -354,7 +328,7 @@ export async function processNotifyJob(payload: NotifyJobPayload): Promise<Dispa
         const guardians = studentResult.student.guardians as any[];
 
         if (guardians.length === 0) {
-            await db.notificationLog.create({
+            await createNotificationLog({
                 data: {
                     dispatchId: payload.dispatchId,
                     studentResultId: studentResult.id,
