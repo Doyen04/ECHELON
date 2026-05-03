@@ -28,20 +28,20 @@ export async function GET(
 
         const notificationLogs = await listDispatchNotificationLogs(dispatchId);
 
-        const studentIds = [
-            ...new Set(
+        const studentIds: string[] = Array.from(
+            new Set<string>(
                 notificationLogs
                     .map((log: { studentId: string | null }) => log.studentId)
                     .filter((id: string | null): id is string => Boolean(id)),
             ),
-        ];
-        const guardianIds = [
-            ...new Set(
+        );
+        const guardianIds: string[] = Array.from(
+            new Set<string>(
                 notificationLogs
                     .map((log: { guardianId: string | null }) => log.guardianId)
                     .filter((id: string | null): id is string => Boolean(id)),
             ),
-        ];
+        );
 
         const [students, guardians] = await Promise.all([
             listStudentsByIds(studentIds),
