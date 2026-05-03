@@ -61,7 +61,7 @@ export default function DashboardClient({ data }: Props) {
                   className='rounded-full bg-white px-6 text-[#1D4B8F] hover:bg-blue-50'
                 >
                   <Link
-                    href='/admin/batches/upload'
+                    href='/admin/upload'
                     className='inline-flex items-center gap-2'
                   >
                     Get Started

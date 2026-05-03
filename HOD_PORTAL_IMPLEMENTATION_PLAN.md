@@ -37,7 +37,7 @@ This document details a comprehensive expansion of the ECHELON results managemen
 
 **Current Upload Flow:**
 
-1. Super-admin → `/admin/batches/upload`
+1. Super-admin → `/admin/upload`
 2. Upload CSV/PDF for department + semester
 3. Results auto-dispatch OR pending admin approval
 4. Guardians notified with portal link
@@ -531,7 +531,7 @@ export async function getProgramsForHod(departmentId: string) {
 
 #### 2.3: HOD Upload API
 
-**New File: `src/app/api/hod/batches/upload/route.ts`**
+**New File: `src/app/api/hod/upload/route.ts`**
 
 ```typescript
 import { NextResponse } from "next/server";
@@ -811,7 +811,7 @@ export default async function HodLayout({ children }: HodLayoutProps) {
 }
 ```
 
-**New File: `src/app/hod/batches/upload/page.tsx`** (similar to admin upload, but with program field)
+**New File: `src/app/hod/upload/page.tsx`** (similar to admin upload, but with program field)
 
 **New File: `src/app/hod/batches/page.tsx`** (list HOD's own batches)
 
@@ -824,7 +824,7 @@ export default async function HodLayout({ children }: HodLayoutProps) {
 - Form fields: Session, Semester, **Program dropdown** (loads from `/api/hod/programs`), **Level**
 - File upload
 - Duplicate warning modal
-- Call `/api/hod/batches/upload`
+- Call `/api/hod/upload`
 
 ---
 
@@ -1032,7 +1032,7 @@ export async function POST(
 ### Scenario 1: HOD Uploads for Software Engineering Level 200
 
 ```
-1. HOD logs into /hod/batches/upload
+1. HOD logs into /hod/upload
 2. Form loads programs: [Computer Science, Software Engineering, Cybersecurity, Data Science]
 3. Selects:
    - Session: 2024/2025
@@ -1275,9 +1275,9 @@ VALUES
 - `src/app/hod/layout.tsx` (NEW)
 - `src/app/hod/dashboard/page.tsx` (NEW)
 - `src/app/hod/batches/page.tsx` (NEW)
-- `src/app/hod/batches/upload/page.tsx` (NEW)
+- `src/app/hod/upload/page.tsx` (NEW)
 - `src/app/hod/batches/[batchId]/page.tsx` (NEW)
-- `src/app/api/hod/batches/upload/route.ts` (NEW)
+- `src/app/api/hod/upload/route.ts` (NEW)
 - `src/app/api/hod/batches/[batchId]/cancel/route.ts` (NEW)
 - `src/app/api/hod/programs/route.ts` (NEW)
 
@@ -1311,7 +1311,7 @@ When sharing this plan with another AI, provide:
 1. **This entire document** as context
 2. **Current schema** from `prisma/schema.prisma`
 3. **Existing auth setup** from `src/lib/auth.ts`
-4. **Existing upload flow** from `src/app/api/batches/upload/route.ts`
+4. **Existing upload flow** from `src/app/api/upload/route.ts`
 5. **Codebase structure** from workspace explorer
 
 Key context to communicate:

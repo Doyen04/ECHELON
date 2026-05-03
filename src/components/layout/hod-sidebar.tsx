@@ -35,7 +35,7 @@ const navItems: Array<{ section: string; items: NavItem[] }> = [
         section: "Results Management",
         items: [
             { label: "My Batches", href: "/hod/batches", icon: ClipboardList },
-            { label: "Upload Result", href: "/hod/batches/upload", icon: Upload },
+            { label: "Upload Result", href: "/hod/upload", icon: Upload },
         ],
     },
 ];
