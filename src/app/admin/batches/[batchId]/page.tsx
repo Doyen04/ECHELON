@@ -14,6 +14,7 @@ import { StatusBadge } from "@/components/shared/badges";
 import { SummaryCard } from "@/components/shared/summary-card";
 import { DataTable } from "@/components/shared/data-table";
 import { ApproveDispatchButton } from "@/components/features/admin/approve-dispatch-button";
+import { RejectBatchButton } from "@/components/features/admin/reject-batch-button";
 import { ExportButton } from "@/components/features/admin/export-button";
 import { ApiGate } from "@/components/shared/api-gate";
 import { columns } from "./columns";
@@ -89,6 +90,11 @@ export default function BatchDetailPage({ params }: BatchPageProps) {
                                         batchId={batch.id}
                                         disabled={!(batch.status === "PENDING" || batch.status === "IN_REVIEW")}
                                         onSuccess={handleApproveSuccess}
+                                    />
+                                    <RejectBatchButton
+                                        batchId={batch.id}
+                                        disabled={!(batch.status === "PENDING" || batch.status === "IN_REVIEW")}
+                                        onSuccess={() => execute()}
                                     />
                                     <ExportButton
                                         endpoint={`/api/batches/${batch.id}/export`}

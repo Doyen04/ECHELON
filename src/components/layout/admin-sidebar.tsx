@@ -53,6 +53,7 @@ const navItems: Array<{ section: string; items: NavItem[] }> = [
         section: "Admin",
         items: [
             { label: "Contacts", href: "/admin/contacts", icon: Users },
+            { label: "Manage Users", href: "/admin/users", icon: Users },
             { label: "Audit Log", href: "/admin/audit", icon: BookOpen },
             { label: "Settings", href: "/admin/settings", icon: Settings },
         ],

@@ -17,6 +17,13 @@ export async function GET() {
                 session: true,
                 semester: true,
                 department: true,
+                program: {
+                    select: {
+                        name: true,
+                        department: { select: { name: true } }
+                    }
+                },
+                level: true,
                 source: true,
                 status: true,
                 uploadedAt: true,

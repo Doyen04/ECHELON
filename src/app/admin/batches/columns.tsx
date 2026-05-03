@@ -29,9 +29,21 @@ export const columns = [
         cell: (batch: any) => semesterLabel(batch.semester),
     },
     {
-        header: "Department",
-        accessorKey: "department",
-        className: "w-36 text-sm font-medium text-foreground",
+        header: "Program / Level",
+        accessorKey: "program",
+        className: "w-48 text-sm font-medium text-foreground",
+        cell: (batch: any) => (
+            <>
+                <div className="font-semibold text-slate-200">
+                    {batch.program?.name || batch.department}
+                </div>
+                {batch.level && (
+                    <div className="mt-0.5 text-[10px] font-mono text-slate-500 uppercase">
+                        {batch.level} Level
+                    </div>
+                )}
+            </>
+        ),
     },
     {
         header: "Students",

@@ -1,29 +1,21 @@
 "use client";
 
-import React, { useState } from "react";
+import { useState } from "react";
 import { useSearchParams } from "next/navigation";
 import {
   Save,
-  UploadCloud,
-  AlertTriangle,
   Mail,
   Phone,
-  Plus,
   Trash2,
   ShieldAlert,
-  Building2,
   BellRing,
-  Users2,
-  Info,
 } from "lucide-react";
 import { PageHeader } from "@/components/shared/page-header";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { DataTable } from "@/components/shared/data-table";
-import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
-type Tab = "templates" | "users" | "danger";
+type Tab = "templates" | "danger";
 
 export default function SettingsPage() {
   const searchParams = useSearchParams();
@@ -33,7 +25,7 @@ export default function SettingsPage() {
 
   const tabs = [
     { id: "templates", label: "Notification Layouts", icon: BellRing },
-    { id: "users", label: "Admin Access", icon: Users2 },
+
     {
       id: "danger",
       label: "System Control",
@@ -113,7 +105,6 @@ export default function SettingsPage() {
             {activeTab === "templates" && (
               <TemplatesTab onChange={() => setHasChanges(true)} />
             )}
-            {activeTab === "users" && <UsersTab />}
             {activeTab === "danger" && <DangerTab />}
           </div>
         </div>
@@ -256,100 +247,6 @@ function TemplatesTab({ onChange }: { onChange: () => void }) {
           </div>
         </div>
       </div>
-    </Card>
-  );
-}
-
-function UsersTab() {
-  const MOCK_USERS = [
-    {
-      id: 1,
-      name: "Registry Admin",
-      email: "admin@unitech.edu.ng",
-      role: "Super Admin",
-      status: "Active",
-    },
-    { id: 2, name: "Exams & Records", row: "Exams Officer", status: "Active" },
-    {
-      id: 3,
-      name: "Senate Secretary",
-      email: "senate@unitech.edu.ng",
-      role: "Reviewer",
-      status: "Active",
-    },
-  ];
-
-  return (
-    <Card className='rounded-xl border-border bg-card overflow-hidden animate-in fade-in duration-500'>
-      <div className='p-6 border-b border-border bg-muted/20 flex items-center justify-between'>
-        <div>
-          <h2 className='text-sm font-bold text-foreground uppercase tracking-wider'>
-            Admin Access
-          </h2>
-          <p className='text-xs text-muted-foreground mt-1'>
-            Manage academic officers and their system permissions.
-          </p>
-        </div>
-        <Button
-          size='sm'
-          className='rounded-xl font-bold uppercase tracking-tight text-[10px] h-9'
-        >
-          <Plus className='h-3.5 w-3.5 mr-1.5' /> New Admin
-        </Button>
-      </div>
-
-      <DataTable
-        className='border-0'
-        hideCount
-        data={MOCK_USERS}
-        columns={[
-          {
-            header: "User Detail",
-            className: "px-6 py-4",
-            cell: (row) => (
-              <div className='flex flex-col'>
-                <span className='text-sm font-bold text-foreground'>
-                  {row.name}
-                </span>
-                <span className='text-[10px] font-medium text-muted-foreground'>
-                  {row.email || "No email assigned"}
-                </span>
-              </div>
-            ),
-          },
-          {
-            header: "System Role",
-            className: "px-6 py-4",
-            cell: (row) => (
-              <Badge
-                variant='outline'
-                className='h-5 rounded-md px-1.5 text-[9px] font-bold uppercase tracking-tight'
-              >
-                {row.role || "Officer"}
-              </Badge>
-            ),
-          },
-          {
-            header: "Status",
-            className: "px-6 py-4",
-            cell: (row) => (
-              <div className='flex items-center gap-1.5 text-[10px] font-bold uppercase text-emerald-600'>
-                <div className='w-1.5 h-1.5 rounded-full bg-emerald-500'></div>{" "}
-                {row.status}
-              </div>
-            ),
-          },
-          {
-            header: "",
-            className: "px-6 py-4 text-right",
-            cell: () => (
-              <button className='text-[10px] font-bold text-muted-foreground hover:text-foreground uppercase'>
-                Manage
-              </button>
-            ),
-          },
-        ]}
-      />
     </Card>
   );
 }
