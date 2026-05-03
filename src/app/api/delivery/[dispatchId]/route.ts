@@ -32,14 +32,14 @@ export async function GET(
             ...new Set(
                 notificationLogs
                     .map((log: { studentId: string | null }) => log.studentId)
-                    .filter((id): id is string => Boolean(id)),
+                    .filter((id: string | null): id is string => Boolean(id)),
             ),
         ];
         const guardianIds = [
             ...new Set(
                 notificationLogs
                     .map((log: { guardianId: string | null }) => log.guardianId)
-                    .filter((id): id is string => Boolean(id)),
+                    .filter((id: string | null): id is string => Boolean(id)),
             ),
         ];
 
