@@ -52,15 +52,45 @@ model Institution {
     createdAt     DateTime      @default(now())
     users         User[]
     students      Student[]
+    departments   Department[]  // Added for HOD Portal
     resultBatches ResultBatch[]
     auditLogs     AuditLog[]
+}
+
+model Department {
+    id            String      @id @default(cuid())
+    institutionId String
+    institution   Institution @relation(fields: [institutionId], references: [id], onDelete: Cascade)
+    code          String      // "CSM"
+    name          String      // "Computer Science & Mathematics"
+    programs      Program[]
+    users         User[]      // HODs
+    createdAt     DateTime    @default(now())
+
+    @@unique([institutionId, code])
+    @@index([institutionId])
+}
+
+model Program {
+    id            String      @id @default(cuid())
+    departmentId  String
+    department    Department  @relation(fields: [departmentId], references: [id], onDelete: Cascade)
+    code          String      // "CS", "SWE", etc.
+    name          String      // "Computer Science", "Software Engineering"
+    resultBatches ResultBatch[]
+    createdAt     DateTime    @default(now())
+
+    @@unique([departmentId, code])
+    @@index([departmentId])
 }
 
 model User {
     id              String                 @id @default(cuid())
     institutionId   String
     institution     Institution            @relation(fields: [institutionId], references: [id], onDelete: Cascade)
-    role            String                 @default("super_admin")
+    role            String                 @default("super_admin") // "super_admin" or "hod"
+    departmentId    String?                // NEW: nullable, set for HOD
+    department      Department?            @relation(fields: [departmentId], references: [id], onDelete: SetNull)
     name            String
     email           String                 @unique
     passwordHash    String
@@ -72,7 +102,7 @@ model User {
     dispatches      NotificationDispatch[] @relation("TriggeredBy")
     auditLogs       AuditLog[]             @relation("AuditActor")
 
-    @@index([institutionId])
+    @@index([institutionId, role, departmentId])
 }
 
 model Student {
@@ -111,9 +141,15 @@ model ResultBatch {
     id             String                 @id @default(cuid())
     institutionId  String
     institution    Institution            @relation(fields: [institutionId], references: [id], onDelete: Cascade)
+    
+    // CHANGED: programId instead of department string
+    programId      String?                 // Temporary nullable for migration
+    program        Program?                @relation(fields: [programId], references: [id], onDelete: Restrict)
+    
     session        String
     semester       Semester
-    department     String
+    department     String                 // Keep for now, will drop after migration
+    level          Int?                   // NEW: 100, 200, 300, 400
     status         BatchStatus            @default(PENDING)
     uploadedById   String
     uploadedBy     User                   @relation("UploadedBy", fields: [uploadedById], references: [id], onDelete: Restrict)
@@ -126,9 +162,10 @@ model ResultBatch {
     studentResults StudentResult[]
     dispatches     NotificationDispatch[]
 
+    @@unique([programId, session, semester, level])
     @@index([institutionId, status])
     @@index([uploadedAt])
-    @@index([session, semester, department])
+    @@index([programId, status])
 }
 
 model StudentResult {
