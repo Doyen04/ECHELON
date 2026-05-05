@@ -185,6 +185,7 @@ export async function countNotificationLogsByStatus(dispatchId: string, status: 
     });
 }
 
+
 export async function updateNotificationDispatchCounts(dispatchId: string, sentCount: number, failedCount: number) {
     return db.notificationDispatch.update({
         where: { id: dispatchId },
