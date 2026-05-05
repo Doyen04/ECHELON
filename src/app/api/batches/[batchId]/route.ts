@@ -27,6 +27,7 @@ export async function GET(
                         id: true,
                         gpa: true,
                         cgpa: true,
+                        courses: true,
                         status: true,
                         withheldReason: true,
                         student: { select: { fullName: true, matricNumber: true } },

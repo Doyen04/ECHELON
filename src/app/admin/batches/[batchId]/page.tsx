@@ -17,9 +17,10 @@ import { ApproveDispatchButton } from "@/components/features/admin/approve-dispa
 import { RejectBatchButton } from "@/components/features/admin/reject-batch-button";
 import { ExportButton } from "@/components/features/admin/export-button";
 import { ApiGate } from "@/components/shared/api-gate";
-import { columns } from "./columns";
+import { getColumns } from "./columns";
 import { Breadcrumbs } from "@/components/shared/breadcrumbs";
 import { toast } from "sonner";
+import { StudentReviewDrawer } from "@/components/features/admin/student-review-drawer";
 
 import {
     formatDateTime,
@@ -37,6 +38,8 @@ type BatchPageProps = {
 export default function BatchDetailPage({ params }: BatchPageProps) {
     const { batchId } = use(params);
     const [successMessage, setSuccessMessage] = useState<string | null>(null);
+    const [selectedStudent, setSelectedStudent] = useState<any>(null);
+    const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
     const {
         data: batch,
@@ -52,6 +55,13 @@ export default function BatchDetailPage({ params }: BatchPageProps) {
         });
         execute();
     };
+
+    const handleReviewStudent = (student: any) => {
+        setSelectedStudent(student);
+        setIsDrawerOpen(true);
+    };
+
+    const columns = getColumns(handleReviewStudent);
 
     return (
         <ApiGate
@@ -249,6 +259,12 @@ export default function BatchDetailPage({ params }: BatchPageProps) {
                                 </aside>
                             </div>
                         </main>
+
+                        <StudentReviewDrawer 
+                            studentResult={selectedStudent}
+                            isOpen={isDrawerOpen}
+                            onOpenChange={setIsDrawerOpen}
+                        />
                     </div>
                 );
             }}

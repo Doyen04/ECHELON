@@ -4,7 +4,7 @@ import { getHodSession } from "@/lib/hod-session";
 import {
   parseStudentRowsFromCsv,
   parseStudentRowsFromPdf,
-} from "@/lib/result-import";
+} from "@/lib/result-import-old";
 import {
   validateLevelConsistency,
   checkDuplicateBatch,
@@ -154,7 +154,7 @@ export async function POST(request: Request) {
             where: { matricNumber: row.matricNumber },
             update: {
               fullName: row.studentName,
-              department: row.department, 
+              department: row.department,
               faculty: row.faculty,
               level: row.level,
             },

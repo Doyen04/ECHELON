@@ -7,7 +7,7 @@ import {
     parseStudentRowsFromCsv,
     parseStudentRowsFromPdf,
     type StudentImportRow,
-} from "@/lib/result-import";
+} from "@/lib/result-import-old";
 import { getSuperAdminSession } from "@/lib/super-admin-session";
 
 const SEMESTER_VALUES = new Set(["FIRST", "SECOND", "THIRD"]);
@@ -83,13 +83,15 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: "Invalid program selected." }, { status: 400 });
     }
 
+    const overwrite = parseBoolean(String(formData.get("overwrite") ?? ""));
+
     // Check duplicate
     const duplicate = await prisma.resultBatch.findFirst({
         where: { programId, session: sessionLabel, semester: semester as any, level },
         select: { id: true, uploadedAt: true, status: true },
     });
 
-    if (duplicate) {
+    if (duplicate && !overwrite) {
         return NextResponse.json(
             {
                 isDuplicate: true,
@@ -128,6 +130,12 @@ export async function POST(request: Request) {
     }
 
     const batch = await db.$transaction(async (tx: any) => {
+        if (overwrite && duplicate) {
+            await tx.resultBatch.delete({
+                where: { id: duplicate.id }
+            });
+        }
+
         const createdBatch = await tx.resultBatch.create({
             data: {
                 institutionId: actor.institutionId,

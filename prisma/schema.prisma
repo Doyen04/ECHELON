@@ -16,6 +16,7 @@ enum Semester {
 enum BatchStatus {
     PENDING
     IN_REVIEW
+    REJECTED
     APPROVED
     DISPATCHED
 }

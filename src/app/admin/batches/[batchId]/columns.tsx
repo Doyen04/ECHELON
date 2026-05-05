@@ -5,18 +5,21 @@ import { StatusBadge } from "@/components/shared/badges";
 import { toBadgeStatus, relativeTimeFromNow } from "@/lib/admin-format";
 import { Badge } from "@/components/ui/badge";
 
-export const columns = [
+import { Eye } from "lucide-react";
+import { Button } from "@/components/ui/button";
+
+export const getColumns = (onReview: (student: any) => void) => [
     {
         header: "Student",
         accessorKey: "student",
         className: "px-6 py-4 text-sm text-foreground",
         cell: (row: any) => (
-            <div className="flex items-center gap-3">
-                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-muted text-[10px] font-bold text-muted-foreground">
+            <div className="flex items-center gap-3 min-w-[200px]">
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-muted text-[10px] font-bold text-muted-foreground shrink-0">
                     {row.student.fullName.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2)}
                 </div>
-                <div>
-                    <div className="font-bold text-sm">{row.student.fullName}</div>
+                <div className="truncate">
+                    <div className="font-bold text-sm truncate">{row.student.fullName}</div>
                     <div className="text-[10px] font-mono text-muted-foreground uppercase tracking-tight">
                         {row.student.matricNumber}
                     </div>
@@ -49,56 +52,28 @@ export const columns = [
         cell: (row: any) => row.cgpa ? Number(row.cgpa).toFixed(2) : <span className="text-muted-foreground/30">—</span>,
     },
     {
-        header: "Token",
-        accessorKey: "token",
-        className: "px-6 py-4 text-sm text-(--text-secondary)",
-        cell: (row: any) => {
-            const token = row.portalTokens?.[0]?.token;
-            return token ? (
-                <Link
-                    href={`/results/view?token=${token}`}
-                    target="_blank"
-                    className="text-brand hover:underline"
-                >
-                    View portal link
-                </Link>
-            ) : (
-                "Not generated"
-            );
-        },
-    },
-    {
-        header: "Accessed",
-        accessorKey: "accessed",
-        className: "px-6 py-4 text-sm text-(--text-secondary)",
-        cell: (row: any) => {
-            const portalToken = row.portalTokens?.[0];
-            if (!portalToken) return <span className="text-(--text-muted)">N/A</span>;
-            if (!portalToken.viewedAt) return <span className="text-(--text-muted)">Not viewed yet</span>;
-            return <span className="text-[var(--color-success)]">Viewed {relativeTimeFromNow(portalToken.viewedAt)}</span>;
-        },
-    },
-    {
         header: "Courses",
         accessorKey: "courses",
-        className: "px-4 py-4 min-w-[200px]",
+        className: "px-4 py-4",
         cell: (row: any) => {
             const courses = Array.isArray(row.courses) ? row.courses : [];
-            return (
-                <div className="flex flex-wrap gap-1">
-                    {courses.slice(0, 3).map((c: any, i: number) => (
-                        <div key={i} className="flex items-center gap-1 rounded bg-muted/50 px-1.5 py-0.5 text-[9px] font-bold border border-border/50">
-                            <span className="text-muted-foreground">{c.courseCode}:</span>
-                            <span className="text-brand">{c.grade}</span>
-                        </div>
-                    ))}
-                    {courses.length > 3 && (
-                        <Badge variant="outline" className="h-4 px-1 text-[8px] font-bold text-muted-foreground">
-                            +{courses.length - 3} more
-                        </Badge>
-                    )}
-                </div>
-            );
+            return <span className="text-xs font-medium text-muted-foreground">{courses.length} Units</span>;
         },
+    },
+    {
+        header: "Actions",
+        accessorKey: "actions",
+        className: "px-6 py-4 text-right",
+        cell: (row: any) => (
+            <Button 
+                variant="ghost" 
+                size="sm" 
+                className="gap-2 h-8 text-[10px] font-bold uppercase tracking-widest text-brand hover:text-brand-hover hover:bg-brand/5"
+                onClick={() => onReview(row)}
+            >
+                <Eye className="h-3 w-3" />
+                Review Detail
+            </Button>
+        ),
     },
 ];

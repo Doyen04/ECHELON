@@ -229,6 +229,10 @@ export default function BatchUploadPage() {
     batchId: string;
     students: number;
   } | null>(null);
+  const [duplicateBatch, setDuplicateBatch] = useState<{
+    id: string;
+    message: string;
+  } | null>(null);
   const [uploadProgress, setUploadProgress] = useState(0);
 
   const selectedFileType = React.useMemo(() => {
@@ -324,6 +328,7 @@ export default function BatchUploadPage() {
     setValidation(null);
     setSubmitError(null);
     setSubmitSuccess(null);
+    setDuplicateBatch(null);
     setUploadProgress(0);
   };
 
@@ -425,16 +430,28 @@ export default function BatchUploadPage() {
       payload.append("level", levelValue);
 
 
-      const response = await fetch("/api/upload", {
+      const response = await fetch("/api/batches/upload", {
         method: "POST",
         body: payload,
       });
 
-      clearInterval(progressInterval);
-
       const responseBody = await response.json().catch(() => null);
+
       if (!response.ok) {
+        clearInterval(progressInterval);
         setUploadProgress(0);
+
+        if (responseBody?.isDuplicate) {
+          setDuplicateBatch({
+            id: responseBody.existingBatchId,
+            message: responseBody.message,
+          });
+          toast.warning("Duplicate Batch Detected", {
+            description: responseBody.message,
+          });
+          return;
+        }
+
         setSubmitError(
           responseBody?.error ?? "Upload failed. Please try again.",
         );
@@ -461,6 +478,59 @@ export default function BatchUploadPage() {
         description:
           "An error occurred while uploading. Check your connection.",
       });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleOverwriteUpload = async () => {
+    if (!file || isSubmitting) return;
+    
+    setDuplicateBatch(null); // Clear the warning
+    
+    setIsSubmitting(true);
+    setSubmitError(null);
+    setUploadProgress(10);
+
+    const progressInterval = setInterval(() => {
+      setUploadProgress((prev) => {
+        if (prev >= 90) return prev;
+        return prev + 10;
+      });
+    }, 500);
+
+    try {
+      const payload = new FormData();
+      payload.append("file", file);
+      payload.append("session", sessionValue);
+      payload.append("semester", semesterValue);
+      payload.append("programId", programId);
+      payload.append("level", levelValue);
+      payload.append("overwrite", "true"); // Explicitly request overwrite
+
+      const response = await fetch("/api/batches/upload", {
+        method: "POST",
+        body: payload,
+      });
+
+      clearInterval(progressInterval);
+      const responseBody = await response.json().catch(() => null);
+
+      if (!response.ok) {
+        setUploadProgress(0);
+        setSubmitError(responseBody?.error ?? "Overwrite failed.");
+        return;
+      }
+
+      setSubmitSuccess({
+        batchId: responseBody.batchId,
+        students: Number(responseBody.students ?? 0),
+      });
+      setUploadProgress(100);
+      toast.success("Upload Overwritten Successfully");
+    } catch (error) {
+      console.error("Overwrite failed", error);
+      setSubmitError("Network error during overwrite.");
     } finally {
       setIsSubmitting(false);
     }
@@ -878,6 +948,41 @@ export default function BatchUploadPage() {
               </div>
             ) : null}
 
+            {duplicateBatch && !submitSuccess && (
+              <Card className='p-6 border-amber-500/30 bg-amber-500/5 animate-in zoom-in-95 duration-300'>
+                <div className='flex items-start gap-4'>
+                  <div className='p-2 rounded-full bg-amber-500/10 text-amber-600 shrink-0'>
+                    <AlertTriangle className='h-6 w-6' />
+                  </div>
+                  <div className='space-y-3 flex-1'>
+                    <h3 className='text-lg font-bold text-amber-900'>Existing Batch Found</h3>
+                    <p className='text-sm text-amber-800/80 leading-relaxed'>
+                      {duplicateBatch.message}
+                    </p>
+                    
+                    <div className='flex flex-wrap gap-3 pt-2'>
+                      <Button 
+                        asChild
+                        variant="outline" 
+                        className="border-amber-200 bg-white text-amber-700 hover:bg-amber-50"
+                      >
+                        <Link href={`/admin/batches/${duplicateBatch.id}`}>
+                          Review Existing Batch
+                        </Link>
+                      </Button>
+                      <Button 
+                        onClick={handleOverwriteUpload}
+                        disabled={isSubmitting}
+                        className="bg-amber-600 hover:bg-amber-700 text-white"
+                      >
+                        {isSubmitting ? "Overwriting..." : "Overwrite and Re-upload"}
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </Card>
+            )}
+
             {submitSuccess ? (
               <Card className='border-emerald-500/20 bg-emerald-500/5 p-6 animate-in zoom-in-95 duration-300'>
                 <div className='flex items-center gap-3 text-emerald-600 mb-4'>
@@ -905,10 +1010,12 @@ export default function BatchUploadPage() {
                   <div className='flex flex-wrap gap-3 pt-2'>
                     <Button
                       asChild
-                      variant='outline'
-                      className='bg-white hover:bg-emerald-50 text-emerald-700 border-emerald-200'
+                      className='bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm'
                     >
-                      <Link href='/admin/dashboard'>View Dashboard</Link>
+                      <Link href={`/admin/batches/${submitSuccess.batchId}`}>
+                        Review Results
+                        <ArrowRight className="ml-2 h-4 w-4" />
+                      </Link>
                     </Button>
                   </div>
                 </div>

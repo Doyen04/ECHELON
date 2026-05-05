@@ -3,7 +3,7 @@ import fs from "node:fs";
 const pdfParseModule = await import("pdf-parse");
 const ParserClass = pdfParseModule.PDFParse;
 
-const buf = fs.readFileSync("C:\\Users\\HP\\Documents\\400lvl\\results\\document (1).pdf");
+const buf = fs.readFileSync("c:\\Users\\HP\\Desktop\\ECHELON\\prisma\\Mountain Top University - Examination Results.pdf");
 const parser = new ParserClass({ data: Buffer.from(buf) });
 const parsed = await parser.getText();
 await parser.destroy();
@@ -28,16 +28,22 @@ for (const line of lines) {
 }
 console.log(`\nStudent rows matched: ${matched}`);
 
+console.log("--- RAW LINES (FIRST 100) ---");
+lines.slice(0, 100).forEach((l, i) => console.log(`${i}: ${l}`));
+
 // Test course code extraction
 const startIndex = lines.findIndex(l => /course\s*codes/i.test(l));
-const endIndex = lines.findIndex((l, i) => i > startIndex && /course\s*status/i.test(l));
-const scoped = lines.slice(startIndex + 1, endIndex > startIndex ? endIndex : lines.length);
-const tokens = scoped.join(" ").split(/\s+/).filter(Boolean);
-const codes = [];
-for (let i = 0; i < tokens.length - 1; i++) {
-    if (/^[A-Z]{2,4}$/i.test(tokens[i]) && /^\d{3}[A-Z]?$/i.test(tokens[i+1])) {
-        codes.push(tokens[i] + tokens[i+1]);
-        i++;
-    }
+console.log(`\nCourse Codes Line Index: ${startIndex}`);
+if (startIndex !== -1) {
+    console.log(`Line ${startIndex}: ${lines[startIndex]}`);
+    console.log(`Line ${startIndex+1}: ${lines[startIndex+1]}`);
+    console.log(`Line ${startIndex+2}: ${lines[startIndex+2]}`);
 }
-console.log(`\nCourse codes found (${codes.length}):`, codes.join(", "));
+
+const unitsLineIdx = lines.findIndex(l => /no\.\s*of\s*units/i.test(l));
+console.log(`\nUnits Line Index: ${unitsLineIdx}`);
+if (unitsLineIdx !== -1) {
+    console.log(`Line ${unitsLineIdx}: ${lines[unitsLineIdx]}`);
+    const unitTokens = lines[unitsLineIdx].split(/\s+/).filter(t => /^\d+$/.test(t)).map(Number);
+    console.log("Unit Tokens:", unitTokens);
+}

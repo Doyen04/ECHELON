@@ -43,7 +43,7 @@ const navItems: Array<{ section: string; items: NavItem[] }> = [
     section: "Results",
     items: [
       { label: "Result Batches", href: "/admin/batches", icon: ClipboardList },
-      { label: "Upload Batch", href: "/admin/upload", icon: Upload },
+      { label: "Upload Batch", href: "/admin/batches/upload", icon: Upload },
       { label: "Approvals", href: "/admin/approvals", icon: ShieldCheck },
     ],
   },

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { prisma } from "@/lib/db";
-import { parseParentContactsFromCsv } from "@/lib/result-import";
+import { parseParentContactsFromCsv } from "@/lib/result-import-old";
 import { getSuperAdminSession } from "@/lib/super-admin-session";
 
 export async function POST(request: Request) {
