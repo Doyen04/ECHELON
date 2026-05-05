@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { getHodSession } from "@/lib/hod-session";
-import { checkDuplicateBatch } from "@/lib/hod-upload-validation";
+import { checkDuplicateBatch, parseSemester } from "@/lib/hod-upload-validation";
 
 export async function GET(request: Request) {
   const session = await getHodSession();
@@ -12,7 +12,7 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const programId = searchParams.get("programId");
   const academicSession = searchParams.get("session");
-  const semester = searchParams.get("semester");
+  const semester = parseSemester(searchParams.get("semester") ?? "");
   const level = parseInt(searchParams.get("level") || "");
 
   if (!programId || !academicSession || !semester || isNaN(level)) {

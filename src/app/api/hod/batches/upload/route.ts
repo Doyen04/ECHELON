@@ -8,6 +8,7 @@ import {
 import {
   validateLevelConsistency,
   checkDuplicateBatch,
+  parseSemester,
 } from "@/lib/hod-upload-validation";
 
 export async function POST(request: Request) {
@@ -27,9 +28,7 @@ export async function POST(request: Request) {
   const file = formData.get("file");
   const programId = String(formData.get("programId") ?? "").trim();
   const sessionLabel = String(formData.get("session") ?? "").trim();
-  const semester = String(formData.get("semester") ?? "")
-    .trim()
-    .toUpperCase() as any; // Cast to Semester enum type
+  const semester = parseSemester(String(formData.get("semester") ?? ""));
   const levelStr = String(formData.get("level") ?? "").trim();
 
   if (!(file instanceof File)) {

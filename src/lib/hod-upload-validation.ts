@@ -1,4 +1,21 @@
+import { Semester, type Semester as SemesterType } from "@/app/generated/prisma-client";
 import { prisma } from "@/lib/db";
+
+export function parseSemester(value: string): SemesterType | null {
+  const normalized = value.trim().toUpperCase();
+
+  if (normalized === Semester.FIRST) {
+    return Semester.FIRST;
+  }
+  if (normalized === Semester.SECOND) {
+    return Semester.SECOND;
+  }
+  if (normalized === Semester.THIRD) {
+    return Semester.THIRD;
+  }
+
+  return null;
+}
 
 export async function validateLevelConsistency(
   studentRows: Array<{ level: number }>,
@@ -21,7 +38,7 @@ export async function validateLevelConsistency(
 export async function checkDuplicateBatch(
   programId: string,
   session: string,
-  semester: string,
+  semester: SemesterType,
   level: number,
 ) {
   const existing = await prisma.resultBatch.findFirst({
