@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/db";
+import { findBatchDispatchDetails } from "@/lib/repositories/admin-repository";
 import { getSuperAdminSession } from "@/lib/super-admin-session";
 
 export async function GET(
@@ -15,24 +15,7 @@ export async function GET(
         const p = await params;
         const batchId = p.batchId;
 
-        const batch = await prisma.resultBatch.findUnique({
-            where: { id: batchId },
-            include: {
-                uploadedBy: { select: { name: true } },
-                studentResults: {
-                    select: { status: true },
-                },
-                dispatches: {
-                    orderBy: { triggeredAt: "desc" },
-                    include: {
-                        triggeredBy: { select: { name: true } },
-                        notificationLogs: {
-                            select: { status: true },
-                        },
-                    },
-                },
-            },
-        });
+        const batch = await findBatchDispatchDetails(batchId);
 
         if (!batch) {
             return NextResponse.json({ error: "Batch not found" }, { status: 404 });

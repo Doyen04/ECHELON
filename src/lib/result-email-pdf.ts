@@ -1,3 +1,6 @@
+import { readFile } from "node:fs/promises";
+import path from "node:path";
+
 import type Mail from "nodemailer/lib/mailer";
 
 type ResultCourse = {
@@ -19,12 +22,15 @@ type StudentResultPdfInput = {
     gpa: number;
     cgpa: number | null;
     courses: ResultCourse[];
+    institutionName?: string;
+    collegeName?: string;
+    programmeName?: string;
+    submissionId?: string | null;
+    logoUrl?: string | null;
+    hodName?: string;
+    deanName?: string;
+    vcName?: string;
 };
-
-function safeBaseName(name: string): string {
-    const cleaned = name.replace(/[^a-zA-Z0-9-_]/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, "");
-    return cleaned || "result";
-}
 
 function sanitizeCourses(courses: ResultCourse[]): ResultCourse[] {
     return courses
@@ -45,6 +51,56 @@ function formatNumber(value: number | null | undefined): string {
     return Number(value).toFixed(2);
 }
 
+function safeBaseName(name: string): string {
+    const cleaned = name.replace(/[^a-zA-Z0-9-_]/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, "");
+    return cleaned || "result";
+}
+
+function getInitials(name: string): string {
+    return (
+        name
+            .split(/\s+/)
+            .filter(Boolean)
+            .map((part) => part[0] ?? "")
+            .join("")
+            .slice(0, 4)
+            .toUpperCase() || "MTU"
+    );
+}
+
+async function loadLogoBytes(logoUrl?: string | null): Promise<{ bytes: Uint8Array; type: "png" | "jpg" } | null> {
+    if (!logoUrl) {
+        return null;
+    }
+
+    try {
+        const normalized = logoUrl.trim();
+        let bytes: Uint8Array;
+
+        if (/^https?:\/\//i.test(normalized)) {
+            const response = await fetch(normalized);
+            if (!response.ok) {
+                return null;
+            }
+            bytes = new Uint8Array(await response.arrayBuffer());
+        } else {
+            const localPath = normalized.startsWith("/")
+                ? path.join(process.cwd(), "public", normalized)
+                : path.resolve(process.cwd(), normalized);
+            bytes = await readFile(localPath);
+        }
+
+        const lower = normalized.toLowerCase();
+        if (lower.endsWith(".jpg") || lower.endsWith(".jpeg")) {
+            return { bytes, type: "jpg" };
+        }
+
+        return { bytes, type: "png" };
+    } catch {
+        return null;
+    }
+}
+
 export async function buildStudentResultPdfAttachment(
     input: StudentResultPdfInput,
 ): Promise<Mail.Attachment> {
@@ -55,139 +111,253 @@ export async function buildStudentResultPdfAttachment(
     const fontRegular = await pdfDoc.embedFont(StandardFonts.Helvetica);
     const fontBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
 
-    // Provide a landscape layout to better mimic the broadsheet layout
     const pageWidth = 842;
     const pageHeight = 595;
-    const margin = 40;
-    const center = pageWidth / 2;
+    const outerMargin = 8;
+    const tableTop = 460;
+    const centerX = pageWidth / 2;
 
-    let page = pdfDoc.addPage([pageWidth, pageHeight]);
-    let y = pageHeight - margin;
+    const page = pdfDoc.addPage([pageWidth, pageHeight]);
 
-    const drawText = (text: string, x: number, yy: number, size = 10, bold = false) => {
+    const drawText = (
+        text: string,
+        x: number,
+        y: number,
+        size = 8,
+        bold = false,
+        options?: { align?: "left" | "center" | "right"; color?: ReturnType<typeof rgb>; opacity?: number },
+    ) => {
+        const font = bold ? fontBold : fontRegular;
+        const align = options?.align ?? "left";
+        const color = options?.color ?? rgb(0, 0, 0);
+        let xPos = x;
+
+        if (align === "center") {
+            xPos = x - font.widthOfTextAtSize(text, size) / 2;
+        } else if (align === "right") {
+            xPos = x - font.widthOfTextAtSize(text, size);
+        }
+
         page.drawText(text, {
+            x: xPos,
+            y,
+            size,
+            font,
+            color,
+            opacity: options?.opacity,
+        });
+    };
+
+    const drawLineH = (xStart: number, xEnd: number, y: number, thickness = 0.5) => {
+        page.drawLine({
+            start: { x: xStart, y },
+            end: { x: xEnd, y },
+            thickness,
+            color: rgb(0, 0, 0),
+        });
+    };
+
+    const drawLineV = (x: number, yStart: number, yEnd: number, thickness = 0.5) => {
+        page.drawLine({
+            start: { x, y: yStart },
+            end: { x, y: yEnd },
+            thickness,
+            color: rgb(0, 0, 0),
+        });
+    };
+
+    const drawBox = (x: number, y: number, width: number, height: number, thickness = 0.5) => {
+        page.drawRectangle({
             x,
-            y: yy,
-            size,
-            font: bold ? fontBold : fontRegular,
-            color: rgb(0, 0, 0),
+            y,
+            width,
+            height,
+            borderColor: rgb(0, 0, 0),
+            borderWidth: thickness,
+            color: rgb(1, 1, 1),
         });
     };
 
-    const drawCenteredText = (text: string, yy: number, size = 10, bold = false) => {
-        const textWidth = (bold ? fontBold : fontRegular).widthOfTextAtSize(text, size);
-        page.drawText(text, {
-            x: center - textWidth / 2,
-            y: yy,
-            size,
-            font: bold ? fontBold : fontRegular,
-            color: rgb(0, 0, 0),
+    const institutionName = (input.institutionName || "Mountain Top University").toUpperCase();
+    const collegeName = (input.collegeName || input.faculty || "BASIC AND APPLIED SCIENCES").toUpperCase();
+    const programmeName = input.programmeName || `${input.department} (Approved)`;
+    const watermarkColor = rgb(0.79, 0.69, 0.62);
+
+    drawBox(outerMargin, outerMargin, pageWidth - outerMargin * 2, pageHeight - outerMargin * 2, 1);
+
+    for (const x of [18, 230, 442, 654]) {
+        for (const y of [492, 332, 172]) {
+            drawText("Not to be taken as", x, y, 24, true, { color: watermarkColor, opacity: 0.18 });
+            drawText("Official Result", x, y - 32, 24, true, { color: watermarkColor, opacity: 0.18 });
+        }
+    }
+
+    const logo = await loadLogoBytes(input.logoUrl);
+    if (logo) {
+        const embedded = logo.type === "jpg" ? await pdfDoc.embedJpg(logo.bytes) : await pdfDoc.embedPng(logo.bytes);
+        page.drawImage(embedded, {
+            x: 28,
+            y: 515,
+            width: 72,
+            height: 72,
         });
-    };
+        drawBox(26, 513, 76, 76, 0.5);
+    } else {
+        drawBox(26, 513, 76, 76, 0.5);
+        drawText(getInitials(institutionName), 64, 551, 18, true, { align: "center" });
+        drawText("MOUNTAIN TOP", 64, 541, 5.5, true, { align: "center" });
+        drawText("UNIVERSITY", 64, 534, 5.5, true, { align: "center" });
+    }
 
-    const drawHeader = () => {
-        // Mountain Top University Examination Result header style
-        drawCenteredText("MOUNTAIN TOP UNIVERSITY EXAMINATION RESULT", y, 14, true);
-        y -= 20;
+    drawText("MOUNTAIN TOP UNIVERSITY EXAMINATION RESULT", 116, 563, 10, true);
+    drawText(`COLLEGE OF ${collegeName}`, 116, 550, 8, true);
+    drawText(`DEPARTMENT: ${input.department}`, 116, 537, 7.5, true);
+    drawText(`PROGRAMME: ${programmeName}`, 116, 524, 7.5, true);
+    drawText(`Submission ID: ${input.submissionId || "N/A"}`, 116, 511, 7.5, true);
+    drawText(`SESSION: ${input.session}   SEMESTER: ${input.semester}   LEVEL: ${input.level}`, 116, 498, 7.5, true);
 
-        drawCenteredText(`COLLEGE OF ${input.faculty.toUpperCase()}`, y, 11, true);
-        y -= 20;
-
-        // Meta Info Block
-        drawText(`DEPARTMENT: ${input.department}`, margin, y, 10, true);
-        y -= 14;
-        
-        drawText(`PROGRAMME: ${input.department} (Approved)`, margin, y, 10, true);
-        y -= 14;
-        
-        drawText(`SESSION: ${input.session}`, margin, y, 10, true);
-        drawText(`SEMESTER: ${input.semester}`, margin + 150, y, 10, true);
-        drawText(`LEVEL: ${input.level}`, margin + 300, y, 10, true);
-        y -= 30;
-
-        // Horizontal Line 1
-        page.drawLine({ start: { x: margin, y }, end: { x: pageWidth - margin, y }, thickness: 1 });
-        y -= 25;
-
-        // Student Identity Block mimicking the broadsheet format
-        drawText("SNo", margin, y, 9, true);
-        drawText("Matric No", margin + 30, y, 9, true);
-        drawText("Names (Surname First)", margin + 140, y, 9, true);
-
-        // Course Codes column headers (horizontal layout)
-        let cx = margin + 350;
-        const maxDisplayCourses = 10;
-        const coursesToDisplay = input.courses.slice(0, maxDisplayCourses);
-
-        drawText("Courses", cx, y + 10, 9, true);
-        coursesToDisplay.forEach((course) => {
-            // Draw course code vertically or split? Let's just print them
-            drawText(course.code, cx, y, 8, true);
-            cx += 45;
-        });
-
-        y -= 15;
-        
-        // Course Status & Units
-        drawText("Course Status", margin + 270, y, 8, true);
-        cx = margin + 350;
-        coursesToDisplay.forEach((course) => {
-            drawText("C", cx + 5, y, 8); // Assuming Compulsory in absence of actual
-            cx += 45;
-        });
-        
-        y -= 15;
-        drawText("No. of Units", margin + 270, y, 8, true);
-        cx = margin + 350;
-        coursesToDisplay.forEach((course) => {
-            drawText(String(course.unit), cx + 5, y, 8);
-            cx += 45;
-        });
-
-        y -= 15;
-        // Horizontal Line 2
-        page.drawLine({ start: { x: margin, y }, end: { x: pageWidth - margin, y }, thickness: 1 });
-        y -= 15;
-    };
-
-    drawHeader();
-    
-    // Row iteration (Only 1 student per PDF, but we mimic the layout)
     const courses = sanitizeCourses(input.courses);
-    const safeCourses = courses.length > 0
-        ? courses
-        : [{ code: "GEN101", title: "Imported Course", unit: 0, grade: "N/A", score: null }];
+    const displayedCourses = Array.from({ length: 15 }, (_, index) => courses[index] ?? null);
 
-    drawText("1", margin, y, 9);
-    drawText(input.matricNumber, margin + 30, y, 9);
-    drawText(input.studentName, margin + 140, y, 9);
+    const left = outerMargin;
+    const identityWidth = 200;
+    const previousWidth = 90;
+    const currentWidth = 360;
+    const cumulativeWidth = 90;
+    const remarksWidth = 86;
 
-    let cx = margin + 350;
-    const maxDisplayCourses = 10;
-    
-    // Print scores and grades directly below course codes
-    safeCourses.slice(0, maxDisplayCourses).forEach((course) => {
-        const scoreStr = course.score !== null ? String(course.score) : "--";
-        drawText(course.grade, cx + 5, y + 8, 8, true);
-        drawText(scoreStr, cx + 5, y - 4, 8);
-        cx += 45;
+    const identityX = left;
+    const previousX = identityX + identityWidth;
+    const currentX = previousX + previousWidth;
+    const cumulativeX = currentX + currentWidth;
+    const remarksX = cumulativeX + cumulativeWidth;
+
+    const headerTop = tableTop;
+    const codeRowTop = 428;
+    const statusRowTop = 405;
+    const unitRowTop = 389;
+    const dataRowTop = 366;
+    const footerTop = 346;
+    const bottom = 286;
+
+    drawLineH(left, remarksX + remarksWidth, headerTop, 0.75);
+    drawLineH(left, remarksX + remarksWidth, bottom, 0.75);
+    drawLineV(identityX, bottom, headerTop, 0.75);
+    drawLineV(identityX + identityWidth, bottom, headerTop, 0.75);
+    drawLineV(previousX, bottom, headerTop, 0.75);
+    drawLineV(currentX, bottom, headerTop, 0.75);
+    drawLineV(cumulativeX, bottom, headerTop, 0.75);
+    drawLineV(remarksX, bottom, headerTop, 0.75);
+    drawLineV(remarksX + remarksWidth, bottom, headerTop, 0.75);
+
+    drawText("Names (Surname First)", identityX + 100, 444, 6.5, true, { align: "center" });
+    drawText("Summary of Previous Semester", previousX + previousWidth / 2, 444, 6.25, true, { align: "center" });
+    drawText("Current Semester Courses", currentX + currentWidth / 2, 444, 6.25, true, { align: "center" });
+    drawText("Current Semester", cumulativeX + cumulativeWidth / 2, 444, 6.25, true, { align: "center" });
+    drawText("Remarks", remarksX + remarksWidth / 2, 444, 6.5, true, { align: "center" });
+
+    drawText("SNo", identityX + 7, codeRowTop, 5.5, true);
+    drawText("Matric No", identityX + 26, codeRowTop, 5.5, true);
+
+    const previousLabels = ["Units Taken", "Units Used", "Units Passed", "Grade Point", "GPA"];
+    previousLabels.forEach((label, index) => {
+        const cellX = previousX + index * 18;
+        drawLineV(cellX, bottom, headerTop, 0.4);
+        drawText(label, cellX + 2, codeRowTop + 10, 4.6, true);
     });
 
-    y -= 30;
+    const courseSlotWidth = 24;
+    displayedCourses.forEach((course, index) => {
+        const cellX = currentX + index * courseSlotWidth;
+        drawLineV(cellX, bottom, headerTop, 0.4);
 
-    // Draw Cumulative Totals block below the row
-    page.drawLine({ start: { x: margin, y }, end: { x: pageWidth - margin, y }, thickness: 0.5 });
-    y -= 15;
+        if (course) {
+            const code = course.code.replace(/\s+/g, "");
+            const codeParts = code.match(/^([A-Z]+)(\d+)$/);
+            const codeText = codeParts ? `${codeParts[1]}\n${codeParts[2]}` : code;
+            drawText(codeText, cellX + 3, codeRowTop, 5.4, true);
+            drawText("C", cellX + 10, statusRowTop, 5.8);
+            drawText(String(course.unit), cellX + 8, unitRowTop, 5.8);
+        }
+    });
+    drawLineV(currentX + currentWidth, bottom, headerTop, 0.4);
 
-    const totalUnits = safeCourses.reduce((sum, course) => sum + Number(course.unit ?? 0), 0);
-    drawText(`Total Units Taken: ${totalUnits}`, margin, y, 9);
-    drawText(`Grade Point Average: ${formatNumber(input.gpa)}`, margin + 150, y, 9);
-    drawText(`Cumulative GPA: ${formatNumber(input.cgpa)}`, margin + 350, y, 9);
-    y -= 25;
+    const totalUnits = displayedCourses.reduce((sum, course) => sum + Number(course?.unit ?? 0), 0);
+    const totalPassed = displayedCourses.filter((course) => course && course.grade !== "F" && course.grade !== "N/A").length;
+    const totalGradePoints = displayedCourses.reduce((sum, course) => {
+        if (!course) {
+            return sum;
+        }
 
-    drawText("Page 1 of 1", center - 30, 40, 8);
-    drawText("Ag. HOD / Dean", margin, 40, 9);
-    drawText("Vice Chancellor", pageWidth - margin - 80, 40, 9);
+        const gradePoint = { A: 5, B: 3.5, C: 2, D: 1, E: 0.5, F: 0, P: 0, "N/A": 0 }[course.grade] ?? 0;
+        return sum + gradePoint * course.unit;
+    }, 0);
+
+    const cumulativeLabels = [
+        { label: "Units Taken", value: String(totalUnits) },
+        { label: "Units Used For CGPA", value: String(totalUnits) },
+        { label: "Units Passed", value: String(totalPassed) },
+        { label: "CGPA", value: formatNumber(input.cgpa) },
+        { label: "Units Outstanding", value: String(Math.max(totalUnits - totalPassed, 0)) },
+    ];
+
+    cumulativeLabels.forEach((item, index) => {
+        const cellX = cumulativeX + index * 18;
+        drawLineV(cellX, bottom, headerTop, 0.4);
+        drawText(item.label, cellX + 1, codeRowTop + 8, 4.4, true);
+        drawText(item.value, cellX + 6, dataRowTop, 5.4, true);
+    });
+    drawLineV(cumulativeX + cumulativeWidth, bottom, headerTop, 0.4);
+
+    const remarkColumns = [
+        { label: "Mode of Entry", value: "UTME" },
+        { label: "Academic Standing", value: "GSD" },
+    ];
+
+    remarkColumns.forEach((item, index) => {
+        const cellX = remarksX + index * 43;
+        drawLineV(cellX, bottom, headerTop, 0.4);
+        drawText(item.label, cellX + 2, codeRowTop + 10, 4.4, true);
+        drawText(item.value, cellX + 12, dataRowTop, 5.4, true);
+    });
+    drawLineV(remarksX + remarksWidth, bottom, headerTop, 0.4);
+
+    drawLineH(left, remarksX + remarksWidth, codeRowTop + 16, 0.4);
+    drawLineH(left, remarksX + remarksWidth, statusRowTop + 14, 0.4);
+    drawLineH(left, remarksX + remarksWidth, unitRowTop + 14, 0.4);
+    drawLineH(left, remarksX + remarksWidth, dataRowTop + 14, 0.4);
+
+    drawText("1", identityX + 6, dataRowTop, 6.4, true);
+    drawText(input.matricNumber, identityX + 24, dataRowTop, 6.4, true);
+    drawText(input.studentName, identityX + 84, dataRowTop, 6.4, true);
+
+    ["0", "0", "0", formatNumber(totalGradePoints), formatNumber(input.gpa)].forEach((value, index) => {
+        const cellX = previousX + index * 18;
+        drawText(value, cellX + 5, dataRowTop, 5.4, true);
+    });
+
+    displayedCourses.forEach((course, index) => {
+        const cellX = currentX + index * courseSlotWidth;
+        if (!course) {
+            return;
+        }
+
+        drawText(String(course.score ?? "--"), cellX + 5, dataRowTop + 6, 5.4, true);
+        drawText(course.grade, cellX + 7, dataRowTop - 1, 5.8, true);
+    });
+
+    drawLineH(left, remarksX + remarksWidth, footerTop, 0.75);
+    drawText(`Total Units Taken: ${totalUnits}`, left + 10, footerTop - 12, 7, true);
+    drawText(`Total Passed: ${totalPassed}`, left + 160, footerTop - 12, 7, true);
+    drawText(`Total Grade Points: ${formatNumber(totalGradePoints)}`, left + 260, footerTop - 12, 7, true);
+    drawText(`GPA: ${formatNumber(input.gpa)}`, left + 415, footerTop - 12, 7, true);
+    drawText(`CGPA: ${formatNumber(input.cgpa)}`, left + 500, footerTop - 12, 7, true);
+
+    drawText("Page 1 of 1", centerX, 40, 7.5, true, { align: "center" });
+    drawText(`Ag. HOD (${input.hodName || "Dr. Mba Odim"})`, left + 10, 30, 6.5, true);
+    drawText(`System Date: ${new Date().toLocaleString()}`, left + 180, 30, 6.5, true);
+    drawText(`Vice Chancellor (${input.vcName || "Prof. Elijah Ayolabi"})`, left + 430, 30, 6.5, true);
+    drawText(`Ag. Dean (${input.deanName || "Dr. Ofudje Edwin Andrew"})`, left + 180, 18, 6.5, true);
 
     const bytes = await pdfDoc.save();
     const filename = `${safeBaseName(`${input.matricNumber}-${input.session}-${input.semester}`)}.pdf`;

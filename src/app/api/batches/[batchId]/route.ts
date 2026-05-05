@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/db";
+import { findBatchDetails } from "@/lib/repositories/admin-repository";
 import { getSuperAdminSession } from "@/lib/super-admin-session";
 
 export async function GET(
@@ -15,45 +15,7 @@ export async function GET(
         const p = await params;
         const batchId = p.batchId;
 
-        const batch = await prisma.resultBatch.findUnique({
-            where: { id: batchId },
-            include: {
-                uploadedBy: { select: { name: true } },
-                approvedBy: { select: { name: true } },
-                studentResults: {
-                    orderBy: { id: "desc" },
-                    take: 100,
-                    select: {
-                        id: true,
-                        gpa: true,
-                        cgpa: true,
-                        courses: true,
-                        status: true,
-                        withheldReason: true,
-                        student: { select: { fullName: true, matricNumber: true } },
-                        portalTokens: {
-                            orderBy: { createdAt: "desc" },
-                            take: 1,
-                            select: { token: true, expiresAt: true, createdAt: true }
-                        },
-                    },
-                },
-                dispatches: {
-                    orderBy: { triggeredAt: "desc" },
-                    take: 5,
-                    select: {
-                        id: true,
-                        status: true,
-                        triggeredAt: true,
-                        totalCount: true,
-                        sentCount: true,
-                        failedCount: true,
-                        triggeredBy: { select: { name: true } },
-                        _count: { select: { notificationLogs: true } },
-                    },
-                },
-            },
-        });
+        const batch = await findBatchDetails(batchId);
 
         if (!batch) {
             return NextResponse.json({ error: "Batch not found" }, { status: 404 });

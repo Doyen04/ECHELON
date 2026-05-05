@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/db";
+import { listRecentDispatches } from "@/lib/repositories/admin-repository";
 import { getSuperAdminSession } from "@/lib/super-admin-session";
 
 export async function GET() {
@@ -9,15 +9,7 @@ export async function GET() {
     }
 
     try {
-        const dispatches = await prisma.notificationDispatch.findMany({
-            orderBy: { triggeredAt: "desc" },
-            take: 25,
-            include: {
-                batch: { select: { department: true, session: true, semester: true } },
-                triggeredBy: { select: { name: true } },
-                _count: { select: { notificationLogs: true } },
-            },
-        });
+        const dispatches = await listRecentDispatches();
 
         return NextResponse.json({ dispatches });
     } catch (error) {

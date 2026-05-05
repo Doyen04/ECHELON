@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/db";
+import { listGuardiansWithStudent } from "@/lib/repositories/admin-repository";
 import { getSuperAdminSession } from "@/lib/super-admin-session";
 
 export async function GET(request: Request) {
@@ -14,36 +14,9 @@ export async function GET(request: Request) {
     const skip = (page - 1) * limit;
 
     try {
-        const [guardians, total] = await Promise.all([
-            prisma.guardian.findMany({
-                orderBy: { createdAt: "desc" },
-                take: limit,
-                skip: skip,
-                include: {
-                    student: {
-                        select: {
-                            id: true,
-                            fullName: true,
-                            matricNumber: true,
-                            department: true,
-                            faculty: true,
-                            level: true,
-                        },
-                    },
-                },
-            }),
-            prisma.guardian.count()
-        ]);
+        const guardians = await listGuardiansWithStudent();
 
-        return NextResponse.json({ 
-            guardians,
-            pagination: {
-                total,
-                pages: Math.ceil(total / limit),
-                currentPage: page,
-                limit
-            }
-        });
+        return NextResponse.json(guardians);
     } catch (error) {
         console.error("Error fetching guardians:", error);
         return NextResponse.json({ error: "Internal server error" }, { status: 500 });

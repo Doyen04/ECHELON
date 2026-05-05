@@ -337,6 +337,48 @@ function parseCourseLine(line: string) {
     };
 }
 
+function escapeRegexValue(value: string): string {
+    return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function extractCourseUnitsFromText(
+    text: string,
+    courseCodes: string[],
+): Map<string, number> {
+    const compactText = text.replace(/\s+/g, " ").trim();
+    const units = new Map<string, number>();
+
+    for (const code of courseCodes) {
+        const normalizedCode = code.replace(/\s+/g, "").toUpperCase();
+        const prefix = normalizedCode.match(/^[A-Z]{2,4}/)?.[0] ?? "";
+        const suffix = normalizedCode.slice(prefix.length);
+
+        if (!prefix || !suffix) {
+            continue;
+        }
+
+        const codePattern = `${escapeRegexValue(prefix)}\\s?${escapeRegexValue(suffix)}`;
+        const verbosePattern = new RegExp(
+            `${codePattern}\\s+.+?\\s+(\\d{1,2})\\s+(?:\\d{1,3}\\s+)?[A-FP](?:[+-])?`,
+            "i",
+        );
+        const compactPattern = new RegExp(
+            `${codePattern}\\s+(\\d{1,2})\\s+(?:\\d{1,3}\\s+)?[A-FP](?:[+-])?`,
+            "i",
+        );
+
+        const verboseMatch = compactText.match(verbosePattern);
+        const compactMatch = compactText.match(compactPattern);
+        const parsed = Number(verboseMatch?.[1] ?? compactMatch?.[1] ?? "");
+
+        if (Number.isFinite(parsed) && parsed >= 0) {
+            units.set(normalizedCode, parsed);
+        }
+    }
+
+    return units;
+}
+
 function extractPdfCourseRows(text: string) {
     const compactText = text.replace(/\s+/g, " ").trim();
     const fullPattern = /([A-Z]{2,4}\s?\d{3}[A-Z]?)\s+(.+?)\s+(\d{1,2})\s+(\d{1,3})\s+([A-F][+-]?)(?=\s+[A-Z]{2,4}\s?\d{3}[A-Z]?|\s*$)/gi;
@@ -378,48 +420,6 @@ function extractPdfCourseRows(text: string) {
     }
 
     return rows;
-}
-
-function escapeRegexValue(value: string): string {
-    return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-}
-
-function extractCourseUnitsFromText(
-    text: string,
-    courseCodes: string[],
-): Map<string, number> {
-    const compactText = text.replace(/\s+/g, " ").trim();
-    const units = new Map<string, number>();
-
-    for (const code of courseCodes) {
-        const normalizedCode = code.replace(/\s+/g, "").toUpperCase();
-        const prefix = normalizedCode.match(/^[A-Z]{2,4}/)?.[0] ?? "";
-        const suffix = normalizedCode.slice(prefix.length);
-
-        if (!prefix || !suffix) {
-            continue;
-        }
-
-        const codePattern = `${escapeRegexValue(prefix)}\\s?${escapeRegexValue(suffix)}`;
-        const verbosePattern = new RegExp(
-            `${codePattern}\\s+.+?\\s+(\\d{1,2})\\s+(?:\\d{1,3}\\s+)?[A-FP](?:[+-])?`,
-            "i",
-        );
-        const compactPattern = new RegExp(
-            `${codePattern}\\s+(\\d{1,2})\\s+(?:\\d{1,3}\\s+)?[A-FP](?:[+-])?`,
-            "i",
-        );
-
-        const verboseMatch = compactText.match(verbosePattern);
-        const compactMatch = compactText.match(compactPattern);
-        const parsed = Number(verboseMatch?.[1] ?? compactMatch?.[1] ?? "");
-
-        if (Number.isFinite(parsed) && parsed >= 0) {
-            units.set(normalizedCode, parsed);
-        }
-    }
-
-    return units;
 }
 
 function extractCourseCodesFromTable(lines: string[]): string[] {

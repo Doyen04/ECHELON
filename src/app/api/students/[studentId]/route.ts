@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/db";
+import { findStudentDetails } from "@/lib/repositories/admin-repository";
 import { getSuperAdminSession } from "@/lib/super-admin-session";
 
 export async function GET(
@@ -14,46 +14,8 @@ export async function GET(
     try {
         const p = await params;
         const studentId = p.studentId;
-        
-        const student = await prisma.student.findUnique({
-            where: { id: studentId },
-            select: {
-                id: true,
-                fullName: true,
-                matricNumber: true,
-                department: true,
-                faculty: true,
-                level: true,
-                guardians: true,
-                studentResults: {
-                    orderBy: { id: "desc" },
-                    select: {
-                        id: true,
-                        gpa: true,
-                        cgpa: true,
-                        status: true,
-                        batchId: true,
-                        batch: {
-                            select: {
-                                session: true,
-                                semester: true,
-                            }
-                        },
-                        portalTokens: {
-                            orderBy: { createdAt: "desc" },
-                            take: 1,
-                            select: { token: true, expiresAt: true }
-                        },
-                    },
-                },
-                notificationLogs: {
-                    orderBy: {
-                        attemptedAt: "desc",
-                    },
-                    take: 20,
-                },
-            },
-        });
+
+        const student = await findStudentDetails(studentId);
 
         if (!student) {
             return NextResponse.json({ error: "Student not found" }, { status: 404 });

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/db";
+import { listBatchesSummary } from "@/lib/repositories/admin-repository";
 import { getSuperAdminSession } from "@/lib/super-admin-session";
 
 export async function GET(request: Request) {
@@ -14,45 +14,7 @@ export async function GET(request: Request) {
     const level = searchParams.get("level");
 
     try {
-        const where: any = {};
-        if (departmentId) {
-            where.program = { departmentId };
-        }
-        if (programId) {
-            where.programId = programId;
-        }
-        if (level) {
-            where.level = parseInt(level);
-        }
-
-        const batches = await prisma.resultBatch.findMany({
-            where,
-            orderBy: { uploadedAt: "desc" },
-            take: 200, // Reasonable hard limit to ensure speed without breaking most views
-            select: {
-                id: true,
-                session: true,
-                semester: true,
-                department: true,
-                program: {
-                    select: {
-                        id: true,
-                        name: true,
-                        department: { select: { id: true, name: true } }
-                    }
-                },
-                level: true,
-                source: true,
-                status: true,
-                uploadedAt: true,
-                uploadedBy: { select: { name: true } },
-                _count: {
-                    select: {
-                        studentResults: true,
-                    },
-                },
-            },
-        });
+        const batches = await listBatchesSummary();
 
         return NextResponse.json(batches);
     } catch (error) {

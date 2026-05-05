@@ -8,7 +8,7 @@ import {
     type SummaryMetric,
     type TrendDirection,
 } from "@/lib/dashboard-data";
-import { prisma } from "@/lib/db";
+import { getDashboardSnapshot } from "@/lib/repositories/notification-repository";
 
 export type DashboardViewData = {
     summaryMetrics: SummaryMetric[];
@@ -119,64 +119,20 @@ function fallbackDashboardData(): DashboardViewData {
 }
 
 export async function getDashboardViewData(): Promise<DashboardViewData> {
-    const db = prisma as any;
     const dashboardWindowHours = 24;
     const dashboardWindowStart = new Date(Date.now() - dashboardWindowHours * 60 * 60 * 1000);
 
     try {
-        const [
+        const snapshot = await getDashboardSnapshot(dashboardWindowStart);
+        const {
             pendingReviewCount,
             approvedResultCount,
             sentCount,
             failedCount,
             dispatchRows,
             activityRows,
-            channelStats,
-        ] = await Promise.all([
-            db.studentResult.count({ where: { status: "PENDING" } }),
-            db.studentResult.count({ where: { status: "APPROVED" } }),
-            db.notificationLog.count({
-                where: {
-                    attemptedAt: { gte: dashboardWindowStart },
-                    status: "SENT",
-                },
-            }),
-            db.notificationLog.count({
-                where: {
-                    attemptedAt: { gte: dashboardWindowStart },
-                    status: "FAILED",
-                },
-            }),
-            db.notificationDispatch.findMany({
-                take: 8,
-                orderBy: { triggeredAt: "desc" },
-                select: {
-                    id: true,
-                    status: true,
-                    totalCount: true,
-                    sentCount: true,
-                    failedCount: true,
-                    triggeredAt: true,
-                    batch: {
-                        select: { department: true, session: true, semester: true },
-                    },
-                },
-            }),
-            db.auditLog.findMany({
-                take: 4,
-                orderBy: { createdAt: "desc" },
-                include: {
-                    actor: {
-                        select: { name: true },
-                    },
-                },
-            }),
-            db.notificationLog.groupBy({
-                by: ["channel", "status"],
-                where: { attemptedAt: { gte: dashboardWindowStart } },
-                _count: { _all: true },
-            }),
-        ]);
+            notificationRows,
+        } = snapshot;
 
         const totalAttempted = sentCount + failedCount;
         const deliveryRate =
@@ -213,8 +169,15 @@ export async function getDashboardViewData(): Promise<DashboardViewData> {
 
         const dispatchRowsMapped: DispatchQueueEntry[] = dispatchRows.slice(0, 3).map(
             (dispatch: any) => {
-                const attempted = dispatch.sentCount + dispatch.failedCount;
-                const successful = dispatch.sentCount;
+                const logCounts = dispatch.notificationLogs.reduce(
+                    (acc: any, log: any) => {
+                        acc[log.status.toLowerCase()] = (acc[log.status.toLowerCase()] || 0) + 1;
+                        return acc;
+                    },
+                    { sent: 0, failed: 0 }
+                );
+                const attempted = logCounts.sent + logCounts.failed;
+                const successful = logCounts.sent;
                 const successRate =
                     attempted === 0
                         ? 0
@@ -225,7 +188,7 @@ export async function getDashboardViewData(): Promise<DashboardViewData> {
                 return {
                     id: dispatch.id,
                     batchLabel: `${dispatch.batch.department} | ${dispatch.batch.session} | ${dispatch.batch.semester}`,
-                    totalStudents: dispatch.totalCount,
+                    totalStudents: dispatch.notificationLogs.length,
                     processedStudents: attempted,
                     successRate,
                     eta:
@@ -245,11 +208,11 @@ export async function getDashboardViewData(): Promise<DashboardViewData> {
             sms: { channel: "sms", queued: 0, sent: 0, failed: 0 },
         };
 
-        channelStats.forEach((stat: any) => {
-            const channel = stat.channel.toLowerCase() as "whatsapp" | "email" | "sms";
-            const status = stat.status.toLowerCase() as "queued" | "sent" | "failed";
+        notificationRows.forEach((row: any) => {
+            const channel = row.channel.toLowerCase() as "whatsapp" | "email" | "sms";
+            const status = row.status.toLowerCase() as "queued" | "sent" | "failed";
             if (channelMap[channel]) {
-                channelMap[channel][status] = stat._count._all;
+                channelMap[channel][status]++;
             }
         });
 
@@ -267,8 +230,15 @@ export async function getDashboardViewData(): Promise<DashboardViewData> {
 
         const notifications: DashboardNotification[] = dispatchRows
             .map((dispatch: any) => {
-                const attempts = dispatch.sentCount + dispatch.failedCount;
-                const failed = dispatch.failedCount;
+                const logCounts = dispatch.notificationLogs.reduce(
+                    (acc: any, log: any) => {
+                        acc[log.status.toLowerCase()] = (acc[log.status.toLowerCase()] || 0) + 1;
+                        return acc;
+                    },
+                    { sent: 0, failed: 0 }
+                );
+                const attempts = logCounts.sent + logCounts.failed;
+                const failed = logCounts.failed;
 
                 if (attempts === 0 || failed === 0) {
                     return null;

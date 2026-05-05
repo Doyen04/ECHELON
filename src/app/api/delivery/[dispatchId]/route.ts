@@ -1,5 +1,10 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/db";
+import {
+    findDispatchDetails,
+    listDispatchNotificationLogs,
+    listGuardiansByIds,
+    listStudentsByIds,
+} from "@/lib/repositories/admin-repository";
 import { getSuperAdminSession } from "@/lib/super-admin-session";
 
 export async function GET(
@@ -15,51 +20,32 @@ export async function GET(
         const p = await params;
         const dispatchId = p.dispatchId;
 
-        const dispatch = await prisma.notificationDispatch.findUnique({
-            where: { id: dispatchId },
-            include: {
-                batch: {
-                    select: { department: true, session: true, semester: true },
-                },
-                triggeredBy: {
-                    select: { name: true },
-                },
-            },
-        });
+        const dispatch = await findDispatchDetails(dispatchId);
 
         if (!dispatch) {
             return NextResponse.json({ error: "Dispatch not found" }, { status: 404 });
         }
 
-        const notificationLogs = await prisma.notificationLog.findMany({
-            where: { dispatchId },
-            orderBy: { attemptedAt: "desc" },
-        });
+        const notificationLogs = await listDispatchNotificationLogs(dispatchId);
 
-        const studentIds = [
-            ...new Set(
-                notificationLogs.map((log) => log.studentId).filter(Boolean),
+        const studentIds: string[] = Array.from(
+            new Set<string>(
+                notificationLogs
+                    .map((log: { studentId: string | null }) => log.studentId)
+                    .filter((id: string | null): id is string => Boolean(id)),
             ),
-        ] as string[];
-        const guardianIds = [
-            ...new Set(
-                notificationLogs.map((log) => log.guardianId).filter(Boolean),
+        );
+        const guardianIds: string[] = Array.from(
+            new Set<string>(
+                notificationLogs
+                    .map((log: { guardianId: string | null }) => log.guardianId)
+                    .filter((id: string | null): id is string => Boolean(id)),
             ),
-        ] as string[];
+        );
 
         const [students, guardians] = await Promise.all([
-            studentIds.length > 0
-                ? prisma.student.findMany({
-                    where: { id: { in: studentIds } },
-                    select: { id: true, fullName: true, matricNumber: true },
-                })
-                : [],
-            guardianIds.length > 0
-                ? prisma.guardian.findMany({
-                    where: { id: { in: guardianIds } },
-                    select: { id: true, name: true },
-                })
-                : [],
+            listStudentsByIds(studentIds),
+            listGuardiansByIds(guardianIds),
         ]);
 
         return NextResponse.json({ dispatch, notificationLogs, students, guardians });
