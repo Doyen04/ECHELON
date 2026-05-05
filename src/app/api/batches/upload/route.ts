@@ -58,21 +58,49 @@ export async function POST(request: Request) {
     const file = formData.get("file");
     const sessionLabel = String(formData.get("session") ?? "").trim();
     const semester = String(formData.get("semester") ?? "").trim().toUpperCase();
-    const department = String(formData.get("department") ?? "").trim();
-    const autoDispatch = parseBoolean(String(formData.get("autoDispatch") ?? "true"));
+    const programId = String(formData.get("programId") ?? "").trim();
+    const levelStr = String(formData.get("level") ?? "").trim();
 
     if (!(file instanceof File)) {
         return NextResponse.json({ error: "Result file (CSV or PDF) is required." }, { status: 400 });
     }
 
-    if (!sessionLabel || !department || !SEMESTER_VALUES.has(semester)) {
+    const level = parseInt(levelStr, 10);
+    if (!sessionLabel || !programId || isNaN(level) || !SEMESTER_VALUES.has(semester)) {
         return NextResponse.json(
-            { error: "session, semester (FIRST|SECOND|THIRD), and department are required." },
+            { error: "session, semester (FIRST|SECOND|THIRD), programId, and level are required." },
             { status: 400 },
         );
     }
 
-    const groupedStudents = await parseStudentRowsFromFile(file, department).catch((err: unknown) => {
+    // Verify program exists
+    const program = await prisma.program.findUnique({
+        where: { id: programId },
+        select: { name: true, departmentId: true },
+    });
+
+    if (!program) {
+        return NextResponse.json({ error: "Invalid program selected." }, { status: 400 });
+    }
+
+    // Check duplicate
+    const duplicate = await prisma.resultBatch.findFirst({
+        where: { programId, session: sessionLabel, semester: semester as any, level },
+        select: { id: true, uploadedAt: true, status: true },
+    });
+
+    if (duplicate) {
+        return NextResponse.json(
+            {
+                isDuplicate: true,
+                existingBatchId: duplicate.id,
+                message: `A batch already exists for ${program.name} Level ${level} in ${semester} ${sessionLabel}.`,
+            },
+            { status: 409 },
+        );
+    }
+
+    const groupedStudents = await parseStudentRowsFromFile(file, program.name).catch((err: unknown) => {
         console.error("[upload] File parse error:", err);
         return [] as StudentImportRow[];
     });
@@ -103,15 +131,17 @@ export async function POST(request: Request) {
         const createdBatch = await tx.resultBatch.create({
             data: {
                 institutionId: actor.institutionId,
+                programId,
                 session: sessionLabel,
                 semester,
-                department,
-                status: autoDispatch ? "APPROVED" : "PENDING",
+                level,
+                status: "PENDING",
                 uploadedById: actor.id,
-                approvedById: autoDispatch ? actor.id : null,
-                approvedAt: autoDispatch ? new Date() : null,
+                approvedById: null,
+                approvedAt: null,
                 source: isUploadedPdf ? "pdf" : "csv",
                 rawFileUrl: null,
+                department: program.name, // Keep for legacy compatibility
             },
         });
 
@@ -175,7 +205,7 @@ export async function POST(request: Request) {
                     courses: studentRow.courses,
                     gpa: effectiveGpa,
                     cgpa: studentRow.cgpa,
-                    status: autoDispatch ? "APPROVED" : "PENDING",
+                    status: "PENDING",
                 },
             });
         }
@@ -190,7 +220,9 @@ export async function POST(request: Request) {
                 metadata: {
                     filename: file.name,
                     studentCount: groupedStudents.length,
-                    autoDispatch,
+                    programId,
+                    level,
+                    autoDispatch: false,
                 },
             },
         });
@@ -198,52 +230,12 @@ export async function POST(request: Request) {
         return createdBatch;
     }, { timeout: 60000, maxWait: 10000 });
 
-    if (!autoDispatch) {
-        return NextResponse.json({
-            batchId: batch.id,
-            uploadedRows: groupedStudents.length,
-            students: groupedStudents.length,
-            dispatch: null,
-        });
-    }
-
-    try {
-        const dispatch = await triggerDispatchForBatch({
-            batchId: batch.id,
-            triggeredById: actor.id,
-        });
-
-        return NextResponse.json({
-            batchId: batch.id,
-            uploadedRows: groupedStudents.length,
-            students: groupedStudents.length,
-            dispatch,
-        });
-    } catch (error) {
-        if (error instanceof DispatchTriggerError) {
-            return NextResponse.json(
-                {
-                    batchId: batch.id,
-                    uploadedRows: groupedStudents.length,
-                    students: groupedStudents.length,
-                    dispatch: null,
-                    error: error.message,
-                },
-                { status: error.statusCode },
-            );
-        }
-
-        return NextResponse.json(
-            {
-                batchId: batch.id,
-                uploadedRows: groupedStudents.length,
-                students: groupedStudents.length,
-                dispatch: null,
-                error: "Upload completed but dispatch failed.",
-            },
-            { status: 500 },
-        );
-    }
+    return NextResponse.json({
+        batchId: batch.id,
+        uploadedRows: groupedStudents.length,
+        students: groupedStudents.length,
+        dispatch: null,
+    });
 }
 
 

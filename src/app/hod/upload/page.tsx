@@ -28,6 +28,7 @@ type ParsedRow = {
   courseUnit: string;
   grade: string;
   score: string;
+  level: string; // Added level for validation
 };
 
 type ValidationState = {
@@ -105,7 +106,7 @@ function parseCsv(text: string): Array<Record<string, string>> {
   });
 }
 
-function validateAndBuildPreview(text: string): ValidationState {
+function validateAndBuildPreview(text: string, selectedLevel: string): ValidationState {
   const lines = text
     .split(/\r?\n/)
     .map((line) => line.trim())
@@ -141,6 +142,8 @@ function validateAndBuildPreview(text: string): ValidationState {
     );
   }
 
+  const levelsInFile = new Set<string>();
+
   parsedRows.forEach((row, index) => {
     const rowNumber = index + 2;
     if (!(row.matric_number ?? "").trim()) {
@@ -155,7 +158,19 @@ function validateAndBuildPreview(text: string): ValidationState {
     if (!(row.grade ?? "").trim()) {
       errors.push(`Row ${rowNumber}: grade is required.`);
     }
+
+    const rowLevel = (row.level ?? "").trim();
+    if (rowLevel) {
+      levelsInFile.add(rowLevel);
+      if (rowLevel !== selectedLevel) {
+        errors.push(`Row ${rowNumber}: Student level (${rowLevel}) does not match selected level (${selectedLevel}).`);
+      }
+    }
   });
+
+  if (levelsInFile.size > 1) {
+    errors.push(`Multiple levels detected in file: ${Array.from(levelsInFile).join(", ")}. A batch must contain students from only one level.`);
+  }
 
   const previewRows: ParsedRow[] = parsedRows.slice(0, 5).map((row) => ({
     matricNumber: (row.matric_number ?? "").trim(),
@@ -165,6 +180,7 @@ function validateAndBuildPreview(text: string): ValidationState {
     courseUnit: (row.unit ?? row.course_unit ?? row.credit_unit ?? "").trim(),
     grade: (row.grade ?? "").trim(),
     score: (row.score ?? "").trim(),
+    level: (row.level ?? "").trim(),
   }));
 
   const uniqueStudents = new Set(
@@ -204,6 +220,9 @@ export default function HodBatchUploadPage() {
     students: number;
   } | null>(null);
 
+  const [existingBatch, setExistingBatch] = useState<any>(null);
+  const [isCheckingDuplicate, setIsCheckingDuplicate] = useState(false);
+
   useEffect(() => {
     fetch("/api/hod/programs")
       .then((res) => res.json())
@@ -221,6 +240,37 @@ export default function HodBatchUploadPage() {
         setIsLoadingPrograms(false);
       });
   }, []);
+
+  // Duplicate check effect
+  useEffect(() => {
+    if (!programId || !sessionValue || !semesterValue || !levelValue) return;
+
+    const checkDuplicate = async () => {
+      setIsCheckingDuplicate(true);
+      try {
+        const params = new URLSearchParams({
+          programId,
+          session: sessionValue,
+          semester: semesterValue,
+          level: levelValue,
+        });
+        const res = await fetch(`/api/hod/batches/check?${params.toString()}`);
+        const data = await res.json();
+        if (data.exists) {
+          setExistingBatch(data.batch);
+        } else {
+          setExistingBatch(null);
+        }
+      } catch (err) {
+        console.error("Duplicate check failed", err);
+      } finally {
+        setIsCheckingDuplicate(false);
+      }
+    };
+
+    const timer = setTimeout(checkDuplicate, 500);
+    return () => clearTimeout(timer);
+  }, [programId, sessionValue, semesterValue, levelValue]);
 
   const selectedFileType = useMemo(() => {
     if (!file) return null;
@@ -242,6 +292,22 @@ export default function HodBatchUploadPage() {
     setSubmitError(null);
     setSubmitSuccess(null);
   };
+
+  // Re-validate CSV when level changes
+  useEffect(() => {
+    if (file && selectedFileType === "csv" && !isParsing) {
+      const revalidate = async () => {
+        try {
+          const csvText = await file.text();
+          const validationResult = validateAndBuildPreview(csvText, levelValue);
+          setValidation(validationResult);
+        } catch (err) {
+          console.error("Re-validation failed", err);
+        }
+      };
+      revalidate();
+    }
+  }, [levelValue, file, selectedFileType]);
 
   const processSelectedFile = async (selectedFile: File) => {
     const isPdfFile =
@@ -271,7 +337,7 @@ export default function HodBatchUploadPage() {
 
     try {
       const csvText = await selectedFile.text();
-      const validationResult = validateAndBuildPreview(csvText);
+      const validationResult = validateAndBuildPreview(csvText, levelValue);
       setValidation(validationResult);
       setShowPreview(true);
     } catch {
@@ -433,6 +499,38 @@ export default function HodBatchUploadPage() {
                 </select>
               </div>
             </div>
+
+            {existingBatch && (
+              <div className='mt-6 rounded-xl border border-amber-500/20 bg-amber-500/5 p-4 animate-in fade-in slide-in-from-top-2'>
+                <div className='flex items-start gap-3'>
+                  <AlertTriangle className='h-5 w-5 text-amber-600 mt-0.5' />
+                  <div className='flex-1'>
+                    <h4 className='text-sm font-bold text-amber-900'>
+                      Previous Upload Detected
+                    </h4>
+                    <p className='text-xs text-amber-800/80 mt-1'>
+                      A batch for this program, level, and semester already exists. 
+                      Uploading again will overwrite the existing data if approved.
+                    </p>
+                    <div className='mt-3 flex items-center gap-3'>
+                      <Button
+                        asChild
+                        variant='outline'
+                        size='sm'
+                        className='h-8 text-[10px] uppercase font-bold border-amber-500/30 bg-amber-500/10 hover:bg-amber-500/20 text-amber-700 rounded-full'
+                      >
+                        <Link href={`/hod/batches/${existingBatch.id}`}>
+                          Review Past Upload
+                        </Link>
+                      </Button>
+                      <span className='text-[10px] text-amber-600/60 font-medium'>
+                        Uploaded on {new Date(existingBatch.uploadedAt).toLocaleDateString()}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
           </Card>
 
           <Card className='p-6 border-border bg-card/50 backdrop-blur-sm'>

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { StatusBadge } from "@/components/shared/badges";
 import { toBadgeStatus, relativeTimeFromNow } from "@/lib/admin-format";
+import { Badge } from "@/components/ui/badge";
 
 export const columns = [
     {
@@ -10,13 +11,24 @@ export const columns = [
         accessorKey: "student",
         className: "px-6 py-4 text-sm text-foreground",
         cell: (row: any) => (
-            <>
-                <div className="font-medium">{row.student.fullName}</div>
-                <div className="mt-1 text-xs text-text-muted">
-                    {row.student.matricNumber}
+            <div className="flex items-center gap-3">
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-muted text-[10px] font-bold text-muted-foreground">
+                    {row.student.fullName.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2)}
                 </div>
-            </>
+                <div>
+                    <div className="font-bold text-sm">{row.student.fullName}</div>
+                    <div className="text-[10px] font-mono text-muted-foreground uppercase tracking-tight">
+                        {row.student.matricNumber}
+                    </div>
+                </div>
+            </div>
         ),
+    },
+    {
+        header: "Level",
+        accessorKey: "level",
+        className: "px-4 py-4 text-xs font-bold text-muted-foreground",
+        cell: (row: any) => <Badge variant="outline" className="border-muted-foreground/20">{row.student.level}</Badge>,
     },
     {
         header: "Status",
@@ -27,8 +39,14 @@ export const columns = [
     {
         header: "GPA",
         accessorKey: "gpa",
-        className: "px-6 py-4 text-sm text-(--text-secondary)",
-        cell: (row: any) => <>{row.cgpa ?? row.gpa}</>,
+        className: "px-4 py-4 text-sm font-bold text-foreground",
+        cell: (row: any) => <span className="text-brand">{Number(row.gpa).toFixed(2)}</span>,
+    },
+    {
+        header: "CGPA",
+        accessorKey: "cgpa",
+        className: "px-4 py-4 text-sm font-bold text-muted-foreground",
+        cell: (row: any) => row.cgpa ? Number(row.cgpa).toFixed(2) : <span className="text-muted-foreground/30">—</span>,
     },
     {
         header: "Token",
@@ -63,10 +81,24 @@ export const columns = [
     {
         header: "Courses",
         accessorKey: "courses",
-        className: "px-6 py-4 text-sm text-(--text-secondary)",
+        className: "px-4 py-4 min-w-[200px]",
         cell: (row: any) => {
             const courses = Array.isArray(row.courses) ? row.courses : [];
-            return <>{courses.length} courses</>;
+            return (
+                <div className="flex flex-wrap gap-1">
+                    {courses.slice(0, 3).map((c: any, i: number) => (
+                        <div key={i} className="flex items-center gap-1 rounded bg-muted/50 px-1.5 py-0.5 text-[9px] font-bold border border-border/50">
+                            <span className="text-muted-foreground">{c.courseCode}:</span>
+                            <span className="text-brand">{c.grade}</span>
+                        </div>
+                    ))}
+                    {courses.length > 3 && (
+                        <Badge variant="outline" className="h-4 px-1 text-[8px] font-bold text-muted-foreground">
+                            +{courses.length - 3} more
+                        </Badge>
+                    )}
+                </div>
+            );
         },
     },
 ];

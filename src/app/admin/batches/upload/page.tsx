@@ -29,6 +29,7 @@ type ParsedRow = {
   courseUnit: string;
   grade: string;
   score: string;
+  level: string; // Added level for validation
 };
 
 type ValidationState = {
@@ -107,7 +108,7 @@ function parseCsv(text: string): Array<Record<string, string>> {
   });
 }
 
-function validateAndBuildPreview(text: string): ValidationState {
+function validateAndBuildPreview(text: string, selectedLevel: string): ValidationState {
   const lines = text
     .split(/\r?\n/)
     .map((line) => line.trim())
@@ -143,6 +144,8 @@ function validateAndBuildPreview(text: string): ValidationState {
     );
   }
 
+  const levelsInFile = new Set<string>();
+
   parsedRows.forEach((row, index) => {
     const rowNumber = index + 2;
     if (!(row.matric_number ?? "").trim()) {
@@ -162,7 +165,19 @@ function validateAndBuildPreview(text: string): ValidationState {
         `Row ${rowNumber}: unit (or course_unit / credit_unit) is required.`,
       );
     }
+
+    const rowLevel = (row.level ?? "").trim();
+    if (rowLevel) {
+      levelsInFile.add(rowLevel);
+      if (rowLevel !== selectedLevel) {
+        errors.push(`Row ${rowNumber}: Student level (${rowLevel}) does not match selected level (${selectedLevel}).`);
+      }
+    }
   });
+
+  if (levelsInFile.size > 1) {
+    errors.push(`Multiple levels detected in file: ${Array.from(levelsInFile).join(", ")}. A batch must contain students from only one level.`);
+  }
 
   const previewRows: ParsedRow[] = parsedRows.slice(0, 5).map((row) => ({
     matricNumber: (row.matric_number ?? "").trim(),
@@ -172,6 +187,7 @@ function validateAndBuildPreview(text: string): ValidationState {
     courseUnit: (row.unit ?? row.course_unit ?? row.credit_unit ?? "").trim(),
     grade: (row.grade ?? "").trim(),
     score: (row.score ?? "").trim(),
+    level: (row.level ?? "").trim(),
   }));
 
   const uniqueStudents = new Set(
@@ -198,17 +214,94 @@ export default function BatchUploadPage() {
   const [validation, setValidation] = useState<ValidationState | null>(null);
   const [sessionValue, setSessionValue] = useState("2024/2025");
   const [semesterValue, setSemesterValue] = useState("FIRST");
-  const [departmentValue, setDepartmentValue] = useState("Computer Science");
-  const [autoDispatch, setAutoDispatch] = useState(false);
+  
+  const [departmentId, setDepartmentId] = useState("");
+  const [programId, setProgramId] = useState("");
+  const [levelValue, setLevelValue] = useState("100");
+
+  const [departments, setDepartments] = useState<any[]>([]);
+  const [programs, setPrograms] = useState<any[]>([]);
+  const [isLoadingMetadata, setIsLoadingMetadata] = useState(true);
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [submitSuccess, setSubmitSuccess] = useState<{
     batchId: string;
-    dispatchId?: string;
     students: number;
-    autoDispatched: boolean;
   } | null>(null);
   const [uploadProgress, setUploadProgress] = useState(0);
+
+  const selectedFileType = React.useMemo(() => {
+    if (!file) {
+      return null;
+    }
+
+    const lowered = file.name.toLowerCase();
+    if (lowered.endsWith(".pdf") || file.type.toLowerCase().includes("pdf")) {
+      return "pdf" as const;
+    }
+
+    return "csv" as const;
+  }, [file]);
+
+  const hasValidationErrors = React.useMemo(() => {
+    return Boolean(validation && validation.errors.length > 0);
+  }, [validation]);
+
+  // Load Departments
+  React.useEffect(() => {
+    fetch("/api/admin/departments")
+      .then((res) => res.json())
+      .then((data) => {
+        setDepartments(data.departments || []);
+        if (data.departments?.length > 0) {
+          setDepartmentId(data.departments[0].id);
+        }
+      })
+      .catch((err) => {
+        console.error("Failed to load departments", err);
+        toast.error("Failed to load departments");
+      })
+      .finally(() => setIsLoadingMetadata(false));
+  }, []);
+
+  // Load Programs when Department changes
+  React.useEffect(() => {
+    if (!departmentId) return;
+    
+    setIsLoadingMetadata(true);
+    fetch(`/api/admin/programs/${departmentId}/list`)
+      .then((res) => res.json())
+      .then((data) => {
+        setPrograms(data || []);
+        if (data?.length > 0) {
+          setProgramId(data[0].id);
+        } else {
+          setProgramId("");
+        }
+      })
+      .catch((err) => {
+        console.error("Failed to load programs", err);
+        toast.error("Failed to load programs");
+      })
+      .finally(() => setIsLoadingMetadata(false));
+  }, [departmentId]);
+
+  // Re-validate CSV when level changes
+  React.useEffect(() => {
+    if (file && selectedFileType === "csv" && !isParsing) {
+      const revalidate = async () => {
+        try {
+          const csvText = await file.text();
+          const validationResult = validateAndBuildPreview(csvText, levelValue);
+          setValidation(validationResult);
+        } catch (err) {
+          console.error("Re-validation failed", err);
+        }
+      };
+      revalidate();
+    }
+  }, [levelValue, file, selectedFileType]);
 
   const steps = [
     { id: 1, title: "Information", icon: FileType },
@@ -223,22 +316,6 @@ export default function BatchUploadPage() {
     return 1;
   }, [file, showPreview, submitSuccess]);
 
-  const selectedFileType = useMemo(() => {
-    if (!file) {
-      return null;
-    }
-
-    const lowered = file.name.toLowerCase();
-    if (lowered.endsWith(".pdf") || file.type.toLowerCase().includes("pdf")) {
-      return "pdf" as const;
-    }
-
-    return "csv" as const;
-  }, [file]);
-
-  const hasValidationErrors = useMemo(() => {
-    return Boolean(validation && validation.errors.length > 0);
-  }, [validation]);
 
   const resetUploadState = () => {
     setFile(null);
@@ -281,7 +358,7 @@ export default function BatchUploadPage() {
 
     try {
       const csvText = await selectedFile.text();
-      const validationResult = validateAndBuildPreview(csvText);
+      const validationResult = validateAndBuildPreview(csvText, levelValue);
       setValidation(validationResult);
       setShowPreview(true);
     } catch {
@@ -344,8 +421,9 @@ export default function BatchUploadPage() {
       payload.append("file", file);
       payload.append("session", sessionValue);
       payload.append("semester", semesterValue);
-      payload.append("department", departmentValue);
-      payload.append("autoDispatch", autoDispatch ? "true" : "false");
+      payload.append("programId", programId);
+      payload.append("level", levelValue);
+
 
       const response = await fetch("/api/upload", {
         method: "POST",
@@ -368,21 +446,13 @@ export default function BatchUploadPage() {
 
       setSubmitSuccess({
         batchId: responseBody.batchId,
-        dispatchId: responseBody.dispatch?.dispatchId,
         students: Number(responseBody.students ?? 0),
-        autoDispatched: Boolean(responseBody.dispatch?.dispatchId),
       });
       setUploadProgress(100);
 
-      if (responseBody.dispatch?.dispatchId) {
-        toast.success("Upload and Dispatch Successful", {
-          description: `Batch ${responseBody.batchId} uploaded and emails are sending.`,
-        });
-      } else {
-        toast.success("Upload Successful", {
-          description: `Batch ${responseBody.batchId} saved to pending review.`,
-        });
-      }
+      toast.success("Upload Successful", {
+        description: `Batch ${responseBody.batchId} saved to pending review.`,
+      });
     } catch {
       clearInterval(progressInterval);
       setUploadProgress(0);
@@ -497,58 +567,58 @@ export default function BatchUploadPage() {
                     <option value='THIRD'>Third Semester</option>
                   </select>
                 </div>
-                <div className='space-y-2 md:col-span-2'>
+                <div className='space-y-2'>
                   <label className='text-xs font-bold uppercase tracking-tight text-muted-foreground px-1'>
-                    Department / Program
+                    Department
                   </label>
                   <select
-                    value={departmentValue}
-                    onChange={(event) => setDepartmentValue(event.target.value)}
+                    value={departmentId}
+                    onChange={(event) => setDepartmentId(event.target.value)}
                     className='w-full h-10 rounded-md border border-input bg-card px-3 text-sm font-medium focus:border-ring focus:ring-2 focus:ring-ring/30 outline-none transition-all cursor-pointer'
                   >
-                    <option>Computer Science</option>
-                    <option>Physics</option>
-                    <option>Mathematics</option>
+                    {departments.map((d) => (
+                      <option key={d.id} value={d.id}>
+                        {d.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className='space-y-2'>
+                  <label className='text-xs font-bold uppercase tracking-tight text-muted-foreground px-1'>
+                    Program
+                  </label>
+                  <select
+                    value={programId}
+                    onChange={(event) => setProgramId(event.target.value)}
+                    className='w-full h-10 rounded-md border border-input bg-card px-3 text-sm font-medium focus:border-ring focus:ring-2 focus:ring-ring/30 outline-none transition-all cursor-pointer disabled:opacity-50'
+                    disabled={programs.length === 0}
+                  >
+                    {programs.map((p) => (
+                      <option key={p.id} value={p.id}>
+                        {p.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className='space-y-2 md:col-span-2'>
+                  <label className='text-xs font-bold uppercase tracking-tight text-muted-foreground px-1'>
+                    Student Level
+                  </label>
+                  <select
+                    value={levelValue}
+                    onChange={(event) => setLevelValue(event.target.value)}
+                    className='w-full h-10 rounded-md border border-input bg-card px-3 text-sm font-medium focus:border-ring focus:ring-2 focus:ring-ring/30 outline-none transition-all cursor-pointer'
+                  >
+                    <option value='100'>100 Level</option>
+                    <option value='200'>200 Level</option>
+                    <option value='300'>300 Level</option>
+                    <option value='400'>400 Level</option>
+                    <option value='500'>500 Level</option>
                   </select>
                 </div>
 
                 <Separator className='md:col-span-2 my-2 opacity-50' />
 
-                <div className='space-y-4 md:col-span-2'>
-                  <label className='text-xs font-bold uppercase tracking-tight text-muted-foreground px-1'>
-                    Auto-Dispatch Settings
-                  </label>
-                  <label
-                    className={cn(
-                      "flex items-center justify-between gap-4 rounded-xl border border-border bg-muted/20 p-4 cursor-pointer transition-all hover:bg-muted/40",
-                      autoDispatch &&
-                        "border-sidebar-primary/30 bg-sidebar-primary/5",
-                    )}
-                  >
-                    <div className='space-y-1 select-none flex-1'>
-                      <span className='block text-sm font-bold text-foreground'>
-                        Instant Parent Notification
-                      </span>
-                      <p className='text-muted-foreground text-xs leading-relaxed'>
-                        Deliver results to parents via Email and WhatsApp
-                        immediately after a successful upload.
-                      </p>
-                    </div>
-
-                    <div className='relative inline-flex items-center shrink-0'>
-                      <input
-                        type='checkbox'
-                        checked={autoDispatch}
-                        onChange={(event) =>
-                          setAutoDispatch(event.target.checked)
-                        }
-                        className='peer sr-only'
-                      />
-                      <div className='h-6 w-11 rounded-full bg-muted border border-border transition-colors peer-checked:bg-sidebar-primary peer-checked:border-sidebar-primary shadow-inner' />
-                      <div className='absolute left-1 top-1 h-4 w-4 rounded-full bg-white shadow-sm transition-transform peer-checked:translate-x-5' />
-                    </div>
-                  </label>
-                </div>
               </div>
             </Card>
 
@@ -828,9 +898,7 @@ export default function BatchUploadPage() {
 
                   <div className='bg-white/50 rounded-xl p-4 border border-emerald-200/50'>
                     <p className='text-xs text-emerald-700'>
-                      {submitSuccess.autoDispatched && submitSuccess.dispatchId
-                        ? `Dispatch active (${submitSuccess.dispatchId}). Delivery status is being tracked.`
-                        : "Batch saved to pending review. No notifications sent yet."}
+                      Batch saved to pending review. No notifications sent yet.
                     </p>
                   </div>
 
@@ -842,18 +910,6 @@ export default function BatchUploadPage() {
                     >
                       <Link href='/admin/dashboard'>View Dashboard</Link>
                     </Button>
-                    {submitSuccess.dispatchId && (
-                      <Button
-                        asChild
-                        className='bg-emerald-600 hover:bg-emerald-700 text-white'
-                      >
-                        <Link
-                          href={`/admin/delivery/${submitSuccess.dispatchId}`}
-                        >
-                          Track Delivery
-                        </Link>
-                      </Button>
-                    )}
                   </div>
                 </div>
               </Card>

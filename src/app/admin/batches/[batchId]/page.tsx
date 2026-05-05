@@ -80,7 +80,7 @@ export default function BatchDetailPage({ params }: BatchPageProps) {
                                 <Breadcrumbs
                                     items={[
                                         { label: "Result Batches", href: "/admin/batches" },
-                                        { label: batch.id },
+                                        { label: `${batch.department} - ${batch.level} Level` },
                                     ]}
                                 />
                             }
@@ -114,6 +114,7 @@ export default function BatchDetailPage({ params }: BatchPageProps) {
                                         <StatusBadge status={toBadgeStatus(batch.status)} />
                                     </div>
                                     <p className='text-sm text-muted-foreground'>
+                                        <Badge variant="outline" className="mr-2 border-brand/20 bg-brand/5 text-brand">{batch.level} Level</Badge>
                                         {batch.session} • {semesterLabel(batch.semester)} Semester •
                                         Uploaded {relativeTimeFromNow(batch.uploadedAt)}
                                     </p>
