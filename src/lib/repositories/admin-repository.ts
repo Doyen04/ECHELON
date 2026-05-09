@@ -226,6 +226,7 @@ export async function findAuthUserByEmail(email: string) {
             name: true,
             email: true,
             role: true,
+            departmentId: true,
             passwordHash: true,
         },
     });

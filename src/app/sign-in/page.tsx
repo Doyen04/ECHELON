@@ -2,8 +2,8 @@
 
 import React, { useState } from "react";
 import { Building2, ShieldCheck, Sparkles } from "lucide-react";
-import { useRouter, useSearchParams } from "next/navigation";
-import { signIn } from "next-auth/react";
+import { useRouter } from "next/navigation";
+import { signIn, getSession } from "next-auth/react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -13,8 +13,7 @@ import { Separator } from "@/components/ui/separator";
 
 export default function SignInPage() {
     const router = useRouter();
-    const searchParams = useSearchParams();
-    const callbackUrl = searchParams.get("callbackUrl") || "/admin/dashboard";
+    
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [email, setEmail] = useState("");
@@ -31,11 +30,15 @@ export default function SignInPage() {
                 password,
                 redirect: false,
             });
-
+           
+            
             if (result?.error) {
                 setError("Invalid email or password");
             } else if (result?.ok) {
-                router.push(callbackUrl);
+                const session = await getSession();
+                const role = session?.user?.role;
+                const dest = role === "hod" ? "/hod/dashboard" : "/admin/dashboard";
+                router.push(dest);
             }
         } catch {
             setError("An error occurred during sign in");
