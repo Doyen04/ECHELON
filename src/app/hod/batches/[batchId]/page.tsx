@@ -171,11 +171,12 @@ export default function HodBatchDetailPage({ params }: BatchPageProps) {
                                 {batch.studentResults.length} Records
                             </Badge>
                         </div>
-                        <Card className="overflow-hidden border-border bg-card shadow-sm">
+                        <Card className="overflow-hidden border-border bg-card shadow-sm text-black">
                             <DataTable 
                                 data={batch.studentResults} 
                                 columns={columns}
                                 className="border-none"
+                                hideCount={true}
                             />
                         </Card>
                     </section>
@@ -208,7 +209,7 @@ export default function HodBatchDetailPage({ params }: BatchPageProps) {
                                 Lifecycle Events
                             </h2>
                             <div className="space-y-3">
-                                <div className="relative pl-6 pb-6 before:absolute before:left-[7px] before:top-2 before:bottom-0 before:w-px before:bg-border">
+                                <div className="relative pl-6 pb-6 before:absolute before:left-1.75 before:top-2 before:bottom-0 before:w-px before:bg-border">
                                     <div className="absolute left-0 top-1 h-3.5 w-3.5 rounded-full border-2 border-brand bg-background" />
                                     <div className="rounded-xl border border-border bg-card p-4 shadow-sm space-y-1">
                                         <div className="flex items-center justify-between">

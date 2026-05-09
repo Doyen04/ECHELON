@@ -13,7 +13,7 @@ import { Separator } from "@/components/ui/separator";
 
 export default function SignInPage() {
     const router = useRouter();
-    
+
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [email, setEmail] = useState("");
@@ -30,8 +30,8 @@ export default function SignInPage() {
                 password,
                 redirect: false,
             });
-           
-            
+
+
             if (result?.error) {
                 setError("Invalid email or password");
             } else if (result?.ok) {

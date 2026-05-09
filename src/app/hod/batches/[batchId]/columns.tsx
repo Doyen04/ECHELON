@@ -25,8 +25,8 @@ export const columns = [
         className: "px-6 py-4 text-sm text-foreground",
         cell: (row: any) => (
             <>
-                <div className="font-semibold text-slate-200">{row.student.fullName}</div>
-                <div className="mt-0.5 text-[10px] font-mono text-slate-500 uppercase">
+                <div className="font-semibold text-foreground">{row.student.fullName}</div>
+                <div className="mt-0.5 text-[10px] font-mono text-muted-foreground uppercase">
                     {row.student.matricNumber}
                 </div>
             </>
@@ -35,7 +35,7 @@ export const columns = [
     {
         header: "GPA",
         accessorKey: "gpa",
-        className: "px-6 py-4 text-sm font-bold text-slate-300",
+        className: "px-6 py-4 text-sm font-bold text-foreground",
         cell: (row: any) => <>{row.gpa.toFixed(2)}</>,
     },
     {
@@ -47,7 +47,7 @@ export const columns = [
     {
         header: "Courses",
         accessorKey: "courses",
-        className: "px-6 py-4 text-xs text-slate-400",
+        className: "px-6 py-4 text-xs text-foreground",
         cell: (row: any) => {
             const courses = Array.isArray(row.courses) ? row.courses : [];
             return <>{courses.length} courses</>;

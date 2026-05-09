@@ -28,7 +28,7 @@ export async function middleware(request: NextRequest) {
 
     // /hod/* requires hod role AND departmentId
     if (path.startsWith("/hod")) {
-    
+
         if (!token || token.role !== "hod" || !token.departmentId) {
             const signInUrl = new URL("/sign-in", request.url);
             signInUrl.searchParams.set("callbackUrl", path);
