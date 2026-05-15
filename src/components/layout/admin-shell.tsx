@@ -15,12 +15,12 @@ export function AdminShell({ sidebar, children }: AdminShellProps) {
     return (
         <div className="flex min-h-screen overflow-x-hidden bg-background">
             {/* Mobile Header */}
-            <header className="fixed top-0 left-0 right-0 z-40 flex h-16 items-center justify-between border-b border-white/10 bg-brand px-4 text-white md:hidden">
+            <header className="fixed top-0 left-0 right-0 z-40 flex h-16 items-center justify-between border-b border-sidebar-border bg-sidebar px-4 text-white md:hidden">
                 <div className="flex items-center gap-3">
-                    <div className="flex h-9 w-9 items-center justify-center rounded-xl border border-white/20 bg-white/12 text-white">
+                    <div className="flex h-9 w-9 items-center justify-center rounded-xl border border-white/25 bg-white/15 text-white shadow-lg">
                         <Layers className="h-5 w-5" />
                     </div>
-                    <span className="font-serif text-lg tracking-tight">Echelon</span>
+                    <span className="font-sans text-base font-bold tracking-tight">Echelon Registry</span>
                 </div>
                 <button
                     onClick={toggleMobileMenu}
