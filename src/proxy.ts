@@ -2,14 +2,14 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { getToken } from "next-auth/jwt";
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
     const token = await getToken({
         req: request,
         secret: process.env.NEXTAUTH_SECRET,
     });
 
     const path = request.nextUrl.pathname;
-
+    console.log(token)
     // Redirect built-in 404 page to sign-in/signup
     if (path === "/404") {
         const signInUrl = new URL("/sign-in", request.url);
@@ -28,7 +28,6 @@ export async function middleware(request: NextRequest) {
 
     // /hod/* requires hod role AND departmentId
     if (path.startsWith("/hod")) {
-
         if (!token || token.role !== "hod" || !token.departmentId) {
             const signInUrl = new URL("/sign-in", request.url);
             signInUrl.searchParams.set("callbackUrl", path);
