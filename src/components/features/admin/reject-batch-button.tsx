@@ -81,7 +81,7 @@ export function RejectBatchButton({ batchId, onSuccess, disabled }: RejectBatchB
                         Reason for Rejection
                     </label>
                     <textarea
-                        className="w-full min-h-[100px] rounded-xl border border-input bg-background/50 p-3 text-sm focus:ring-2 focus:ring-rose-500/30 outline-none transition-all"
+                        className="w-full min-h-25 rounded-xl border border-input bg-background/50 p-3 text-sm focus:ring-2 focus:ring-rose-500/30 outline-none transition-all"
                         placeholder="e.g., Incorrect course units for some students, duplicate records detected..."
                         value={reason}
                         onChange={(e) => setReason(e.target.value)}
