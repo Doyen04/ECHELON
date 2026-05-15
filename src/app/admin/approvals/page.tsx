@@ -55,7 +55,7 @@ export default function ApprovalsPage() {
                         />
 
                         <main className='mx-auto w-full max-w-7xl space-y-8 px-4 py-6 sm:px-6 lg:px-8 lg:py-8'>
-                            <div className='grid gap-4'>
+                            <div>
                                 <h2 className='flex items-center gap-2 px-1 text-sm font-bold uppercase tracking-widest text-muted-foreground'>
                                     <Clock className='h-4 w-4 text-warning' /> Action Required ({pendingBatches.length})
                                 </h2>
@@ -91,7 +91,7 @@ export default function ApprovalsPage() {
                                         <ChevronDown className='h-5 w-5 text-muted-foreground transition-transform group-open:rotate-180' />
                                     </summary>
 
-                                    <div className='overflow-x-auto border-t border-border bg-card'>
+                                    <div className='border-t border-border bg-card'>
                                         <DataTable
                                             data={reviewedBatches}
                                             className='border-0 shadow-none -mx-px'

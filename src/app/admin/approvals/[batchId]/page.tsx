@@ -65,7 +65,7 @@ export default function ApprovalsPage() {
               <ChevronDown className='h-5 w-5 text-muted-foreground transition-transform group-open:rotate-180' />
             </summary>
 
-            <div className='border-t border-border bg-card overflow-x-auto'>
+            <div className='border-t border-border bg-card'>
               <DataTable
                 data={[
                   { id: "BCH-7F1X", department: "Physics", session: "2024/2025", status: "APPROVED" },

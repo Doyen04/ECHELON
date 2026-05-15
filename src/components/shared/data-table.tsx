@@ -41,8 +41,6 @@ interface DataTableProps<TData> {
     onPageChange?: (page: number) => void;
     isLoading?: boolean;
 }
-
-import { Loader2 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export function DataTable<TData>({

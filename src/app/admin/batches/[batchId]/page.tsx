@@ -166,18 +166,16 @@ export default function BatchDetailPage({ params }: BatchPageProps) {
                                     </div>
                                     <Card className='overflow-hidden border-border shadow-sm'>
                                         {batch.studentResults.length > 0 ? (
-                                            <div className='overflow-x-auto'>
-                                                <DataTable
-                                                    data={batch.studentResults}
-                                                    className='border-0 shadow-none -mx-px'
-                                                    columns={columns}
-                                                    manualPagination
-                                                    currentPage={batch.pagination?.currentPage ?? currentPage}
-                                                    totalPages={batch.pagination?.pages ?? 1}
-                                                    totalCount={batch.pagination?.total ?? batch.studentResults.length}
-                                                    onPageChange={setCurrentPage}
-                                                />
-                                            </div>
+                                            <DataTable
+                                                data={batch.studentResults}
+                                                className='border-0 shadow-none -mx-px'
+                                                columns={columns}
+                                                manualPagination
+                                                currentPage={batch.pagination?.currentPage ?? currentPage}
+                                                totalPages={batch.pagination?.pages ?? 1}
+                                                totalCount={batch.pagination?.total ?? batch.studentResults.length}
+                                                onPageChange={setCurrentPage}
+                                            />
                                         ) : (
                                             <div className='px-6 py-12 text-center text-sm text-muted-foreground'>
                                                 No student results are stored for this batch yet.

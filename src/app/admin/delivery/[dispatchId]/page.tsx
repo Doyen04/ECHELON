@@ -175,7 +175,7 @@ export default function DeliveryLogPage({ params }: DeliveryPageProps) {
                             </p>
                         </div>
 
-                        <div className='overflow-x-auto'>
+                        <div>
                             <DataTable
                                 data={notificationLogs}
                                 className='border-0 shadow-none'
