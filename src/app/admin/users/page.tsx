@@ -34,6 +34,9 @@ export default function AdminUserManagementPage() {
     const [departments, setDepartments] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isCreateOpen, setIsCreateOpen] = useState(false);
+    const [isEditOpen, setIsEditOpen] = useState(false);
+    const [editTarget, setEditTarget] = useState<any | null>(null);
+    const [editForm, setEditForm] = useState({ name: "", email: "", role: "hod", departmentId: "" });
     
     // Form state
     const [formData, setFormData] = useState({
@@ -52,6 +55,37 @@ export default function AdminUserManagementPage() {
             .then(data => setUsers(data.users || []))
             .catch(err => toast.error("Failed to load users"))
             .finally(() => setIsLoading(false));
+    };
+
+    const openEdit = (user: any) => {
+        setEditTarget(user);
+        setEditForm({
+            name: user.name ?? "",
+            email: user.email ?? "",
+            role: user.role ?? "hod",
+            departmentId: user.department?.id ?? "",
+        });
+        setIsEditOpen(true);
+    };
+
+    const handleSaveEdit = async (e?: React.FormEvent) => {
+        if (e) e.preventDefault();
+        if (!editTarget) return;
+        try {
+            const res = await fetch(`/api/admin/users/${editTarget.id}`, {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(editForm),
+            });
+            const body = await res.json();
+            if (!res.ok) throw new Error(body?.error || "Failed to update user");
+            toast.success("User updated");
+            setIsEditOpen(false);
+            setEditTarget(null);
+            fetchUsers();
+        } catch (err: any) {
+            toast.error(err.message || "Failed to save user");
+        }
     };
 
     useEffect(() => {
@@ -104,7 +138,7 @@ export default function AdminUserManagementPage() {
                                 Add New User
                             </Button>
                         </DialogTrigger>
-                        <DialogContent className="sm:max-w-[425px] bg-card border-border">
+                        <DialogContent className="sm:max-w-106.25 bg-card border-border">
                             <DialogHeader>
                                 <DialogTitle className="text-xl font-bold">Create New User</DialogTitle>
                             </DialogHeader>
@@ -213,7 +247,7 @@ export default function AdminUserManagementPage() {
                                     </div>
 
                                     <div className="flex items-center justify-end gap-3 border-t md:border-t-0 pt-4 md:pt-0">
-                                        <Button variant="ghost" size="sm" className="text-xs font-bold uppercase tracking-widest h-9 px-4">
+                                        <Button variant="ghost" size="sm" className="text-xs font-bold uppercase tracking-widest h-9 px-4" onClick={() => openEdit(user)}>
                                             Edit
                                         </Button>
                                         <Button variant="ghost" size="icon" className="h-9 w-9 text-muted-foreground">
@@ -226,6 +260,46 @@ export default function AdminUserManagementPage() {
                     </div>
                 )}
             </main>
+
+            <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
+                <DialogContent className="sm:max-w-120 bg-card border-border">
+                    <DialogHeader>
+                        <DialogTitle className="text-xl font-bold">Edit User</DialogTitle>
+                    </DialogHeader>
+                    <form onSubmit={handleSaveEdit} className="space-y-4 py-4">
+                        <div className="space-y-2">
+                            <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground px-1">Full Name</label>
+                            <Input value={editForm.name} onChange={e => setEditForm(prev => ({ ...prev, name: e.target.value }))} />
+                        </div>
+                        <div className="space-y-2">
+                            <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground px-1">Email Address</label>
+                            <Input value={editForm.email} type="email" onChange={e => setEditForm(prev => ({ ...prev, email: e.target.value }))} />
+                        </div>
+                        <div className="space-y-2">
+                            <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground px-1">Access Role</label>
+                            <select className="w-full h-10 rounded-md border border-input bg-background/50 px-3 text-sm" value={editForm.role} onChange={e => setEditForm(prev => ({ ...prev, role: e.target.value }))}>
+                                <option value="hod">Head of Department (HOD)</option>
+                                <option value="super_admin">Super Admin</option>
+                            </select>
+                        </div>
+                        {editForm.role === "hod" && (
+                            <div className="space-y-2">
+                                <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground px-1">Assigned Department</label>
+                                <select className="w-full h-10 rounded-md border border-input bg-background/50 px-3 text-sm" value={editForm.departmentId} onChange={e => setEditForm(prev => ({ ...prev, departmentId: e.target.value }))}>
+                                    <option value="">No Dept Assigned</option>
+                                    {departments.map(d => (
+                                        <option key={d.id} value={d.id}>{d.name}</option>
+                                    ))}
+                                </select>
+                            </div>
+                        )}
+                        <DialogFooter className="pt-4">
+                            <Button variant="ghost" onClick={() => { setIsEditOpen(false); setEditTarget(null); }} className="mr-2">Cancel</Button>
+                            <Button type="submit" className="bg-sidebar-primary">Save Changes</Button>
+                        </DialogFooter>
+                    </form>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }
