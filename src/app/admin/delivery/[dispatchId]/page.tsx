@@ -178,7 +178,6 @@ export default function DeliveryLogPage({ params }: DeliveryPageProps) {
                         <div className='overflow-x-auto'>
                             <DataTable
                                 data={notificationLogs}
-                                hideCount={true}
                                 className='border-0 shadow-none'
                                 manualPagination
                                 currentPage={pagination?.currentPage ?? currentPage}

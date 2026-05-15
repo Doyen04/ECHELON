@@ -31,7 +31,6 @@ interface DataTableProps<TData> {
     pageSize?: number;
     className?: string;
     onRowClick?: (item: TData) => void;
-    hideCount?: boolean;
     /** Optional renderer for mobile row cards. */
     mobileRow?: (item: TData) => React.ReactNode;
     /** Enable server-side pagination controls. */
@@ -51,7 +50,6 @@ export function DataTable<TData>({
     pageSize = 10,
     className,
     onRowClick,
-    hideCount = false,
     mobileRow,
     manualPagination = false,
     currentPage: controlledCurrentPage,
@@ -117,16 +115,10 @@ export function DataTable<TData>({
                     )}
                     {filters}
                 </div>
-
-                {!hideCount && (
-                    <div className="text-sm text-muted-foreground">
-                        Showing <span className="font-medium text-foreground">{manualPagination ? (totalCount ?? data.length) : filteredData.length}</span> results
-                    </div>
-                )}
             </div>
 
             {/* Desktop table */}
-            <div className="min-w-0 overflow-hidden rounded-xl border border-border/70 bg-card">
+            <div className="min-w-0 overflow-hidden">
                 <div className="hidden md:block">
                     <Table className="divide-y divide-border">
                         <TableHeader className="bg-muted/30">
@@ -161,9 +153,9 @@ export function DataTable<TData>({
                 </div>
             </div>
 
-            <div className="flex items-center justify-between px-2 py-4">
-                <div className="text-sm text-muted-foreground">
-                    Page {resolvedCurrentPage} of {resolvedTotalPages}
+            <div className="flex items-center justify-between px-6 py-6 border-t border-border/50">
+                <div className="text-sm font-medium text-muted-foreground tracking-tight">
+                    Page <span className="text-foreground">{resolvedCurrentPage}</span> of <span className="text-foreground">{resolvedTotalPages}</span>
                 </div>
                 <div className="flex items-center gap-2">
                     <Button

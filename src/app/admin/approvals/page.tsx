@@ -93,7 +93,6 @@ export default function ApprovalsPage() {
 
                                     <div className='overflow-x-auto border-t border-border bg-card'>
                                         <DataTable
-                                            hideCount
                                             data={reviewedBatches}
                                             className='border-0 shadow-none -mx-px'
                                             manualPagination

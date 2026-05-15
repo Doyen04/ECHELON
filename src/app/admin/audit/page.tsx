@@ -100,7 +100,6 @@ export default function AuditLogPage() {
                             <Card className='hidden md:block overflow-hidden rounded-xl border-border shadow-none'>
                                 <DataTable
                                     data={logs}
-                                    hideCount
                                     manualPagination
                                     currentPage={pagination.currentPage}
                                     totalPages={pagination.pages}

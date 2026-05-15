@@ -179,7 +179,6 @@ export default function HodBatchDetailPage({ params }: BatchPageProps) {
                                 data={batch.studentResults}
                                 columns={columns}
                                 className="border-none"
-                                hideCount={true}
                                 manualPagination
                                 currentPage={batch.pagination?.currentPage ?? currentPage}
                                 totalPages={batch.pagination?.pages ?? 1}
