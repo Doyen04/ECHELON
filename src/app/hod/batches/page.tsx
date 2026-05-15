@@ -274,7 +274,6 @@ export default function HodBatchesPage() {
                     <Card className='overflow-hidden border-border bg-card shadow-sm'>
                         <DataTable
                             data={batches}
-                            hideCount
                             columns={columns}
                             className='border-none'
                             manualPagination
