@@ -10,9 +10,9 @@ export const columns = [
     {
         header: "Batch ID",
         accessorKey: "id",
-        className: "w-28 font-mono text-[10px] text-muted-foreground",
+        className: "",
         cell: (batch: any) => (
-            <div className="max-w-24 truncate" title={batch.id}>
+            <div className="max-w-24 truncate text-[10px] font-mono text-muted-foreground" title={batch.id}>
                 {batch.id}
             </div>
         ),
@@ -20,25 +20,26 @@ export const columns = [
     {
         header: "Session",
         accessorKey: "session",
-        className: "w-24 text-sm text-foreground",
+        className: "",
+        cell: (batch: any) => <div className="text-sm font-bold text-foreground">{batch.session}</div>,
     },
     {
         header: "Semester",
         accessorKey: "semester",
-        className: "w-24 text-sm text-foreground",
-        cell: (batch: any) => semesterLabel(batch.semester),
+        className: "",
+        cell: (batch: any) => <div className="text-sm font-bold text-foreground">{semesterLabel(batch.semester)}</div>,
     },
     {
         header: "Program / Level",
         accessorKey: "program",
-        className: "w-48 text-sm font-medium text-foreground",
+        className: "",
         cell: (batch: any) => (
             <>
-                <div className="font-semibold text-slate-200">
+                <div className="text-sm font-bold text-foreground">
                     {batch.program?.name || batch.department}
                 </div>
                 {batch.level && (
-                    <div className="mt-0.5 text-[10px] font-mono text-slate-500 uppercase">
+                    <div className="mt-1 text-[11px] font-medium text-muted-foreground uppercase tracking-tight">
                         {batch.level} Level
                     </div>
                 )}
@@ -47,40 +48,40 @@ export const columns = [
     },
     {
         header: "Students",
-        className: "w-20 text-sm text-foreground",
-        cell: (batch: any) => batch._count?.studentResults ?? 0,
+        className: "",
+        cell: (batch: any) => <div className="text-[11px] font-medium text-muted-foreground">{batch._count?.studentResults ?? 0}</div>,
     },
     {
         header: "Source",
-        className: "w-20",
+        className: "",
         cell: (batch: any) => (
-            <Badge variant="outline" className="font-bold">
+            <Badge variant="outline" className="text-[10px] font-bold uppercase tracking-tight">
                 {String(batch.source).toUpperCase()}
             </Badge>
         ),
     },
     {
         header: "Status",
-        className: "w-24",
+        className: "",
         cell: (batch: any) => <StatusBadge status={toBadgeStatus(batch.status)} />,
     },
     {
         header: "Uploaded",
-        className: "w-36",
+        className: "",
         cell: (batch: any) => (
-            <div className="min-w-0 flex flex-col">
-                <span className="truncate text-sm text-foreground">{batch.uploadedBy?.name ?? "System"}</span>
-                <span className="text-xs text-muted-foreground">{relativeTimeFromNow(batch.uploadedAt)}</span>
+            <div className="min-w-0 flex flex-col gap-0.5">
+                <span className="text-sm font-bold text-foreground truncate">{batch.uploadedBy?.name ?? "System"}</span>
+                <span className="text-[11px] font-medium text-muted-foreground">{relativeTimeFromNow(batch.uploadedAt)}</span>
             </div>
         ),
     },
     {
         header: "",
-        className: "w-20 text-right",
+        className: "text-right",
         cell: (batch: any) => (
             <Link
                 href={`/admin/batches/${batch.id}`}
-                className="inline-flex items-center gap-1 text-sm font-medium text-brand hover:text-brand-hover hover:underline"
+                className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-widest text-brand hover:text-brand-hover hover:underline"
             >
                 View <ChevronRight className="h-4 w-4" />
             </Link>

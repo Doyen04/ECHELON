@@ -22,11 +22,11 @@ export const columns = [
     {
         header: "Student",
         accessorKey: "student",
-        className: "px-6 py-4 text-sm text-foreground",
+        className: "",
         cell: (row: any) => (
             <>
-                <div className="font-semibold text-foreground">{row.student.fullName}</div>
-                <div className="mt-0.5 text-[10px] font-mono text-muted-foreground uppercase">
+                <div className="text-sm font-bold text-foreground leading-none">{row.student.fullName}</div>
+                <div className="mt-1.5 text-[11px] font-medium text-muted-foreground uppercase tracking-tight">
                     {row.student.matricNumber}
                 </div>
             </>
@@ -35,22 +35,22 @@ export const columns = [
     {
         header: "GPA",
         accessorKey: "gpa",
-        className: "px-6 py-4 text-sm font-bold text-foreground",
-        cell: (row: any) => <>{row.gpa.toFixed(2)}</>,
+        className: "",
+        cell: (row: any) => <div className="text-sm font-bold text-foreground">{row.gpa.toFixed(2)}</div>,
     },
     {
         header: "Status",
         accessorKey: "status",
-        className: "px-6 py-4",
+        className: "",
         cell: (row: any) => getStatusBadge(row.status),
     },
     {
         header: "Courses",
         accessorKey: "courses",
-        className: "px-6 py-4 text-xs text-foreground",
+        className: "",
         cell: (row: any) => {
             const courses = Array.isArray(row.courses) ? row.courses : [];
-            return <>{courses.length} courses</>;
+            return <div className="text-[11px] font-medium text-muted-foreground">{courses.length} courses</div>;
         },
     },
 ];
