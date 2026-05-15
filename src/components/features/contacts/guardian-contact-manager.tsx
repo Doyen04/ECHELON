@@ -297,7 +297,7 @@ export function GuardianContactManager({ guardians }: GuardianContactManagerProp
                                     </td>
                                     <td className="px-6 py-5 align-top">
                                         <div className="space-y-1">
-                                            <div className="text-[11px] font-medium text-foreground truncate max-w-[180px]">
+                                            <div className="text-[11px] font-medium text-foreground truncate max-w-45">
                                                 {guardian.email ?? "No email address"}
                                             </div>
                                             <div className="text-[11px] font-medium text-muted-foreground">
@@ -467,7 +467,7 @@ export function GuardianContactManager({ guardians }: GuardianContactManagerProp
                             type="button"
                             onClick={saveGuardian}
                             disabled={isSaving}
-                            className="rounded-xl bg-sidebar-primary min-w-[120px] font-bold shadow-md shadow-sidebar-primary/20"
+                            className="rounded-xl bg-sidebar-primary min-w-30 font-bold shadow-md shadow-sidebar-primary/20"
                         >
                             <Save className="mr-2 h-4 w-4" />
                             {isSaving ? "Saving..." : "Save Changes"}
@@ -558,7 +558,7 @@ export function GuardianContactManager({ guardians }: GuardianContactManagerProp
                             type="button"
                             onClick={handleUploadContacts}
                             disabled={!uploadFile || isUploading}
-                            className="rounded-xl bg-sidebar-primary min-w-[140px] font-bold shadow-md shadow-sidebar-primary/20"
+                            className="rounded-xl bg-sidebar-primary min-w-35 font-bold shadow-md shadow-sidebar-primary/20"
                         >
                             <Upload className="mr-2 h-4 w-4" />
                             {isUploading ? "Importing..." : "Start Import"}
