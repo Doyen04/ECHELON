@@ -196,7 +196,6 @@ export function DataTable<TData>({
                 </div>
             </div>
 
-            {/* Mobile stacked card list */}
             <div className="md:hidden">
                 <div className="space-y-4 px-4 py-4">
                     {isLoading ? (
