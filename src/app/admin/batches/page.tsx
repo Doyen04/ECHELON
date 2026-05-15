@@ -14,6 +14,7 @@ import { PageHeader } from "@/components/shared/page-header";
 import { ExportButton } from "@/components/features/admin/export-button";
 import { useApi } from "@/hooks/use-api";
 import { ApiGate } from "@/components/shared/api-gate";
+import { Card } from "@/components/ui/card";
 
 import { columns } from "./columns";
 import { DataTable } from "@/components/shared/data-table";
@@ -193,15 +194,17 @@ export default function BatchesPage() {
                             )}
                         </div>
 
-                        <DataTable
-                            data={batches}
-                            columns={columns}
-                            manualPagination
-                            currentPage={pagination.currentPage}
-                            totalPages={pagination.pages}
-                            totalCount={pagination.total}
-                            onPageChange={setCurrentPage}
-                        />
+                        <Card className="overflow-hidden border-border bg-card shadow-sm">
+                            <DataTable
+                                data={batches}
+                                columns={columns}
+                                manualPagination
+                                currentPage={pagination.currentPage}
+                                totalPages={pagination.pages}
+                                totalCount={pagination.total}
+                                onPageChange={setCurrentPage}
+                            />
+                        </Card>
                     </main>
                 </div>
             )}

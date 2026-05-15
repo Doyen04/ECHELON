@@ -118,10 +118,16 @@ export function DataTable<TData>({
             </div>
 
             {/* Desktop table */}
-            <div className="min-w-0 overflow-x-auto">
+            <div className={cn(
+                "min-w-0 overflow-x-auto rounded-xl",
+                !className?.includes("border-none") && !className?.includes("border-0") && "border border-border/50 bg-card/50 shadow-sm"
+            )}>
                 <div className="hidden md:block">
                     <Table className="divide-y divide-border">
-                        <TableHeader className="bg-muted/30">
+                        <TableHeader className={cn(
+                            "border-b border-border/50",
+                            !className?.includes("border-none") && !className?.includes("border-0") && "bg-muted/20"
+                        )}>
                             <TableRow>
                                 {columns.map((column, index) => (
                                     <TableHead key={index} className={cn("px-6 py-4 text-left text-[10px] font-bold uppercase tracking-widest text-muted-foreground", column.className)}>

@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { AlertTriangle, Edit3, Trash2, Search, Save, Upload, X, CheckCircle2 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
+import { Card } from "@/components/ui/card";
 import { Modal, ConfirmModal } from "@/components/ui/modal";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -327,7 +328,8 @@ export function GuardianContactManager({
             ) : null}
 
             {/* Desktop Table View */}
-            <DataTable
+            <Card className="overflow-hidden border-border bg-card shadow-sm">
+                <DataTable
                 columns={getGuardianColumns(
                     openEditor,
                     (guardian) => setDeleteTarget(guardian)
@@ -389,6 +391,7 @@ export function GuardianContactManager({
                     </div>
                 )}
             />
+            </Card>
 
             {guardians.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-20 bg-card rounded-xl border border-border border-dashed">
