@@ -9,7 +9,7 @@ export async function proxy(request: NextRequest) {
     });
 
     const path = request.nextUrl.pathname;
-    console.log(token)
+    console.log(token, 888888888, path)
     // Redirect built-in 404 page to sign-in/signup
     if (path === "/404") {
         const signInUrl = new URL("/sign-in", request.url);
