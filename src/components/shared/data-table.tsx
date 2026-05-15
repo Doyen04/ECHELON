@@ -167,6 +167,7 @@ export function DataTable<TData>({
                 </div>
                 <div className="flex items-center gap-2">
                     <Button
+                        type="button"
                         variant="outline"
                         size="sm"
                         onClick={() => handlePageChange(Math.max(1, resolvedCurrentPage - 1))}
@@ -177,6 +178,7 @@ export function DataTable<TData>({
                         Previous
                     </Button>
                     <Button
+                        type="button"
                         variant="outline"
                         size="sm"
                         onClick={() => handlePageChange(Math.min(resolvedTotalPages, resolvedCurrentPage + 1))}

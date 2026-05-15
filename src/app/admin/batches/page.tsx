@@ -178,6 +178,7 @@ export default function BatchesPage() {
 
                             {(selectedDept || selectedProgram || selectedLevel) && (
                                 <Button
+                                    type="button"
                                     variant='ghost'
                                     size='sm'
                                     onClick={() => {

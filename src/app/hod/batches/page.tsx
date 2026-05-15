@@ -248,6 +248,7 @@ export default function HodBatchesPage() {
 
                     {(searchQuery || selectedLevel || selectedStatus) && (
                         <Button
+                            type="button"
                             variant='ghost'
                             size='sm'
                             onClick={() => {
