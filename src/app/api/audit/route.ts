@@ -27,13 +27,29 @@ export async function GET(request: Request) {
     }
 
     const { searchParams } = new URL(request.url);
-    const page = parseInt(searchParams.get("page") || "1");
-    const limit = parseInt(searchParams.get("limit") || "50");
+    const page = Math.max(1, parseInt(searchParams.get("page") || "1", 10));
+    const limit = Math.max(1, parseInt(searchParams.get("limit") || "15", 10));
     const skip = (page - 1) * limit;
+    const query = searchParams.get("q")?.trim();
+
+    const where = {
+        institutionId: actor.institutionId,
+        ...(query
+            ? {
+                OR: [
+                    { action: { contains: query, mode: "insensitive" } },
+                    { entityType: { contains: query, mode: "insensitive" } },
+                    { entityId: { contains: query, mode: "insensitive" } },
+                    { ipAddress: { contains: query, mode: "insensitive" } },
+                    { actor: { name: { contains: query, mode: "insensitive" } } },
+                ],
+            }
+            : {}),
+    };
 
     const [auditLogs, total] = await Promise.all([
         db.auditLog.findMany({
-            where: { institutionId: actor.institutionId },
+            where,
             orderBy: { createdAt: "desc" },
             take: limit,
             skip: skip,
@@ -41,7 +57,7 @@ export async function GET(request: Request) {
                 actor: { select: { name: true } },
             },
         }),
-        db.auditLog.count({ where: { institutionId: actor.institutionId } })
+        db.auditLog.count({ where })
     ]);
 
     return NextResponse.json({

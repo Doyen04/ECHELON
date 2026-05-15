@@ -9,14 +9,27 @@ export async function GET(request: Request) {
     }
 
     const { searchParams } = new URL(request.url);
-    const page = parseInt(searchParams.get("page") || "1");
-    const limit = parseInt(searchParams.get("limit") || "50");
+    const page = Math.max(1, parseInt(searchParams.get("page") || "1", 10));
+    const limit = Math.max(1, parseInt(searchParams.get("limit") || "10", 10));
     const skip = (page - 1) * limit;
+    const query = searchParams.get("q") || undefined;
 
     try {
-        const guardians = await listGuardiansWithStudent();
+        const { guardians, total } = await listGuardiansWithStudent({
+            skip,
+            take: limit,
+            query,
+        });
 
-        return NextResponse.json(guardians);
+        return NextResponse.json({
+            guardians,
+            pagination: {
+                total,
+                pages: Math.max(1, Math.ceil(total / limit)),
+                currentPage: page,
+                limit,
+            },
+        });
     } catch (error) {
         console.error("Error fetching guardians:", error);
         return NextResponse.json({ error: "Internal server error" }, { status: 500 });

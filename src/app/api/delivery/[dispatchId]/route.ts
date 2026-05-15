@@ -19,6 +19,11 @@ export async function GET(
     try {
         const p = await params;
         const dispatchId = p.dispatchId;
+        const { searchParams } = new URL(request.url);
+        const page = Math.max(1, parseInt(searchParams.get("page") || "1", 10));
+        const limit = Math.max(1, parseInt(searchParams.get("limit") || "20", 10));
+        const skip = (page - 1) * limit;
+        const query = searchParams.get("q") || undefined;
 
         const dispatch = await findDispatchDetails(dispatchId);
 
@@ -26,7 +31,11 @@ export async function GET(
             return NextResponse.json({ error: "Dispatch not found" }, { status: 404 });
         }
 
-        const notificationLogs = await listDispatchNotificationLogs(dispatchId);
+        const { logs: notificationLogs, total } = await listDispatchNotificationLogs(dispatchId, {
+            skip,
+            take: limit,
+            query,
+        });
 
         const studentIds: string[] = Array.from(
             new Set<string>(
@@ -48,7 +57,18 @@ export async function GET(
             listGuardiansByIds(guardianIds),
         ]);
 
-        return NextResponse.json({ dispatch, notificationLogs, students, guardians });
+        return NextResponse.json({
+            dispatch,
+            notificationLogs,
+            students,
+            guardians,
+            pagination: {
+                total,
+                pages: Math.max(1, Math.ceil(total / limit)),
+                currentPage: page,
+                limit,
+            },
+        });
     } catch (error) {
         console.error("Error fetching dispatch details:", error);
         return NextResponse.json({ error: "Internal server error" }, { status: 500 });
