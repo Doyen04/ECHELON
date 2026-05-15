@@ -131,7 +131,7 @@ export default function BatchDetailPage({ params }: BatchPageProps) {
                                 </div>
                             </div>
 
-                            <div className='grid gap-4 sm:grid-cols-2 xl:grid-cols-4'>
+                            <div className='grid gap-4 sm:grid-cols-2 xl:grid-cols-4 min-w-0'>
                                 <SummaryCard
                                     title='Total Students'
                                     value={batch.studentResultsTotal ?? batch.studentResults.length}
@@ -157,8 +157,8 @@ export default function BatchDetailPage({ params }: BatchPageProps) {
                                 />
                             </div>
 
-                            <div className='grid gap-8 lg:grid-cols-[1fr_350px]'>
-                                <section className='space-y-4'>
+                            <div className='grid gap-8 lg:grid-cols-[1fr_350px] min-w-0'>
+                                <section className='space-y-4 min-w-0'>
                                     <div className="flex items-center justify-between px-1">
                                         <h2 className='text-sm font-bold uppercase tracking-widest text-muted-foreground'>
                                             Student Records

@@ -17,9 +17,9 @@ export const getColumns = (onReview: (student: any) => void) => [
                 <div className="flex h-8 w-8 items-center justify-center rounded-full bg-muted text-[10px] font-bold text-muted-foreground shrink-0">
                     {row.student.fullName.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2)}
                 </div>
-                <div className="truncate">
+                <div className="truncate min-w-0">
                     <div className="text-sm font-bold text-foreground truncate">{row.student.fullName}</div>
-                    <div className="text-[11px] font-medium text-muted-foreground uppercase tracking-tight">
+                    <div className="text-[11px] font-medium text-muted-foreground uppercase tracking-tight truncate">
                         {row.student.matricNumber}
                     </div>
                 </div>
