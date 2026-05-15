@@ -39,7 +39,7 @@ export default function DeliveryLogPage({ params }: DeliveryPageProps) {
         { immediate: true },
     );
 
-    if (isLoading) {
+    if (isLoading && !data) {
         return <LoadingState title='Loading delivery log...' />;
     }
 
@@ -184,6 +184,7 @@ export default function DeliveryLogPage({ params }: DeliveryPageProps) {
                                 totalPages={pagination?.pages ?? 1}
                                 totalCount={pagination?.total ?? notificationLogs.length}
                                 onPageChange={setCurrentPage}
+                                isLoading={isLoading}
                                 columns={[
                                     {
                                         header: "Student",

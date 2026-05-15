@@ -100,6 +100,7 @@ export default function ApprovalsPage() {
                                             totalPages={reviewedPagination?.pages ?? 1}
                                             totalCount={reviewedPagination?.total ?? reviewedBatches.length}
                                             onPageChange={setReviewedPage}
+                                            isLoading={isLoading}
                                             columns={[
                                                 {
                                                     header: "Batch ID",

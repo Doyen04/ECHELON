@@ -107,6 +107,7 @@ export default function AuditLogPage() {
                                     totalCount={pagination.total}
                                     onPageChange={setCurrentPage}
                                     onRowClick={(entry: AuditLogEntry) => setSelectedEntry(entry)}
+                                    isLoading={isLoading}
                                     columns={[
                                         {
                                             header: "Time",

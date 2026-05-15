@@ -23,7 +23,7 @@ export function ApiGate<T>({
   onRetry,
   children,
 }: ApiGateProps<T>) {
-  if (isLoading) {
+  if (isLoading && !data) {
     return <LoadingState title={loadingTitle} />;
   }
 

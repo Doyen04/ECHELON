@@ -39,7 +39,11 @@ interface DataTableProps<TData> {
     totalPages?: number;
     totalCount?: number;
     onPageChange?: (page: number) => void;
+    isLoading?: boolean;
 }
+
+import { Loader2 } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export function DataTable<TData>({
     columns,
@@ -56,6 +60,7 @@ export function DataTable<TData>({
     totalPages: controlledTotalPages,
     totalCount,
     onPageChange,
+    isLoading = false,
 }: DataTableProps<TData>) {
     const [searchQuery, setSearchQuery] = React.useState("");
     const [currentPage, setCurrentPage] = React.useState(1);
@@ -130,8 +135,18 @@ export function DataTable<TData>({
                                 ))}
                             </TableRow>
                         </TableHeader>
-                        <TableBody className="divide-y divide-border">
-                            {paginatedData.length > 0 ? (
+                        <TableBody className="divide-y divide-border relative">
+                            {isLoading ? (
+                                Array.from({ length: pageSize }).map((_, idx) => (
+                                    <TableRow key={`loading-${idx}`} className="animate-pulse">
+                                        {columns.map((_, colIdx) => (
+                                            <TableCell key={`loading-cell-${colIdx}`} className="px-6 py-5">
+                                                <Skeleton className="h-4 w-full bg-muted/50 rounded" />
+                                            </TableCell>
+                                        ))}
+                                    </TableRow>
+                                ))
+                            ) : paginatedData.length > 0 ? (
                                 paginatedData.map((row, rowIndex) => (
                                     <TableRow key={rowIndex} className={cn("group transition-colors hover:bg-muted/20", onRowClick && "cursor-pointer")} onClick={() => onRowClick?.(row)}>
                                         {columns.map((column, colIndex) => (
@@ -185,32 +200,42 @@ export function DataTable<TData>({
 
             {/* Mobile stacked card list */}
             <div className="md:hidden">
-                {paginatedData.length > 0 ? (
-                    <div className="grid gap-4">
-                        {paginatedData.map((row, idx) => (
+                <div className="space-y-4 px-4 py-4">
+                    {isLoading ? (
+                        Array.from({ length: 3 }).map((_, idx) => (
+                            <div key={`loading-mobile-${idx}`} className="rounded-xl border border-border bg-card p-5 space-y-4 animate-pulse">
+                                <Skeleton className="h-6 w-2/3 bg-muted/50 rounded" />
+                                <div className="space-y-2">
+                                    <Skeleton className="h-4 w-full bg-muted/50 rounded" />
+                                    <Skeleton className="h-4 w-5/6 bg-muted/50 rounded" />
+                                </div>
+                            </div>
+                        ))
+                    ) : paginatedData.length > 0 ? (
+                        paginatedData.map((item, idx) => (
                             <div key={idx} className="rounded-xl border border-border bg-card p-5 space-y-4">
                                 {mobileRow ? (
-                                    mobileRow(row)
+                                    mobileRow(item)
                                 ) : (
                                     <div className="space-y-3">
                                         {columns.map((col, i) => (
                                             <div key={i}>
                                                 <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground leading-none mb-1.5">{col.header}</div>
-                                                <div className="text-sm font-medium text-foreground">{col.cell ? col.cell(row) : (col.accessorKey ? String((row as any)[col.accessorKey as string] ?? "") : "")}</div>
+                                                <div className="text-sm font-medium text-foreground">{col.cell ? col.cell(item) : (col.accessorKey ? String((item as any)[col.accessorKey as string] ?? "") : "")}</div>
                                                 {i < columns.length - 1 && <div className="mt-3 pt-3 border-t border-border/50" />}
                                             </div>
                                         ))}
                                     </div>
                                 )}
                             </div>
-                        ))}
-                    </div>
-                ) : (
-                    <div className="rounded-xl border border-border border-dashed bg-card p-8 text-center">
-                        <Search className="mx-auto h-8 w-8 text-muted-foreground/30 mb-2" />
-                        <p className="text-sm font-medium text-muted-foreground">No results found.</p>
-                    </div>
-                )}
+                        ))
+                    ) : (
+                        <div className="flex flex-col items-center justify-center py-12 text-center bg-card rounded-xl border border-border border-dashed">
+                             <Search className="mx-auto h-8 w-8 text-muted-foreground/30 mb-2" />
+                             <p className="text-sm text-muted-foreground font-medium">No results found.</p>
+                        </div>
+                    )}
+                </div>
             </div>
         </div>
     );

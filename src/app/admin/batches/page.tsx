@@ -203,6 +203,7 @@ export default function BatchesPage() {
                                 totalPages={pagination.pages}
                                 totalCount={pagination.total}
                                 onPageChange={setCurrentPage}
+                                isLoading={isLoading}
                             />
                         </Card>
                     </main>
