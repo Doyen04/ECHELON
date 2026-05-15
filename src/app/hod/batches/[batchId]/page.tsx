@@ -122,7 +122,7 @@ export default function HodBatchDetailPage({ params }: BatchPageProps) {
                             </Button>
                         )}
                         {batch.status === "REJECTED" && (
-                            <Button className="bg-brand hover:bg-brand-hover rounded-full shadow-lg font-bold text-xs uppercase">
+                            <Button className="bg-brand hover:bg-brand-hover rounded-full  font-bold text-xs uppercase">
                                 <RotateCcw className="mr-2 h-3.5 w-3.5" />
                                 Re-upload Corrected
                             </Button>
@@ -158,10 +158,10 @@ export default function HodBatchDetailPage({ params }: BatchPageProps) {
                 </div>
 
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                    <SummaryCard title="Total Students" value={batch.studentResultsTotal ?? batch.studentResults.length} className="bg-card shadow-sm border-border" />
-                    <SummaryCard title="Average GPA" value={averageGpa} className="bg-card shadow-sm border-border" />
-                    <SummaryCard title="Upload Date" value={new Date(batch.uploadedAt).toLocaleDateString()} className="bg-card shadow-sm border-border" />
-                    <SummaryCard title="Format" value={batch.source.toUpperCase()} className="bg-card shadow-sm border-border" />
+                    <SummaryCard title="Total Students" value={batch.studentResultsTotal ?? batch.studentResults.length} className="bg-card  border-border" />
+                    <SummaryCard title="Average GPA" value={averageGpa} className="bg-card  border-border" />
+                    <SummaryCard title="Upload Date" value={new Date(batch.uploadedAt).toLocaleDateString()} className="bg-card  border-border" />
+                    <SummaryCard title="Format" value={batch.source.toUpperCase()} className="bg-card  border-border" />
                 </div>
 
                 <div className="grid gap-8 lg:grid-cols-[1fr_360px]">
@@ -174,7 +174,7 @@ export default function HodBatchDetailPage({ params }: BatchPageProps) {
                                 {batch.studentResultsTotal ?? batch.studentResults.length} Records
                             </Badge>
                         </div>
-                        <Card className="overflow-hidden border-border bg-card shadow-sm text-black">
+                        <Card className="overflow-hidden border-border bg-card  text-black">
                             <DataTable
                                 data={batch.studentResults}
                                 columns={columns}
@@ -193,7 +193,7 @@ export default function HodBatchDetailPage({ params }: BatchPageProps) {
                             <h2 className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground/80 px-1">
                                 Upload Metadata
                             </h2>
-                            <Card className="p-6 border-border bg-card shadow-sm space-y-5">
+                            <Card className="p-6 border-border bg-card  space-y-5">
                                 <div className="space-y-4 text-sm font-medium">
                                     <div className="flex justify-between items-center">
                                         <span className="text-muted-foreground text-xs uppercase tracking-tighter">Uploader</span>
@@ -218,7 +218,7 @@ export default function HodBatchDetailPage({ params }: BatchPageProps) {
                             <div className="space-y-3">
                                 <div className="relative pl-6 pb-6 before:absolute before:left-1.75 before:top-2 before:bottom-0 before:w-px before:bg-border">
                                     <div className="absolute left-0 top-1 h-3.5 w-3.5 rounded-full border-2 border-brand bg-background" />
-                                    <div className="rounded-xl border border-border bg-card p-4 shadow-sm space-y-1">
+                                    <div className="rounded-xl border border-border bg-card p-4  space-y-1">
                                         <div className="flex items-center justify-between">
                                             <span className="text-[11px] font-bold text-foreground uppercase tracking-tight">Batch Uploaded</span>
                                             <span className="text-[10px] text-muted-foreground">{new Date(batch.uploadedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
@@ -232,7 +232,7 @@ export default function HodBatchDetailPage({ params }: BatchPageProps) {
                                 {batch.status === "APPROVED" && (
                                     <div className="relative pl-6 pb-2">
                                         <div className="absolute left-0 top-1 h-3.5 w-3.5 rounded-full border-2 border-emerald-500 bg-background" />
-                                        <div className="rounded-xl border border-emerald-500/10 bg-emerald-50/30 p-4 shadow-sm space-y-1">
+                                        <div className="rounded-xl border border-emerald-500/10 bg-emerald-50/30 p-4  space-y-1">
                                             <div className="flex items-center justify-between">
                                                 <span className="text-[11px] font-bold text-emerald-700 uppercase tracking-tight">Batch Approved</span>
                                                 <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
@@ -247,7 +247,7 @@ export default function HodBatchDetailPage({ params }: BatchPageProps) {
                                 {batch.status === "REJECTED" && (
                                     <div className="relative pl-6 pb-2">
                                         <div className="absolute left-0 top-1 h-3.5 w-3.5 rounded-full border-2 border-rose-500 bg-background" />
-                                        <div className="rounded-xl border border-rose-500/10 bg-rose-50/30 p-4 shadow-sm space-y-1">
+                                        <div className="rounded-xl border border-rose-500/10 bg-rose-50/30 p-4  space-y-1">
                                             <div className="flex items-center justify-between">
                                                 <span className="text-[11px] font-bold text-rose-700 uppercase tracking-tight">Batch Rejected</span>
                                                 <AlertTriangle className="h-3.5 w-3.5 text-rose-500" />

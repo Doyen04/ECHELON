@@ -66,14 +66,14 @@ export function HodSidebar({ email, name, role }: HodSidebarProps) {
                 <button
                     type="button"
                     onClick={toggleSidebar}
-                    className="absolute left-full top-16 hidden h-6 w-6 items-center justify-center rounded-none bg-sidebar text-sidebar-foreground opacity-100 shadow-lg transition-colors duration-150 hover:bg-sidebar md:flex z-50"
+                    className="absolute left-full top-16 hidden h-6 w-6 items-center justify-center rounded-none bg-sidebar text-sidebar-foreground opacity-100  transition-colors duration-150 hover:bg-sidebar md:flex z-50"
                     aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
                 >
                     <ChevronRight className={`h-2.5 w-2.5 transition-transform duration-300 ${isCollapsed ? "" : "rotate-180"}`} />
                 </button>
 
                 <div className={`flex gap-3 px-2 transition-all duration-300 group ${isCollapsed ? "flex-col items-center py-2" : "h-16 items-center justify-start"}`}>
-                    <div className={`flex shrink-0 items-center justify-center rounded-2xl border border-white/25 bg-white/15 text-white shadow-xl transition-all duration-300 ${isCollapsed ? "h-10 w-10" : "h-11 w-11"}`}>
+                    <div className={`flex shrink-0 items-center justify-center rounded-2xl border border-white/25 bg-white/15 text-white  transition-all duration-300 ${isCollapsed ? "h-10 w-10" : "h-11 w-11"}`}>
                         <Layers className={`${isCollapsed ? "h-5 w-5" : "h-6 w-6"} text-white`} strokeWidth={2.5} />
                     </div>
 
@@ -121,17 +121,17 @@ export function HodSidebar({ email, name, role }: HodSidebarProps) {
                     <div className={`text-white/90 transition-all duration-300 ${isCollapsed ? "p-1" : "p-2"}`}>
                         <div className={`flex ${isCollapsed ? "flex-col items-center gap-2" : "items-center gap-3.5"}`}>
                             <div className="relative flex shrink-0 items-center justify-center">
-                                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-sidebar-accent text-[12px] font-bold text-sidebar-foreground shadow-inner">
+                                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-sidebar-accent text-[12px] font-bold text-sidebar-foreground ">
                                      {userInitials}
                                  </div>
-                                 <div className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-sidebar bg-emerald-500 shadow-sm" />
+                                 <div className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-sidebar bg-emerald-500 " />
                             </div>
  
                             {!isCollapsed && (
                                 <div className="min-w-0 flex-1 opacity-100 transition-all duration-300">
                                     <p className="truncate text-sm font-semibold tracking-tight text-white leading-tight">{name ?? "HOD"}</p>
                                     <div className="flex items-center gap-1.5 mt-1">
-                                        <span className="inline-flex rounded-full bg-sidebar-primary/20 border border-sidebar-primary/30 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-sidebar-primary shadow-sm">
+                                        <span className="inline-flex rounded-full bg-sidebar-primary/20 border border-sidebar-primary/30 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-sidebar-primary ">
                                             HOD
                                         </span>
                                     </div>

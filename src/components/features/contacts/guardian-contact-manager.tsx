@@ -328,7 +328,7 @@ export function GuardianContactManager({
             ) : null}
 
             {/* Desktop Table View */}
-            <Card className="overflow-hidden border-border bg-card shadow-sm">
+            <Card className="overflow-hidden border-border bg-card ">
                 <DataTable
                 columns={getGuardianColumns(
                     openEditor,
@@ -464,7 +464,7 @@ export function GuardianContactManager({
                             type="button"
                             onClick={saveGuardian}
                             disabled={isSaving}
-                            className="rounded-xl bg-sidebar-primary min-w-30 font-bold shadow-md shadow-sidebar-primary/20"
+                            className="rounded-xl bg-sidebar-primary min-w-30 font-bold  "
                         >
                             <Save className="mr-2 h-4 w-4" />
                             {isSaving ? "Saving..." : "Save Changes"}
@@ -555,7 +555,7 @@ export function GuardianContactManager({
                             type="button"
                             onClick={handleUploadContacts}
                             disabled={!uploadFile || isUploading}
-                            className="rounded-xl bg-sidebar-primary min-w-35 font-bold shadow-md shadow-sidebar-primary/20"
+                            className="rounded-xl bg-sidebar-primary min-w-35 font-bold  "
                         >
                             <Upload className="mr-2 h-4 w-4" />
                             {isUploading ? "Importing..." : "Start Import"}

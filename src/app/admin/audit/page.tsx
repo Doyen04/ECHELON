@@ -97,9 +97,9 @@ export default function AuditLogPage() {
                             </div>
 
                             {/* Desktop View */}
-                            <Card className='hidden md:block overflow-hidden rounded-xl border-border shadow-none'>
+                            <Card className='hidden md:block overflow-hidden rounded-xl border-border '>
                                 <DataTable
-                                    className='border-0 shadow-none'
+                                    className='border-0 '
                                     data={logs}
                                     manualPagination
                                     currentPage={pagination.currentPage}

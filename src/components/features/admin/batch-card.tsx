@@ -26,7 +26,7 @@ export function BatchCard({ batch, index = 0, showActions = true }: BatchCardPro
 
   return (
     <Card
-      className="dashboard-card group rounded-xl border border-border bg-card p-6 shadow-sm transition-all hover:border-sidebar-primary/50 hover:shadow-md"
+      className="dashboard-card group rounded-xl border border-border bg-card p-6  transition-all hover:border-sidebar-primary/50 hover:"
       style={{ animationDelay: `${index * 60}ms` }}
     >
       <div className="flex flex-col justify-between gap-6 md:flex-row md:items-center">

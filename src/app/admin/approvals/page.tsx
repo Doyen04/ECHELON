@@ -94,7 +94,7 @@ export default function ApprovalsPage() {
                                     <div className='border-t border-border bg-card'>
                                         <DataTable
                                             data={reviewedBatches}
-                                            className='border-0 shadow-none -mx-px'
+                                            className='border-0  -mx-px'
                                             manualPagination
                                             currentPage={reviewedPagination?.currentPage ?? reviewedPage}
                                             totalPages={reviewedPagination?.pages ?? 1}

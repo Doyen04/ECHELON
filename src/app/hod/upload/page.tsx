@@ -580,7 +580,7 @@ export default function HodBatchUploadPage() {
                   }
                   className='absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10'
                 />
-                <div className='rounded-2xl bg-card p-4 mb-4 border border-border shadow-sm'>
+                <div className='rounded-2xl bg-card p-4 mb-4 border border-border '>
                   <UploadCloud className='h-8 w-8 text-sidebar-primary' />
                 </div>
                 <h3 className='text-base font-bold text-foreground mb-1'>

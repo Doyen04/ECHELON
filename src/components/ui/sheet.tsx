@@ -47,7 +47,7 @@ export function Sheet({ isOpen, onClose, title, description, children, footer }:
 
             <div
                 className={cn(
-                    "relative z-10 flex h-full w-full max-w-md flex-col bg-card shadow-2xl animate-in slide-in-from-right duration-300 ease-out border-l border-border",
+                    "relative z-10 flex h-full w-full max-w-md flex-col bg-card  animate-in slide-in-from-right duration-300 ease-out border-l border-border",
                 )}
                 role="dialog"
                 aria-modal="true"

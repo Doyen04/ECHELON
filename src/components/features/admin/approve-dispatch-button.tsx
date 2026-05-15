@@ -55,7 +55,7 @@ export function ApproveDispatchButton({ batchId, disabled, onSuccess }: ApproveD
                 type="button"
                 onClick={handleApprove}
                 disabled={isSubmitting || disabled}
-                className="inline-flex items-center justify-center rounded-md bg-brand px-4 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-brand-hover disabled:cursor-not-allowed disabled:opacity-70"
+                className="inline-flex items-center justify-center rounded-md bg-brand px-4 py-2 text-sm font-medium text-white  transition-colors hover:bg-brand-hover disabled:cursor-not-allowed disabled:opacity-70"
             >
                 {isSubmitting ? "Approving..." : "Approve & Dispatch"}
             </button>

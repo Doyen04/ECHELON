@@ -271,7 +271,7 @@ export default function HodBatchesPage() {
                         </p>
                     </div>
                 ) : (
-                    <Card className='overflow-hidden border-border bg-card shadow-sm'>
+                    <Card className='overflow-hidden border-border bg-card '>
                         <DataTable
                             data={batches}
                             columns={columns}

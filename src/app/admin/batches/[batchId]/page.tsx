@@ -135,24 +135,24 @@ export default function BatchDetailPage({ params }: BatchPageProps) {
                                 <SummaryCard
                                     title='Total Students'
                                     value={batch.studentResultsTotal ?? batch.studentResults.length}
-                                    className="bg-card border-border shadow-xs"
+                                    className="bg-card border-border "
                                 />
                                 <SummaryCard
                                     title='Approved'
                                     value={approvedCount}
-                                    className="bg-emerald-50/50 border-emerald-100 shadow-xs"
+                                    className="bg-emerald-50/50 border-emerald-100 "
                                     color='text-emerald-600'
                                 />
                                 <SummaryCard
                                     title='Pending'
                                     value={pendingCount}
-                                    className="bg-amber-50/50 border-amber-100 shadow-xs"
+                                    className="bg-amber-50/50 border-amber-100 "
                                     color='text-amber-600'
                                 />
                                 <SummaryCard
                                     title='Withheld'
                                     value={withheldCount}
-                                    className="bg-rose-50/50 border-rose-100 shadow-xs"
+                                    className="bg-rose-50/50 border-rose-100 "
                                     color='text-rose-600'
                                 />
                             </div>
@@ -164,11 +164,11 @@ export default function BatchDetailPage({ params }: BatchPageProps) {
                                             Student Records
                                         </h2>
                                     </div>
-                                    <Card className='overflow-hidden border-border shadow-sm'>
+                                    <Card className='overflow-hidden border-border '>
                                         {batch.studentResults.length > 0 ? (
                                             <DataTable
                                                 data={batch.studentResults}
-                                                className='border-0 shadow-none -mx-px'
+                                                className='border-0  -mx-px'
                                                 columns={columns}
                                                 manualPagination
                                                 currentPage={batch.pagination?.currentPage ?? currentPage}
@@ -189,7 +189,7 @@ export default function BatchDetailPage({ params }: BatchPageProps) {
                                         <h2 className='text-xs font-bold uppercase tracking-widest text-muted-foreground px-1'>
                                             Batch Metadata
                                         </h2>
-                                        <div className='rounded-xl border border-border bg-card p-5 space-y-4 shadow-sm'>
+                                        <div className='rounded-xl border border-border bg-card p-5 space-y-4 '>
                                             <div className='grid gap-4 text-sm'>
                                                 <div className="flex justify-between items-center">
                                                     <span className='text-muted-foreground'>Uploaded by:</span>
@@ -213,7 +213,7 @@ export default function BatchDetailPage({ params }: BatchPageProps) {
                                         </h2>
                                         <div className='space-y-3'>
                                             {successMessage && (
-                                                <div className="rounded-xl border border-emerald-100 bg-emerald-50/50 p-4 shadow-sm flex items-start gap-3">
+                                                <div className="rounded-xl border border-emerald-100 bg-emerald-50/50 p-4  flex items-start gap-3">
                                                     <CheckCircle2 className="h-5 w-5 text-emerald-600 mt-0.5 shrink-0" />
                                                     <p className="text-sm text-emerald-800 font-medium">
                                                         {successMessage}
@@ -224,7 +224,7 @@ export default function BatchDetailPage({ params }: BatchPageProps) {
                                                 batch.dispatches.map((dispatch: any) => (
                                                     <div
                                                         key={dispatch.id}
-                                                        className='rounded-xl border border-border bg-card p-4 shadow-sm transition-all hover:shadow-md'
+                                                        className='rounded-xl border border-border bg-card p-4  transition-all hover:'
                                                     >
                                                         <div className='flex items-center justify-between gap-3'>
                                                             <div className="space-y-0.5">

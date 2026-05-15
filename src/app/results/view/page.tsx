@@ -96,7 +96,7 @@ export default function PublicResultViewPage({
         </div>
 
         <div
-          className='page-transition-enter flex items-start gap-4 rounded-xl border border-status-success/40 bg-status-success/5 px-6 py-4 shadow-sm sm:items-center'
+          className='page-transition-enter flex items-start gap-4 rounded-xl border border-status-success/40 bg-status-success/5 px-6 py-4  sm:items-center'
           style={{ animationDelay: "100ms" }}
         >
           <CheckCircle2 className='mt-0.5 h-6 w-6 shrink-0 text-status-success sm:mt-0' />
@@ -114,7 +114,7 @@ export default function PublicResultViewPage({
         </div>
 
         <div
-          className='page-transition-enter overflow-hidden rounded-xl border border-border-subtle bg-surface-main shadow-md'
+          className='page-transition-enter overflow-hidden rounded-xl border border-border-subtle bg-surface-main '
           style={{ animationDelay: "150ms" }}
         >
           <div className='hidden border-b border-border-subtle bg-surface-subtle/50 px-6 py-3 text-xs font-semibold uppercase tracking-wider text-text-muted sm:grid sm:grid-cols-[1fr_2fr_1fr_1fr_1fr]'>

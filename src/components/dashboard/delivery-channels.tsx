@@ -94,7 +94,7 @@ export function DeliveryChannels({ channels }: { channels: ChannelDelivery[] }) 
 
                         <div className="space-y-2">
                             {data.map((entry) => (
-                                <Card key={entry.name} className="flex items-center justify-between rounded-xl border border-border/70 px-3 py-2 shadow-none">
+                                <Card key={entry.name} className="flex items-center justify-between rounded-xl border border-border/70 px-3 py-2 ">
                                     <div className="flex items-center gap-2">
                                         <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: entry.color }} />
                                         <span className="text-sm font-medium text-foreground">{entry.name}</span>

@@ -301,7 +301,7 @@ export default function AdminUserManagementPage() {
                                                 <MoreVertical className="h-4 w-4" />
                                             </Button>
                                             {menuOpenUserId === user.id ? (
-                                                <div className="absolute right-0 mt-2 w-44 rounded-md border border-border bg-card shadow-lg z-50">
+                                                <div className="absolute right-0 mt-2 w-44 rounded-md border border-border bg-card  z-50">
                                                     <button type="button" className="w-full text-left px-3 py-2 text-sm hover:bg-muted/30" onClick={() => openChangePassword(user)}>Change password</button>
                                                 </div>
                                             ) : null}

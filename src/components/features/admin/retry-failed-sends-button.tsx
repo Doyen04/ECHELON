@@ -275,7 +275,7 @@ export function RetryFailedSendsButton({ dispatchId, failedCount }: RetryFailedS
                         <Button
                             type="button"
                             onClick={() => retryFailedSends()}
-                            className="rounded-xl w-full sm:w-auto min-w-50 gap-2 bg-sidebar-primary shadow-md shadow-sidebar-primary/20"
+                            className="rounded-xl w-full sm:w-auto min-w-50 gap-2 bg-sidebar-primary  "
                             disabled={!preview?.canRetry || isRetrying || isLoading || !preview}
                         >
                             <RefreshCw className={cn("h-4 w-4", isRetrying && "animate-spin")} />

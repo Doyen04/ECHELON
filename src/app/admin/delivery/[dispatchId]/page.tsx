@@ -178,7 +178,7 @@ export default function DeliveryLogPage({ params }: DeliveryPageProps) {
                         <div>
                             <DataTable
                                 data={notificationLogs}
-                                className='border-0 shadow-none'
+                                className='border-0 '
                                 manualPagination
                                 currentPage={pagination?.currentPage ?? currentPage}
                                 totalPages={pagination?.pages ?? 1}

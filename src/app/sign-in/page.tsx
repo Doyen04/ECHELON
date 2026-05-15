@@ -97,10 +97,10 @@ export default function SignInPage() {
             </div>
 
             <div className="flex w-full items-center justify-center bg-[linear-gradient(180deg,rgba(255,255,255,0.92),rgba(247,246,243,0.96))] p-6 sm:p-10 lg:w-[58%] lg:p-12">
-                <Card className="w-full max-w-xl border-border/70 shadow-[0_26px_70px_-48px_rgba(15,23,42,0.45)]">
+                <Card className="w-full max-w-xl border-border/70 (15,23,42,0.45)]">
                     <CardHeader className="space-y-4 p-6 sm:p-8">
                         <div className="flex items-center gap-3 lg:hidden">
-                            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-brand text-white shadow-sm">
+                            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-brand text-white ">
                                 <Building2 className="h-6 w-6" />
                             </div>
                             <span className="font-serif text-xl tracking-wide text-foreground">ECHELON</span>
@@ -150,7 +150,7 @@ export default function SignInPage() {
                                 </div>
                             ) : null}
 
-                            <Button type="submit" disabled={loading} className="h-12 w-full rounded-full text-sm shadow-sm">
+                            <Button type="submit" disabled={loading} className="h-12 w-full rounded-full text-sm ">
                                 {loading ? (
                                     <span className="flex items-center gap-2">
                                         <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />

@@ -17,7 +17,7 @@ export function AdminShell({ sidebar, children }: AdminShellProps) {
             {/* Mobile Header */}
             <header className="fixed top-0 left-0 right-0 z-40 flex h-16 items-center justify-between border-b border-sidebar-border bg-sidebar px-4 text-white md:hidden">
                 <div className="flex items-center gap-3">
-                    <div className="flex h-9 w-9 items-center justify-center rounded-xl border border-white/25 bg-white/15 text-white shadow-lg">
+                    <div className="flex h-9 w-9 items-center justify-center rounded-xl border border-white/25 bg-white/15 text-white ">
                         <Layers className="h-5 w-5" />
                     </div>
                     <span className="font-sans text-base font-bold tracking-tight">Echelon Registry</span>

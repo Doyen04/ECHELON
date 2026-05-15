@@ -1010,7 +1010,7 @@ export default function BatchUploadPage() {
                   <div className='flex flex-wrap gap-3 pt-2'>
                     <Button
                       asChild
-                      className='bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm'
+                      className='bg-emerald-600 hover:bg-emerald-700 text-white '
                     >
                       <Link href={`/admin/batches/${submitSuccess.batchId}`}>
                         Review Results

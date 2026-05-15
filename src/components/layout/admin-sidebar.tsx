@@ -92,7 +92,7 @@ export function AdminSidebar({ email, name, role }: AdminSidebarProps) {
         <button
           type='button'
           onClick={toggleSidebar}
-          className='absolute left-full top-16 hidden h-6 w-6 items-center justify-center rounded-none bg-sidebar text-sidebar-foreground opacity-100 shadow-lg transition-colors duration-150 hover:bg-sidebar md:flex z-50'
+          className='absolute left-full top-16 hidden h-6 w-6 items-center justify-center rounded-none bg-sidebar text-sidebar-foreground opacity-100  transition-colors duration-150 hover:bg-sidebar md:flex z-50'
           aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
           title={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
         >
@@ -106,7 +106,7 @@ export function AdminSidebar({ email, name, role }: AdminSidebarProps) {
         >
           {/* Stylized Logo for Echelon */}
           <div
-            className={`flex shrink-0 items-center justify-center rounded-2xl border border-white/25 bg-white/15 text-white shadow-xl transition-all duration-300 ${isCollapsed ? "h-10 w-10" : "h-11 w-11"}`}
+            className={`flex shrink-0 items-center justify-center rounded-2xl border border-white/25 bg-white/15 text-white  transition-all duration-300 ${isCollapsed ? "h-10 w-10" : "h-11 w-11"}`}
           >
             <Layers
               className={`${isCollapsed ? "h-5 w-5" : "h-6 w-6"} text-white`}
@@ -174,7 +174,7 @@ export function AdminSidebar({ email, name, role }: AdminSidebarProps) {
                             isCollapsed ? "justify-center" : "gap-3"
                           } ${
                             active
-                              ? "bg-sidebar-accent text-sidebar-primary shadow-xs"
+                              ? "bg-sidebar-accent text-sidebar-primary "
                               : "text-sidebar-foreground/60 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
                           }`}
                         >
@@ -191,7 +191,7 @@ export function AdminSidebar({ email, name, role }: AdminSidebarProps) {
                             {item.label}
                           </span>
                           {!isCollapsed && active && (
-                            <div className='ml-auto h-1 w-1 rounded-full bg-sidebar-primary shadow-[0_0_8px_rgba(59,130,246,0.5)]' />
+                            <div className='ml-auto h-1 w-1 rounded-full bg-sidebar-primary (59,130,246,0.5)]' />
                           )}
                         </Link>
                       );
@@ -214,10 +214,10 @@ export function AdminSidebar({ email, name, role }: AdminSidebarProps) {
               }`}
             >
               <div className='relative flex shrink-0 items-center justify-center'>
-                <div className='flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-sidebar-accent text-[12px] font-bold text-sidebar-foreground shadow-inner'>
+                <div className='flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-sidebar-accent text-[12px] font-bold text-sidebar-foreground '>
                   {userInitials}
                 </div>
-                <div className='absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-sidebar bg-emerald-500 shadow-sm' />
+                <div className='absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-sidebar bg-emerald-500 ' />
               </div>
 
               <div
@@ -231,7 +231,7 @@ export function AdminSidebar({ email, name, role }: AdminSidebarProps) {
                   {name ?? "User"}
                 </p>
                 <div className='flex items-center gap-1.5 mt-1'>
-                  <span className='inline-flex rounded-full bg-sidebar-primary/20 border border-sidebar-primary/30 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-sidebar-primary shadow-sm'>
+                  <span className='inline-flex rounded-full bg-sidebar-primary/20 border border-sidebar-primary/30 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-sidebar-primary '>
                     {roleLabel}
                   </span>
                 </div>

@@ -101,7 +101,7 @@ export default function HodDashboardPage() {
 
                 <div className='grid gap-6 xl:grid-cols-[1fr_380px]'>
                     <aside className='space-y-6'>
-                        <Card className='relative overflow-hidden border-none bg-brand p-8 text-white shadow-xl'>
+                        <Card className='relative overflow-hidden border-none bg-brand p-8 text-white '>
                             <div className='relative z-10'>
                                 <p className='text-[10px] font-bold uppercase tracking-[0.2em] text-white/70'>
                                     Action Center
@@ -118,7 +118,7 @@ export default function HodDashboardPage() {
                                 <div className='mt-8'>
                                     <Button
                                         asChild
-                                        className='rounded-full bg-white px-6 text-brand hover:bg-white/90 shadow-lg font-bold'
+                                        className='rounded-full bg-white px-6 text-brand hover:bg-white/90  font-bold'
                                     >
                                         <Link
                                             href='/hod/upload'
@@ -147,7 +147,7 @@ export default function HodDashboardPage() {
                                 View History <ArrowUpRight className='h-3 w-3' />
                             </Link>
                         </div>
-                        <Card className='overflow-hidden border-border bg-card shadow-sm'>
+                        <Card className='overflow-hidden border-border bg-card '>
                             {recentBatches.length > 0 ? (
                                 <div className='divide-y divide-border/50'>
                                     {recentBatches.map((batch: any, index: number) => (

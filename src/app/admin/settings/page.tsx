@@ -146,7 +146,7 @@ function TemplatesTab({ onChange }: { onChange: () => void }) {
             className={cn(
               "flex-1 flex items-center justify-center gap-2 py-2.5 text-[11px] font-bold uppercase tracking-tight rounded-lg transition-all",
               subTab === t.id
-                ? "bg-card text-foreground shadow-sm border border-border"
+                ? "bg-card text-foreground  border border-border"
                 : "text-muted-foreground hover:text-foreground",
             )}
           >

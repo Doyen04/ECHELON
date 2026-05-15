@@ -80,7 +80,7 @@ export function Modal({
 
             <div
                 className={cn(
-                    "relative z-10 w-full overflow-y-auto rounded-xl bg-card border border-border shadow-2xl animate-in zoom-in-95 duration-300 max-h-[calc(100vh-2rem)] sm:max-h-[calc(100vh-4rem)]",
+                    "relative z-10 w-full overflow-y-auto rounded-xl bg-card border border-border  animate-in zoom-in-95 duration-300 max-h-[calc(100vh-2rem)] sm:max-h-[calc(100vh-4rem)]",
                     sizeClasses[size]
                 )}
                 role="dialog"

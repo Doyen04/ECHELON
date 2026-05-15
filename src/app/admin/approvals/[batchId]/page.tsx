@@ -53,7 +53,7 @@ export default function ApprovalsPage() {
           </div>
         </div>
 
-        <Card className='p-0 shadow-sm overflow-hidden'>
+        <Card className='p-0  overflow-hidden'>
           <details className='group'>
             <summary className='flex cursor-pointer items-center justify-between p-5 list-none [&::-webkit-details-marker]:hidden bg-muted/30 hover:bg-muted/50 transition-colors'>
               <div className='flex items-center gap-2'>
@@ -71,7 +71,7 @@ export default function ApprovalsPage() {
                   { id: "BCH-7F1X", department: "Physics", session: "2024/2025", status: "APPROVED" },
                   { id: "BCH-4L8K", department: "Chemistry", session: "2024/2025", status: "APPROVED" }
                 ]}
-                className='border-0 shadow-none -mx-px'
+                className='border-0  -mx-px'
                 columns={[
                   { header: "Batch ID", accessorKey: "id", className: "px-6 font-mono text-xs text-muted-foreground" },
                   { header: "Department", accessorKey: "department", className: "px-6 font-semibold" },
