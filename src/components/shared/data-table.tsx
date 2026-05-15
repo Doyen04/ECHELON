@@ -72,7 +72,7 @@ export function DataTable<TData, TValue>({
     }, [searchQuery]);
 
     return (
-        <div className={cn("space-y-4", className)}>
+        <div className={cn("min-w-0 space-y-4", className)}>
             <div className="flex flex-wrap items-center justify-between gap-4">
                 <div className="flex flex-1 flex-wrap items-center gap-3">
                     {searchKey && (
@@ -95,7 +95,7 @@ export function DataTable<TData, TValue>({
                 )}
             </div>
 
-            <div className="rounded-xl border border-border/70 bg-card overflow-hidden">
+            <div className="min-w-0 overflow-hidden rounded-xl border border-border/70 bg-card">
                 <Table>
                     <TableHeader className="bg-muted/30">
                         <TableRow>

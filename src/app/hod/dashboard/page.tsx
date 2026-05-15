@@ -83,7 +83,7 @@ export default function HodDashboardPage() {
   ];
 
   return (
-    <div className='flex h-full w-full flex-col overflow-y-auto bg-background'>
+    <div className='flex h-full w-full flex-col overflow-x-hidden overflow-y-auto bg-background'>
       <PageHeader
         title='HOD Portal'
         // description="Academic administration and result management."
@@ -154,25 +154,25 @@ export default function HodDashboardPage() {
                     <Link
                       key={batch.id}
                       href={`/hod/batches/${batch.id}`}
-                      className='flex items-center justify-between p-5 hover:bg-muted/30 transition-all group'
+                      className='group flex min-w-0 items-center justify-between gap-3 p-4 transition-all hover:bg-muted/30 sm:p-5'
                       style={{
                         animation: `fade-in 0.4s ease-out ${index * 0.05}s both`,
                       }}
                     >
-                      <div className='flex items-center gap-4'>
+                      <div className='flex min-w-0 items-center gap-3 sm:gap-4'>
                         <div className='h-11 w-11 rounded-2xl bg-brand/5 flex items-center justify-center text-brand border border-brand/10 group-hover:scale-105 transition-transform'>
                           <BookOpen className='h-5 w-5' />
                         </div>
-                        <div>
-                          <p className='text-sm font-bold text-foreground'>
+                        <div className='min-w-0'>
+                          <p className='truncate text-sm font-bold text-foreground'>
                             {batch.program.name}
                           </p>
-                          <p className='text-[10px] text-muted-foreground uppercase font-bold tracking-widest mt-0.5'>
+                          <p className='mt-0.5 truncate text-[10px] font-bold uppercase tracking-widest text-muted-foreground'>
                             {batch.session} • {batch.semester} • {batch.level}L
                           </p>
                         </div>
                       </div>
-                      <div className='flex items-center gap-6'>
+                      <div className='flex shrink-0 items-center gap-3 sm:gap-6'>
                         <div className='hidden sm:flex flex-col items-end'>
                           <p className='text-[9px] font-bold uppercase text-muted-foreground tracking-tighter'>
                             Status

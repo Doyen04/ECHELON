@@ -11,19 +11,19 @@ type PageHeaderProps = {
 export function PageHeader({ title, breadcrumbs, action }: PageHeaderProps) {
     return (
         <header className="sticky top-0 z-40 border-b border-border/70 bg-background/90 backdrop-blur supports-backdrop-filter:bg-background/80 page-transition-enter transition-colors duration-200">
-            <div className="flex h-18 items-center justify-between px-6">
-                <div className="flex flex-col justify-center">
+            <div className="flex min-h-18 flex-wrap items-center justify-between gap-3 px-4 py-3 sm:px-6">
+                <div className="min-w-0 flex-1">
                     {breadcrumbs && (
-                        <div className="mb-0.5 text-xs font-medium text-muted-foreground">
+                        <div className="mb-0.5 truncate text-xs font-medium text-muted-foreground">
                             {breadcrumbs}
                         </div>
                     )}
-                    <h1 className="font-sans text-xl font-bold leading-none text-foreground">
+                    <h1 className="truncate font-sans text-xl font-bold leading-none text-foreground">
                         {title}
                     </h1>
                 </div>
                 {action && (
-                    <div className="flex items-center">
+                    <div className="flex w-full items-center justify-start sm:w-auto sm:justify-end">
                         {action}
                     </div>
                 )}

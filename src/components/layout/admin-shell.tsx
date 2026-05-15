@@ -13,7 +13,7 @@ export function AdminShell({ sidebar, children }: AdminShellProps) {
     const { isCollapsed, isMobileOpen, toggleMobileMenu, closeMobileMenu } = useSidebar();
 
     return (
-        <div className="flex min-h-screen bg-background">
+        <div className="flex min-h-screen overflow-x-hidden bg-background">
             {/* Mobile Header */}
             <header className="fixed top-0 left-0 right-0 z-40 flex h-16 items-center justify-between border-b border-white/10 bg-brand px-4 text-white md:hidden">
                 <div className="flex items-center gap-3">
@@ -42,10 +42,10 @@ export function AdminShell({ sidebar, children }: AdminShellProps) {
             {sidebar}
 
             <main
-                className={`min-h-screen flex-1 transition-[padding] duration-300 ease-in-out pt-16 md:pt-0 ${isCollapsed ? "md:pl-16" : "md:pl-60"
+                className={`min-h-screen min-w-0 flex-1 overflow-x-hidden transition-[padding] duration-300 ease-in-out pt-16 md:pt-0 ${isCollapsed ? "md:pl-16" : "md:pl-60"
                     }`}
             >
-                <div className="relative h-full w-full">
+                <div className="relative h-full w-full min-w-0">
                     {children}
                 </div>
             </main>

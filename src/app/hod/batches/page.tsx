@@ -170,7 +170,7 @@ export default function HodBatchesPage() {
   ];
 
   return (
-    <div className='flex h-full w-full flex-col overflow-y-auto bg-background'>
+    <div className='flex h-full w-full flex-col overflow-x-hidden overflow-y-auto bg-background'>
       <PageHeader
         title='My Result Batches'
         // description="Review and manage academic results for your programs."
@@ -195,7 +195,7 @@ export default function HodBatchesPage() {
       />
 
       <main className='mx-auto w-full max-w-7xl py-8 px-4 sm:px-6 lg:px-8'>
-        <div className='flex flex-wrap items-center gap-3 mb-8 bg-card/30 p-4 rounded-2xl border border-border'>
+        <div className='mb-8 flex flex-wrap items-stretch gap-3 rounded-2xl border border-border bg-card/30 p-4 sm:items-center'>
           <div className='flex items-center gap-2 mr-2'>
             <Filter className='h-4 w-4 text-muted-foreground' />
             <span className='text-xs font-bold uppercase tracking-widest text-muted-foreground'>
@@ -203,7 +203,7 @@ export default function HodBatchesPage() {
             </span>
           </div>
 
-          <div className='relative min-w-[240px]'>
+          <div className='relative w-full min-w-0 sm:min-w-60 sm:max-w-sm sm:flex-1'>
             <Search className='absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground' />
             <Input
               placeholder='Search by program...'
@@ -214,7 +214,7 @@ export default function HodBatchesPage() {
           </div>
 
           <select
-            className='h-9 rounded-full border border-input bg-background px-4 text-xs font-bold uppercase tracking-tight outline-none focus:ring-2 focus:ring-brand/30'
+            className='h-9 w-full rounded-full border border-input bg-background px-4 text-xs font-bold uppercase tracking-tight outline-none focus:ring-2 focus:ring-brand/30 sm:w-auto'
             value={selectedLevel}
             onChange={(e) => setSelectedLevel(e.target.value)}
           >
@@ -227,7 +227,7 @@ export default function HodBatchesPage() {
           </select>
 
           <select
-            className='h-9 rounded-full border border-input bg-background px-4 text-xs font-bold uppercase tracking-tight outline-none focus:ring-2 focus:ring-brand/30'
+            className='h-9 w-full rounded-full border border-input bg-background px-4 text-xs font-bold uppercase tracking-tight outline-none focus:ring-2 focus:ring-brand/30 sm:w-auto'
             value={selectedStatus}
             onChange={(e) => setSelectedStatus(e.target.value)}
           >
