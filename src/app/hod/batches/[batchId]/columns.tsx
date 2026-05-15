@@ -24,24 +24,24 @@ export const columns = [
         accessorKey: "student",
         className: "",
         cell: (row: any) => (
-            <>
+            <div className="min-w-[250px]">
                 <div className="text-sm font-bold text-foreground leading-none">{row.student.fullName}</div>
                 <div className="mt-1.5 text-[11px] font-medium text-muted-foreground uppercase tracking-tight">
                     {row.student.matricNumber}
                 </div>
-            </>
+            </div>
         ),
     },
     {
         header: "GPA",
         accessorKey: "gpa",
-        className: "",
+        className: "whitespace-nowrap",
         cell: (row: any) => <div className="text-sm font-bold text-foreground">{row.gpa.toFixed(2)}</div>,
     },
     {
         header: "Status",
         accessorKey: "status",
-        className: "",
+        className: "whitespace-nowrap",
         cell: (row: any) => getStatusBadge(row.status),
     },
     {

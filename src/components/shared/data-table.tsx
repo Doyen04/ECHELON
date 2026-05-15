@@ -118,7 +118,7 @@ export function DataTable<TData>({
             </div>
 
             {/* Desktop table */}
-            <div className="min-w-0 overflow-hidden">
+            <div className="min-w-0 overflow-x-auto">
                 <div className="hidden md:block">
                     <Table className="divide-y divide-border">
                         <TableHeader className="bg-muted/30">
@@ -135,7 +135,7 @@ export function DataTable<TData>({
                                 paginatedData.map((row, rowIndex) => (
                                     <TableRow key={rowIndex} className={cn("group transition-colors hover:bg-muted/20", onRowClick && "cursor-pointer")} onClick={() => onRowClick?.(row)}>
                                         {columns.map((column, colIndex) => (
-                                            <TableCell key={colIndex} className={cn("px-6 py-5 align-top", column.className)}>
+                                            <TableCell key={colIndex} className={cn("px-6 py-5 align-top whitespace-normal", column.className)}>
                                                 {column.cell ? column.cell(row) : (column.accessorKey ? String((row as any)[column.accessorKey as string] ?? "") : "")}
                                             </TableCell>
                                         ))}
