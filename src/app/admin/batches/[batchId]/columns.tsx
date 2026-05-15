@@ -1,8 +1,7 @@
 "use client";
 
-import Link from "next/link";
 import { StatusBadge } from "@/components/shared/badges";
-import { toBadgeStatus, relativeTimeFromNow } from "@/lib/admin-format";
+import { toBadgeStatus } from "@/lib/admin-format";
 import { Badge } from "@/components/ui/badge";
 
 import { Eye } from "lucide-react";
@@ -14,7 +13,7 @@ export const getColumns = (onReview: (student: any) => void) => [
         accessorKey: "student",
         className: "",
         cell: (row: any) => (
-            <div className="flex items-center gap-3 min-w-[200px]">
+            <div className="flex items-center gap-3 min-w-50">
                 <div className="flex h-8 w-8 items-center justify-center rounded-full bg-muted text-[10px] font-bold text-muted-foreground shrink-0">
                     {row.student.fullName.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2)}
                 </div>
@@ -65,9 +64,9 @@ export const getColumns = (onReview: (student: any) => void) => [
         accessorKey: "actions",
         className: "text-right",
         cell: (row: any) => (
-            <Button 
-                variant="ghost" 
-                size="sm" 
+            <Button
+                variant="ghost"
+                size="sm"
                 className="gap-2 h-8 text-[10px] font-bold uppercase tracking-widest text-brand hover:text-brand-hover hover:bg-brand/5"
                 onClick={() => onReview(row)}
             >

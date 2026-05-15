@@ -8,6 +8,7 @@ import { Modal, ConfirmModal } from "@/components/ui/modal";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
+import { DataTable } from "@/components/shared/data-table";
 
 type GuardianRow = {
     id: string;
@@ -48,6 +49,82 @@ const emptyEditState: EditableGuardian = {
     email: "",
     phone: "",
 };
+
+const getGuardianColumns = (onEdit: (guardian: GuardianRow) => void, onDelete: (guardian: GuardianRow) => void) => [
+    {
+        header: "Parent",
+        accessorKey: "name",
+        className: "",
+        cell: (guardian: GuardianRow) => (
+            <div>
+                <div className="text-sm font-bold text-foreground leading-none">{guardian.name || "N/A"}</div>
+                <div className="mt-1.5 text-[11px] font-medium text-muted-foreground uppercase tracking-tight">{guardian.relationship}</div>
+            </div>
+        ),
+    },
+    {
+        header: "Student Linked",
+        accessorKey: "studentName",
+        className: "",
+        cell: (guardian: GuardianRow) => (
+            <div>
+                <div className="text-sm font-bold text-foreground leading-none">{guardian.studentName}</div>
+                <div className="mt-1.5 flex flex-col gap-0.5">
+                    <div className="text-[11px] font-mono text-muted-foreground uppercase tracking-tighter">{guardian.matricNumber}</div>
+                    <div className="text-[10px] font-bold text-muted-foreground/70 uppercase">{guardian.department} · LVL {guardian.level}</div>
+                </div>
+            </div>
+        ),
+    },
+    {
+        header: "Contact Detail",
+        accessorKey: "email",
+        className: "",
+        cell: (guardian: GuardianRow) => (
+            <div className="space-y-1">
+                <div className="text-[11px] font-medium text-foreground truncate max-w-45">{guardian.email ?? "No email address"}</div>
+                <div className="text-[11px] font-medium text-muted-foreground">{guardian.phone ?? "No phone number"}</div>
+            </div>
+        ),
+    },
+    {
+        header: "Status",
+        accessorKey: "id",
+        className: "",
+        cell: () => (
+            <Badge variant="outline" className="h-5 rounded-md px-1.5 text-[9px] font-bold uppercase tracking-tight bg-emerald-500/5 text-emerald-700 border-emerald-500/20">
+                Verified
+            </Badge>
+        ),
+    },
+    {
+        header: "Manage",
+        accessorKey: "id",
+        className: "text-right",
+        cell: (guardian: GuardianRow) => (
+            <div className="inline-flex items-center gap-2">
+                <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => onEdit(guardian)}
+                    className="h-8 w-8 p-0 rounded-md"
+                >
+                    <Edit3 className="h-3.5 w-3.5" />
+                </Button>
+                <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => onDelete(guardian)}
+                    className="h-8 w-8 p-0 rounded-md text-destructive hover:bg-destructive/5 hover:text-destructive hover:border-destructive/20"
+                >
+                    <Trash2 className="h-3.5 w-3.5" />
+                </Button>
+            </div>
+        ),
+    },
+];
 
 export function GuardianContactManager({ guardians }: GuardianContactManagerProps) {
     const [query, setQuery] = useState("");
@@ -259,90 +336,15 @@ export function GuardianContactManager({ guardians }: GuardianContactManagerProp
             ) : null}
 
             {/* Desktop Table View */}
-            <div className="hidden md:block overflow-hidden rounded-xl border border-border bg-card">
-                <div className="overflow-x-auto">
-                    <table className="min-w-full divide-y divide-border">
-                        <thead className="bg-muted/30">
-                            <tr>
-                                <th className="px-6 py-4 text-left text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Parent</th>
-                                <th className="px-6 py-4 text-left text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Student Linked</th>
-                                <th className="px-6 py-4 text-left text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Contact Detail</th>
-                                <th className="px-6 py-4 text-left text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Status</th>
-                                <th className="px-6 py-4 text-right text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Manage</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-border">
-                            {filteredGuardians.map((guardian) => (
-                                <tr key={guardian.id} className="group transition-colors hover:bg-muted/20">
-                                    <td className="px-6 py-5 align-top">
-                                        <div className="text-sm font-bold text-foreground leading-none">
-                                            {guardian.name || "N/A"}
-                                        </div>
-                                        <div className="mt-1.5 text-[11px] font-medium text-muted-foreground uppercase tracking-tight">
-                                            {guardian.relationship}
-                                        </div>
-                                    </td>
-                                    <td className="px-6 py-5 align-top">
-                                        <div className="text-sm font-bold text-foreground leading-none">
-                                            {guardian.studentName}
-                                        </div>
-                                        <div className="mt-1.5 flex flex-col gap-0.5">
-                                            <div className="text-[11px] font-mono text-muted-foreground uppercase tracking-tighter">
-                                                {guardian.matricNumber}
-                                            </div>
-                                            <div className="text-[10px] font-bold text-muted-foreground/70 uppercase">
-                                                {guardian.department} · LVL {guardian.level}
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td className="px-6 py-5 align-top">
-                                        <div className="space-y-1">
-                                            <div className="text-[11px] font-medium text-foreground truncate max-w-45">
-                                                {guardian.email ?? "No email address"}
-                                            </div>
-                                            <div className="text-[11px] font-medium text-muted-foreground">
-                                                {guardian.phone ?? "No phone number"}
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td className="px-6 py-5 align-top">
-                                        <Badge variant="outline" className="h-5 rounded-md px-1.5 text-[9px] font-bold uppercase tracking-tight bg-emerald-500/5 text-emerald-700 border-emerald-500/20">
-                                            Verified
-                                        </Badge>
-                                    </td>
-                                    <td className="px-6 py-5 align-top text-right">
-                                        <div className="inline-flex items-center gap-2 opacity-0 transition-opacity group-hover:opacity-100">
-                                            <Button
-                                                type="button"
-                                                variant="outline"
-                                                size="sm"
-                                                onClick={() => openEditor(guardian)}
-                                                className="h-8 w-8 p-0 rounded-md"
-                                            >
-                                                <Edit3 className="h-3.5 w-3.5" />
-                                            </Button>
-                                            <Button
-                                                type="button"
-                                                variant="outline"
-                                                size="sm"
-                                                onClick={() => setDeleteTarget(guardian)}
-                                                className="h-8 w-8 p-0 rounded-md text-destructive hover:bg-destructive/5 hover:text-destructive hover:border-destructive/20"
-                                            >
-                                                <Trash2 className="h-3.5 w-3.5" />
-                                            </Button>
-                                        </div>
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            {/* Mobile Card List View */}
-            <div className="grid gap-4 md:hidden">
-                {filteredGuardians.map((guardian) => (
-                    <div key={guardian.id} className="rounded-xl border border-border bg-card p-5 space-y-4">
+            <DataTable
+                columns={getGuardianColumns(
+                    openEditor,
+                    (guardian) => setDeleteTarget(guardian)
+                )}
+                data={filteredGuardians}
+                searchKey="name"
+                mobileRow={(guardian: GuardianRow) => (
+                    <div className="space-y-4">
                         <div className="flex items-start justify-between gap-4">
                             <div className="space-y-1">
                                 <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground leading-none">Parent</div>
@@ -353,7 +355,6 @@ export function GuardianContactManager({ guardians }: GuardianContactManagerProp
                                 Verified
                             </Badge>
                         </div>
-
                         <div className="space-y-1 pt-3 border-t border-border/50">
                             <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground leading-none">Student Linked</div>
                             <div className="text-sm font-bold text-foreground">{guardian.studentName}</div>
@@ -363,13 +364,11 @@ export function GuardianContactManager({ guardians }: GuardianContactManagerProp
                                 <span className="uppercase">{guardian.department}</span>
                             </div>
                         </div>
-
                         <div className="space-y-1 pt-3 border-t border-border/50">
                             <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground leading-none">Contact Details</div>
                             <div className="text-[11px] font-medium text-foreground">{guardian.email ?? "No email"}</div>
                             <div className="text-[11px] font-medium text-muted-foreground">{guardian.phone ?? "No phone"}</div>
                         </div>
-
                         <div className="flex items-center gap-3 pt-4">
                             <Button
                                 type="button"
@@ -393,8 +392,8 @@ export function GuardianContactManager({ guardians }: GuardianContactManagerProp
                             </Button>
                         </div>
                     </div>
-                ))}
-            </div>
+                )}
+            />
 
             {filteredGuardians.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-20 bg-card rounded-xl border border-border border-dashed">
