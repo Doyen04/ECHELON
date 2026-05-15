@@ -20,6 +20,7 @@ export async function GET(
     const query = searchParams.get("q")?.trim();
 
     try {
+        const db = prisma as any;
         const filter = filterBatchesByUserRole(session.user);
         const studentResultWhere = {
             batchId,
@@ -37,7 +38,7 @@ export async function GET(
                 : {}),
         };
 
-        const batch = await prisma.resultBatch.findFirst({
+        const batch = await db.resultBatch.findFirst({
             where: {
                 id: batchId,
                 ...filter,
@@ -67,7 +68,7 @@ export async function GET(
         }
 
         const [studentResults, studentResultsTotal, statusGroups, gpaAggregate] = await Promise.all([
-            prisma.studentResult.findMany({
+            db.studentResult.findMany({
                 where: studentResultWhere,
                 orderBy: { id: "desc" },
                 skip,
@@ -90,13 +91,13 @@ export async function GET(
                     }
                 }
             }),
-            prisma.studentResult.count({ where: studentResultWhere }),
-            prisma.studentResult.groupBy({
+            db.studentResult.count({ where: studentResultWhere }),
+            db.studentResult.groupBy({
                 by: ["status"],
                 where: { batchId },
                 _count: { _all: true },
             }),
-            prisma.studentResult.aggregate({
+            db.studentResult.aggregate({
                 where: { batchId },
                 _avg: { gpa: true },
             }),
