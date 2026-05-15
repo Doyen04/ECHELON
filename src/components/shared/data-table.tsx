@@ -118,7 +118,7 @@ export function DataTable<TData>({
             </div>
 
             {/* Desktop table */}
-            <div className="min-w-0 overflow-x-auto">
+            <div className="min-w-0 overflow-x-auto scrollbar-hide">
                 <div className="hidden md:block">
                     <Table className="divide-y divide-border">
                         <TableHeader className="border-b border-border/50">
