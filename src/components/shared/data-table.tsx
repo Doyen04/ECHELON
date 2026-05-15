@@ -49,7 +49,7 @@ export function DataTable<TData, TValue>({
     // Filter data based on search query
     const filteredData = React.useMemo(() => {
         if (!searchQuery || !searchKey) return data;
-        
+
         return data.filter((item) => {
             const value = item[searchKey];
             if (typeof value === "string") {
@@ -109,7 +109,7 @@ export function DataTable<TData, TValue>({
                     <TableBody>
                         {paginatedData.length > 0 ? (
                             paginatedData.map((row, rowIndex) => (
-                                <TableRow 
+                                <TableRow
                                     key={rowIndex}
                                     className={cn(onRowClick && "cursor-pointer")}
                                     onClick={() => onRowClick?.(row)}
