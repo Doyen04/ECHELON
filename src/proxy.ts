@@ -9,6 +9,14 @@ export async function proxy(request: NextRequest) {
     });
 
     const path = request.nextUrl.pathname;
+    const cookies = request.cookies.getAll().map(c => c.name);
+    console.log("[Proxy Debug]", { 
+        path, 
+        tokenExists: !!token, 
+        cookieNames: cookies,
+        hasSecret: !!process.env.NEXTAUTH_SECRET,
+        nodeEnv: process.env.NODE_ENV 
+    });
     console.log(token, 888888888, path)
     // Redirect built-in 404 page to sign-in/signup
     if (path === "/404") {
