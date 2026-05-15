@@ -64,7 +64,7 @@ export async function GET(
             return NextResponse.json({ error: "Batch not found" }, { status: 404 });
         }
 
-        const [studentResults, studentResultsTotal] = await Promise.all([
+        const [studentResults, studentResultsTotal, statusGroups, gpaAggregate] = await Promise.all([
             prisma.studentResult.findMany({
                 where: studentResultWhere,
                 orderBy: { id: "desc" },
@@ -89,12 +89,26 @@ export async function GET(
                 }
             }),
             prisma.studentResult.count({ where: studentResultWhere }),
+            prisma.studentResult.groupBy({
+                by: ["status"],
+                where: { batchId },
+                _count: { _all: true },
+            }),
+            prisma.studentResult.aggregate({
+                where: { batchId },
+                _avg: { gpa: true },
+            }),
         ]);
 
         return NextResponse.json({
             ...batch,
             studentResults,
             studentResultsTotal,
+            statusCounts: statusGroups.reduce((acc: Record<string, number>, row: any) => {
+                acc[row.status] = row._count._all;
+                return acc;
+            }, {}),
+            averageGpa: gpaAggregate?._avg?.gpa ?? null,
             pagination: {
                 total: studentResultsTotal,
                 pages: Math.max(1, Math.ceil(studentResultsTotal / limit)),

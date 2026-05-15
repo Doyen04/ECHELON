@@ -6,7 +6,7 @@ import { Search } from "lucide-react";
 import { PageHeader } from "@/components/shared/page-header";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { DataTable } from "../../../components/shared/data-table";
+import { DataTable } from "@/components/shared/data-table";
 import { formatDateTime, humanizeEnum } from "@/lib/admin-format";
 import { ExportButton } from "@/components/features/admin/export-button";
 import { Sheet } from "@/components/ui/sheet";

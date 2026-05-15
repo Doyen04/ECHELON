@@ -34,6 +34,12 @@ interface DataTableProps<TData> {
     hideCount?: boolean;
     /** Optional renderer for mobile row cards. */
     mobileRow?: (item: TData) => React.ReactNode;
+    /** Enable server-side pagination controls. */
+    manualPagination?: boolean;
+    currentPage?: number;
+    totalPages?: number;
+    totalCount?: number;
+    onPageChange?: (page: number) => void;
 }
 
 export function DataTable<TData>({
@@ -47,11 +53,17 @@ export function DataTable<TData>({
     onRowClick,
     hideCount = false,
     mobileRow,
+    manualPagination = false,
+    currentPage: controlledCurrentPage,
+    totalPages: controlledTotalPages,
+    totalCount,
+    onPageChange,
 }: DataTableProps<TData>) {
     const [searchQuery, setSearchQuery] = React.useState("");
     const [currentPage, setCurrentPage] = React.useState(1);
 
     const filteredData = React.useMemo(() => {
+        if (manualPagination) return data;
         if (!searchQuery || !searchKey) return data;
         return data.filter((item) => {
             const value = item[searchKey];
@@ -62,12 +74,29 @@ export function DataTable<TData>({
         });
     }, [data, searchQuery, searchKey]);
 
-    const totalPages = Math.max(1, Math.ceil(filteredData.length / pageSize));
-    const startIndex = (currentPage - 1) * pageSize;
-    const paginatedData = filteredData.slice(startIndex, startIndex + pageSize);
+    const resolvedCurrentPage = manualPagination
+        ? Math.max(1, controlledCurrentPage ?? 1)
+        : currentPage;
+    const computedTotalPages = Math.max(1, Math.ceil(filteredData.length / pageSize));
+    const resolvedTotalPages = manualPagination
+        ? Math.max(1, controlledTotalPages ?? 1)
+        : computedTotalPages;
+    const startIndex = (resolvedCurrentPage - 1) * pageSize;
+    const paginatedData = manualPagination
+        ? data
+        : filteredData.slice(startIndex, startIndex + pageSize);
 
-    const canNextPage = currentPage < totalPages;
-    const canPreviousPage = currentPage > 1;
+    const canNextPage = resolvedCurrentPage < resolvedTotalPages;
+    const canPreviousPage = resolvedCurrentPage > 1;
+
+    const handlePageChange = (nextPage: number) => {
+        if (manualPagination) {
+            onPageChange?.(nextPage);
+            return;
+        }
+
+        setCurrentPage(nextPage);
+    };
 
     React.useEffect(() => setCurrentPage(1), [searchQuery]);
 
@@ -91,7 +120,7 @@ export function DataTable<TData>({
 
                 {!hideCount && (
                     <div className="text-sm text-muted-foreground">
-                        Showing <span className="font-medium text-foreground">{filteredData.length}</span> results
+                        Showing <span className="font-medium text-foreground">{manualPagination ? (totalCount ?? data.length) : filteredData.length}</span> results
                     </div>
                 )}
             </div>
@@ -134,13 +163,13 @@ export function DataTable<TData>({
 
             <div className="flex items-center justify-between px-2 py-4">
                 <div className="text-sm text-muted-foreground">
-                    Page {currentPage} of {Math.max(1, totalPages)}
+                    Page {resolvedCurrentPage} of {resolvedTotalPages}
                 </div>
                 <div className="flex items-center gap-2">
                     <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                        onClick={() => handlePageChange(Math.max(1, resolvedCurrentPage - 1))}
                         disabled={!canPreviousPage}
                         className="rounded-full h-8 px-4"
                     >
@@ -150,7 +179,7 @@ export function DataTable<TData>({
                     <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                        onClick={() => handlePageChange(Math.min(resolvedTotalPages, resolvedCurrentPage + 1))}
                         disabled={!canNextPage}
                         className="rounded-full h-8 px-4"
                     >

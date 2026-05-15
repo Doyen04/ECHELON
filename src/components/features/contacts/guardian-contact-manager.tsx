@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useState, useTransition } from "react";
 import { AlertTriangle, Edit3, Trash2, Search, Save, Upload, X, CheckCircle2 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
@@ -26,6 +26,12 @@ type GuardianRow = {
 
 type GuardianContactManagerProps = {
     guardians: GuardianRow[];
+    query: string;
+    onQueryChange: (value: string) => void;
+    currentPage: number;
+    totalPages: number;
+    totalCount: number;
+    onPageChange: (page: number) => void;
 };
 
 type EditableGuardian = {
@@ -126,8 +132,15 @@ const getGuardianColumns = (onEdit: (guardian: GuardianRow) => void, onDelete: (
     },
 ];
 
-export function GuardianContactManager({ guardians }: GuardianContactManagerProps) {
-    const [query, setQuery] = useState("");
+export function GuardianContactManager({
+    guardians,
+    query,
+    onQueryChange,
+    currentPage,
+    totalPages,
+    totalCount,
+    onPageChange,
+}: GuardianContactManagerProps) {
     const [selectedGuardian, setSelectedGuardian] = useState<GuardianRow | null>(null);
     const [editState, setEditState] = useState<EditableGuardian>(emptyEditState);
     const [deleteTarget, setDeleteTarget] = useState<GuardianRow | null>(null);
@@ -139,28 +152,6 @@ export function GuardianContactManager({ guardians }: GuardianContactManagerProp
     const [isSaving, startSaving] = useTransition();
     const [message, setMessage] = useState<string | null>(null);
     const [isError, setIsError] = useState(false);
-
-    const filteredGuardians = useMemo(() => {
-        const normalized = query.trim().toLowerCase();
-        if (!normalized) {
-            return guardians;
-        }
-
-        return guardians.filter((guardian) => {
-            return [
-                guardian.name,
-                guardian.relationship,
-                guardian.email ?? "",
-                guardian.phone ?? "",
-                guardian.matricNumber,
-                guardian.studentName,
-                guardian.department,
-            ]
-                .join(" ")
-                .toLowerCase()
-                .includes(normalized);
-        });
-    }, [guardians, query]);
 
     const openEditor = (guardian: GuardianRow) => {
         setSelectedGuardian(guardian);
@@ -304,15 +295,15 @@ export function GuardianContactManager({ guardians }: GuardianContactManagerProp
                     <input
                         type="search"
                         value={query}
-                        onChange={(event) => setQuery(event.target.value)}
+                        onChange={(event) => onQueryChange(event.target.value)}
                         placeholder="Search by parent name, matric number, email..."
                         className="w-full h-11 rounded-xl border border-border bg-card pl-10 pr-4 text-sm text-foreground outline-none transition-all focus:border-sidebar-primary/50 focus:ring-1 focus:ring-sidebar-primary/20"
                     />
                 </div>
-                
+
                 <div className="flex items-center justify-between gap-3 sm:justify-end">
                     <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground sm:text-xs">
-                        <span className="text-foreground">{filteredGuardians.length}</span> Records
+                        <span className="text-foreground">{totalCount}</span> Records
                     </div>
                     <Button
                         type="button"
@@ -341,8 +332,12 @@ export function GuardianContactManager({ guardians }: GuardianContactManagerProp
                     openEditor,
                     (guardian) => setDeleteTarget(guardian)
                 )}
-                data={filteredGuardians}
-                searchKey="name"
+                data={guardians}
+                manualPagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                totalCount={totalCount}
+                onPageChange={onPageChange}
                 mobileRow={(guardian: GuardianRow) => (
                     <div className="space-y-4">
                         <div className="flex items-start justify-between gap-4">
@@ -395,7 +390,7 @@ export function GuardianContactManager({ guardians }: GuardianContactManagerProp
                 )}
             />
 
-            {filteredGuardians.length === 0 ? (
+            {guardians.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-20 bg-card rounded-xl border border-border border-dashed">
                     <Search className="h-8 w-8 text-muted-foreground/30" />
                     <p className="mt-2 text-sm font-medium text-muted-foreground">No contacts found matching your search.</p>
@@ -502,7 +497,7 @@ export function GuardianContactManager({ guardians }: GuardianContactManagerProp
                     <div className="p-4 rounded-xl bg-muted/30 border border-border space-y-2">
                         <p className="text-xs font-bold uppercase tracking-widest text-foreground">CSV Format Guide</p>
                         <p className="text-xs text-muted-foreground leading-relaxed">
-                            Upload a CSV with <span className="font-bold text-foreground">matric_number</span> to match students. 
+                            Upload a CSV with <span className="font-bold text-foreground">matric_number</span> to match students.
                             You can also include <span className="italic">parent_name, parent_email,</span> and <span className="italic">parent_phone</span> to update their records.
                         </p>
                     </div>
