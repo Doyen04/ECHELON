@@ -26,10 +26,12 @@ export async function GET(
             ...(query
                 ? {
                     student: {
-                        OR: [
-                            { fullName: { contains: query, mode: "insensitive" } },
-                            { matricNumber: { contains: query, mode: "insensitive" } },
-                        ],
+                        is: {
+                            OR: [
+                                { fullName: { contains: query, mode: "insensitive" } },
+                                { matricNumber: { contains: query, mode: "insensitive" } },
+                            ],
+                        },
                     },
                 }
                 : {}),

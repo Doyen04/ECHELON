@@ -63,22 +63,24 @@ export async function listGuardiansWithStudent(options?: {
 
     const where = query
         ? {
-              OR: [
-                  { name: { contains: query, mode: "insensitive" } },
-                  { relationship: { contains: query, mode: "insensitive" } },
-                  { email: { contains: query, mode: "insensitive" } },
-                  { phone: { contains: query, mode: "insensitive" } },
-                  {
-                      student: {
-                          OR: [
-                              { fullName: { contains: query, mode: "insensitive" } },
-                              { matricNumber: { contains: query, mode: "insensitive" } },
-                              { department: { contains: query, mode: "insensitive" } },
-                          ],
-                      },
-                  },
-              ],
-          }
+            OR: [
+                { name: { contains: query, mode: "insensitive" } },
+                { relationship: { contains: query, mode: "insensitive" } },
+                { email: { contains: query, mode: "insensitive" } },
+                { phone: { contains: query, mode: "insensitive" } },
+                {
+                    student: {
+                        is: {
+                            OR: [
+                                { fullName: { contains: query, mode: "insensitive" } },
+                                { matricNumber: { contains: query, mode: "insensitive" } },
+                                { department: { contains: query, mode: "insensitive" } },
+                            ],
+                        },
+                    },
+                },
+            ],
+        }
         : undefined;
 
     const [guardians, total] = await Promise.all([
@@ -136,15 +138,15 @@ export async function listDispatchNotificationLogs(
         dispatchId,
         ...(query
             ? {
-                  OR: [
-                      { status: { contains: query, mode: "insensitive" } },
-                      { channel: { contains: query, mode: "insensitive" } },
-                      { studentId: { contains: query, mode: "insensitive" } },
-                      { guardianId: { contains: query, mode: "insensitive" } },
-                      { failureReason: { contains: query, mode: "insensitive" } },
-                      { providerMessageId: { contains: query, mode: "insensitive" } },
-                  ],
-              }
+                OR: [
+                    { status: { contains: query, mode: "insensitive" } },
+                    { channel: { contains: query, mode: "insensitive" } },
+                    { studentId: { contains: query, mode: "insensitive" } },
+                    { guardianId: { contains: query, mode: "insensitive" } },
+                    { failureReason: { contains: query, mode: "insensitive" } },
+                    { providerMessageId: { contains: query, mode: "insensitive" } },
+                ],
+            }
             : {}),
     };
 
@@ -245,13 +247,15 @@ export async function findBatchDetails(
         batchId,
         ...(query
             ? {
-                  student: {
-                      OR: [
-                          { fullName: { contains: query, mode: "insensitive" } },
-                          { matricNumber: { contains: query, mode: "insensitive" } },
-                      ],
-                  },
-              }
+                student: {
+                    is: {
+                        OR: [
+                            { fullName: { contains: query, mode: "insensitive" } },
+                            { matricNumber: { contains: query, mode: "insensitive" } },
+                        ],
+                    },
+                },
+            }
             : {}),
     };
 
@@ -357,13 +361,13 @@ export async function listBatchesSummary(options?: {
         ...(level ? { level: Number(level) } : {}),
         ...(query
             ? {
-                  OR: [
-                      { id: { contains: query, mode: "insensitive" } },
-                      { department: { contains: query, mode: "insensitive" } },
-                      { session: { contains: query, mode: "insensitive" } },
-                      { program: { name: { contains: query, mode: "insensitive" } } },
-                  ],
-              }
+                OR: [
+                    { id: { contains: query, mode: "insensitive" } },
+                    { department: { contains: query, mode: "insensitive" } },
+                    { session: { contains: query, mode: "insensitive" } },
+                    { program: { name: { contains: query, mode: "insensitive" } } },
+                ],
+            }
             : {}),
     };
 
