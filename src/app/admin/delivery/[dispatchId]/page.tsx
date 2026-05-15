@@ -2,7 +2,7 @@
 
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { use } from "react";
+import { use, useState } from "react";
 import { useApi } from "@/hooks/use-api";
 import { LoadingState } from "@/components/shared/loading-state";
 
@@ -31,9 +31,11 @@ type DeliveryPageProps = {
 
 export default function DeliveryLogPage({ params }: DeliveryPageProps) {
     const { dispatchId } = use(params);
+    const [currentPage, setCurrentPage] = useState(1);
+    const pageSize = 20;
 
     const { data, isLoading, error } = useApi<any>(
-        `/api/delivery/${dispatchId}`,
+        `/api/delivery/${dispatchId}?page=${currentPage}&limit=${pageSize}`,
         { immediate: true },
     );
 
@@ -50,7 +52,7 @@ export default function DeliveryLogPage({ params }: DeliveryPageProps) {
         );
     }
 
-    const { dispatch, notificationLogs, students, guardians } = data;
+    const { dispatch, notificationLogs, students, guardians, pagination } = data;
 
     const studentById = new Map<
         string,
@@ -178,6 +180,11 @@ export default function DeliveryLogPage({ params }: DeliveryPageProps) {
                                 data={notificationLogs}
                                 hideCount={true}
                                 className='border-0 shadow-none'
+                                manualPagination
+                                currentPage={pagination?.currentPage ?? currentPage}
+                                totalPages={pagination?.pages ?? 1}
+                                totalCount={pagination?.total ?? notificationLogs.length}
+                                onPageChange={setCurrentPage}
                                 columns={[
                                     {
                                         header: "Student",

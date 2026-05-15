@@ -40,13 +40,15 @@ export default function BatchDetailPage({ params }: BatchPageProps) {
     const [successMessage, setSuccessMessage] = useState<string | null>(null);
     const [selectedStudent, setSelectedStudent] = useState<any>(null);
     const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+    const [currentPage, setCurrentPage] = useState(1);
+    const pageSize = 10;
 
     const {
         data: batch,
         isLoading,
         error,
         execute,
-    } = useApi<any>(`/api/batches/${batchId}`, { immediate: true });
+    } = useApi<any>(`/api/batches/${batchId}?page=${currentPage}&limit=${pageSize}`, { immediate: true });
 
     const handleApproveSuccess = () => {
         setSuccessMessage("Batch approved and queued for parent delivery.");
@@ -72,15 +74,9 @@ export default function BatchDetailPage({ params }: BatchPageProps) {
             errorMessage="Failed to load batch"
         >
             {(batch) => {
-                const approvedCount = batch.studentResults.filter(
-                    (result: any) => result.status === "APPROVED",
-                ).length;
-                const pendingCount = batch.studentResults.filter(
-                    (result: any) => result.status === "PENDING",
-                ).length;
-                const withheldCount = batch.studentResults.filter(
-                    (result: any) => result.status === "WITHHELD",
-                ).length;
+                const approvedCount = batch.statusCounts?.APPROVED ?? 0;
+                const pendingCount = batch.statusCounts?.PENDING ?? 0;
+                const withheldCount = batch.statusCounts?.WITHHELD ?? 0;
 
                 return (
                     <div className='dashboard-root flex h-full w-full flex-col overflow-y-auto bg-background'>
@@ -138,7 +134,7 @@ export default function BatchDetailPage({ params }: BatchPageProps) {
                             <div className='grid gap-4 sm:grid-cols-2 xl:grid-cols-4'>
                                 <SummaryCard
                                     title='Total Students'
-                                    value={batch.studentResults.length}
+                                    value={batch.studentResultsTotal ?? batch.studentResults.length}
                                     className="bg-card border-border shadow-xs"
                                 />
                                 <SummaryCard
@@ -176,6 +172,11 @@ export default function BatchDetailPage({ params }: BatchPageProps) {
                                                     data={batch.studentResults}
                                                     className='border-0 shadow-none -mx-px'
                                                     columns={columns}
+                                                    manualPagination
+                                                    currentPage={batch.pagination?.currentPage ?? currentPage}
+                                                    totalPages={batch.pagination?.pages ?? 1}
+                                                    totalCount={batch.pagination?.total ?? batch.studentResults.length}
+                                                    onPageChange={setCurrentPage}
                                                 />
                                             </div>
                                         ) : (
@@ -260,7 +261,7 @@ export default function BatchDetailPage({ params }: BatchPageProps) {
                             </div>
                         </main>
 
-                        <StudentReviewDrawer 
+                        <StudentReviewDrawer
                             studentResult={selectedStudent}
                             isOpen={isDrawerOpen}
                             onOpenChange={setIsDrawerOpen}

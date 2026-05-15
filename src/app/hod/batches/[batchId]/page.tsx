@@ -2,12 +2,12 @@
 
 import { use, useEffect, useState } from "react";
 import Link from "next/link";
-import { 
-    ArrowLeft, 
-    Calendar, 
-    User, 
-    CheckCircle2, 
-    Clock, 
+import {
+    ArrowLeft,
+    Calendar,
+    User,
+    CheckCircle2,
+    Clock,
     AlertTriangle,
     FileText,
     History,
@@ -36,9 +36,12 @@ export default function HodBatchDetailPage({ params }: BatchPageProps) {
     const { batchId } = use(params);
     const [batch, setBatch] = useState<any>(null);
     const [isLoading, setIsLoading] = useState(true);
+    const [currentPage, setCurrentPage] = useState(1);
+    const pageSize = 10;
 
     useEffect(() => {
-        fetch(`/api/hod/batches/${batchId}`)
+        setIsLoading(true);
+        fetch(`/api/hod/batches/${batchId}?page=${currentPage}&limit=${pageSize}`)
             .then(res => res.json())
             .then(data => {
                 if (data.error) throw new Error(data.error);
@@ -51,7 +54,7 @@ export default function HodBatchDetailPage({ params }: BatchPageProps) {
             .finally(() => {
                 setIsLoading(false);
             });
-    }, [batchId]);
+    }, [batchId, currentPage]);
 
     const handleCancel = async () => {
         if (confirm("Are you sure you want to cancel this batch? This action cannot be undone.")) {
@@ -93,11 +96,11 @@ export default function HodBatchDetailPage({ params }: BatchPageProps) {
         );
     }
 
-    const averageGpa = (batch.studentResults.reduce((acc: number, r: any) => acc + r.gpa, 0) / (batch.studentResults.length || 1)).toFixed(2);
+    const averageGpa = Number(batch.averageGpa ?? 0).toFixed(2);
 
     return (
         <div className="flex h-full w-full flex-col overflow-y-auto bg-background">
-            <PageHeader 
+            <PageHeader
                 title={batch.program.name}
                 breadcrumbs={
                     <div className="flex items-center gap-1">
@@ -109,8 +112,8 @@ export default function HodBatchDetailPage({ params }: BatchPageProps) {
                 action={
                     <div className="flex items-center gap-3">
                         {batch.status === "PENDING" && (
-                            <Button 
-                                variant="outline" 
+                            <Button
+                                variant="outline"
                                 className="rounded-full border-rose-500/20 text-rose-600 hover:bg-rose-50 hover:border-rose-500/40 font-bold text-xs uppercase"
                                 onClick={handleCancel}
                             >
@@ -139,9 +142,9 @@ export default function HodBatchDetailPage({ params }: BatchPageProps) {
                             <h1 className="text-3xl font-bold tracking-tight text-foreground">{batch.program.name}</h1>
                             <Badge variant="outline" className={cn(
                                 "rounded-full px-3 py-0.5 text-[10px] font-bold uppercase border-none",
-                                batch.status === "APPROVED" ? "bg-emerald-50 text-emerald-600" : 
-                                batch.status === "REJECTED" ? "bg-rose-50 text-rose-600" : 
-                                "bg-amber-50 text-amber-600"
+                                batch.status === "APPROVED" ? "bg-emerald-50 text-emerald-600" :
+                                    batch.status === "REJECTED" ? "bg-rose-50 text-rose-600" :
+                                        "bg-amber-50 text-amber-600"
                             )}>
                                 {batch.status}
                             </Badge>
@@ -155,7 +158,7 @@ export default function HodBatchDetailPage({ params }: BatchPageProps) {
                 </div>
 
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                    <SummaryCard title="Total Students" value={batch.studentResults.length} className="bg-card shadow-sm border-border" />
+                    <SummaryCard title="Total Students" value={batch.studentResultsTotal ?? batch.studentResults.length} className="bg-card shadow-sm border-border" />
                     <SummaryCard title="Average GPA" value={averageGpa} className="bg-card shadow-sm border-border" />
                     <SummaryCard title="Upload Date" value={new Date(batch.uploadedAt).toLocaleDateString()} className="bg-card shadow-sm border-border" />
                     <SummaryCard title="Format" value={batch.source.toUpperCase()} className="bg-card shadow-sm border-border" />
@@ -168,15 +171,20 @@ export default function HodBatchDetailPage({ params }: BatchPageProps) {
                                 Student Result List
                             </h2>
                             <Badge variant="secondary" className="bg-muted/50 text-[10px] font-bold">
-                                {batch.studentResults.length} Records
+                                {batch.studentResultsTotal ?? batch.studentResults.length} Records
                             </Badge>
                         </div>
                         <Card className="overflow-hidden border-border bg-card shadow-sm text-black">
-                            <DataTable 
-                                data={batch.studentResults} 
+                            <DataTable
+                                data={batch.studentResults}
                                 columns={columns}
                                 className="border-none"
                                 hideCount={true}
+                                manualPagination
+                                currentPage={batch.pagination?.currentPage ?? currentPage}
+                                totalPages={batch.pagination?.pages ?? 1}
+                                totalCount={batch.pagination?.total ?? batch.studentResults.length}
+                                onPageChange={setCurrentPage}
                             />
                         </Card>
                     </section>
@@ -221,7 +229,7 @@ export default function HodBatchDetailPage({ params }: BatchPageProps) {
                                         </p>
                                     </div>
                                 </div>
-                                
+
                                 {batch.status === "APPROVED" && (
                                     <div className="relative pl-6 pb-2">
                                         <div className="absolute left-0 top-1 h-3.5 w-3.5 rounded-full border-2 border-emerald-500 bg-background" />

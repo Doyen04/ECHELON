@@ -31,12 +31,26 @@ export default function HodBatchesPage() {
     const [searchQuery, setSearchQuery] = useState("");
     const [selectedLevel, setSelectedLevel] = useState("");
     const [selectedStatus, setSelectedStatus] = useState("");
+    const [currentPage, setCurrentPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(1);
+    const [totalCount, setTotalCount] = useState(0);
+    const pageSize = 10;
 
     useEffect(() => {
-        fetch("/api/hod/batches")
+        const params = new URLSearchParams({
+            page: String(currentPage),
+            limit: String(pageSize),
+        });
+        if (searchQuery.trim()) params.set("q", searchQuery.trim());
+        if (selectedLevel) params.set("level", selectedLevel);
+        if (selectedStatus) params.set("status", selectedStatus);
+
+        fetch(`/api/hod/batches?${params.toString()}`)
             .then((res) => res.json())
             .then((data) => {
                 setBatches(data.batches || []);
+                setTotalPages(data.pagination?.pages ?? 1);
+                setTotalCount(data.pagination?.total ?? 0);
             })
             .catch((err) => {
                 console.error("Failed to load batches", err);
@@ -45,18 +59,11 @@ export default function HodBatchesPage() {
             .finally(() => {
                 setIsLoading(false);
             });
-    }, []);
+    }, [currentPage, searchQuery, selectedLevel, selectedStatus]);
 
-    const filteredBatches = useMemo(() => {
-        return batches.filter((b) => {
-            const matchesSearch =
-                b.program.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                b.session.toLowerCase().includes(searchQuery.toLowerCase());
-            const matchesLevel = !selectedLevel || String(b.level) === selectedLevel;
-            const matchesStatus = !selectedStatus || b.status === selectedStatus;
-            return matchesSearch && matchesLevel && matchesStatus;
-        });
-    }, [batches, searchQuery, selectedLevel, selectedStatus]);
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [searchQuery, selectedLevel, selectedStatus]);
 
     const levels = Array.from(
         new Set(batches.map((b) => String(b.level))),
@@ -265,10 +272,15 @@ export default function HodBatchesPage() {
                 ) : (
                     <Card className='overflow-hidden border-border bg-card shadow-sm'>
                         <DataTable
-                            data={filteredBatches}
+                            data={batches}
                             hideCount
                             columns={columns}
                             className='border-none'
+                            manualPagination
+                            currentPage={currentPage}
+                            totalPages={totalPages}
+                            totalCount={totalCount}
+                            onPageChange={setCurrentPage}
                         />
                     </Card>
                 )}
