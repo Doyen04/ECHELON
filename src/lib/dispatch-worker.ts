@@ -143,7 +143,7 @@ async function sendSmsNotification(to: string, message: string): Promise<SendRes
     });
     const data = await res.json() as any;
     if (!res.ok) throw new Error(data.message ?? `Sendchamp API error ${res.status}`);
-    return { ok: true, providerMessageId: data.data?.uid ?? `sms-${Date.now()}`, status: "SENT" };
+    return { ok: true, providerMessageId: data.data?.id ?? `sms-${Date.now()}`, status: "SENT" };
 }
 
 async function sendNotification(
@@ -230,36 +230,41 @@ export async function processNotifyJob(payload: NotifyJobPayload): Promise<Dispa
         let sentCount = 0;
         let lastChannel: ChannelSelection["channel"] | undefined;
 
-        // Send to every guardian with available contact info
+        // Send to every guardian, trying channels in order (email → whatsapp → sms) until one succeeds
         for (const guardian of guardians) {
             const channels = selectChannels(guardian);
             if (channels.length === 0) continue;
 
-            // Use the first available channel per guardian
-            const channelSelection = channels[0];
-            const sendResult = await sendNotification(channelSelection, {
-                parentName: guardian.name,
-                studentName: studentResult.student.fullName,
-                matricNumber: studentResult.student.matricNumber,
-                semester,
-                portalLink,
-            });
+            let guardianSent = false;
+            for (const channelSelection of channels) {
+                const sendResult = await sendNotification(channelSelection, {
+                    parentName: guardian.name,
+                    studentName: studentResult.student.fullName,
+                    matricNumber: studentResult.student.matricNumber,
+                    semester,
+                    portalLink,
+                });
 
-            await createNotificationLog({
-                dispatchId: payload.dispatchId,
-                studentResultId: studentResult.id,
-                studentId: studentResult.studentId,
-                guardianId: guardian.id,
-                channel: channelSelection.channel,
-                status: sendResult.ok ? sendResult.status : "FAILED",
-                providerMessageId: sendResult.providerMessageId,
-                failureReason: sendResult.ok ? null : (sendResult.failureReason ?? "Provider error"),
-            });
+                await createNotificationLog({
+                    dispatchId: payload.dispatchId,
+                    studentResultId: studentResult.id,
+                    studentId: studentResult.studentId,
+                    guardianId: guardian.id,
+                    channel: channelSelection.channel,
+                    status: sendResult.ok ? sendResult.status : "FAILED",
+                    providerMessageId: sendResult.providerMessageId,
+                    failureReason: sendResult.ok ? null : (sendResult.failureReason ?? "Provider error"),
+                });
 
-            if (sendResult.ok) {
-                sentCount++;
-                lastChannel = channelSelection.channel;
+                if (sendResult.ok) {
+                    sentCount++;
+                    lastChannel = channelSelection.channel;
+                    guardianSent = true;
+                    break;
+                }
             }
+
+            void guardianSent;
         }
 
         await markDispatchProgress(payload.dispatchId, sentCount > 0);
