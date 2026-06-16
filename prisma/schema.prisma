@@ -47,14 +47,17 @@ enum NotificationStatus {
 }
 
 model Institution {
-    id            String        @id @default(cuid())
-    name          String
-    logoUrl       String?
-    createdAt     DateTime      @default(now())
-    users         User[]
-    students      Student[]
-    resultBatches ResultBatch[]
-    auditLogs     AuditLog[]
+    id               String        @id @default(cuid())
+    name             String
+    logoUrl          String?
+    contactEmail     String?
+    gpaScale         String        @default("5.0")
+    messageTemplates Json?
+    createdAt        DateTime      @default(now())
+    users            User[]
+    students         Student[]
+    resultBatches    ResultBatch[]
+    auditLogs        AuditLog[]
 }
 
 model User {
