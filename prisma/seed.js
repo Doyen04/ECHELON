@@ -50,7 +50,58 @@ async function main() {
         },
     });
 
+    // Seed Departments and Programs
+    const csmDept = await prisma.department.upsert({
+        where: { institutionId_code: { institutionId, code: "CSM" } },
+        update: { name: "Computer Science & Mathematics" },
+        create: {
+            institutionId,
+            code: "CSM",
+            name: "Computer Science & Mathematics",
+        },
+    });
+
+    const programs = [
+        { code: "CS", name: "Computer Science" },
+        { code: "SWE", name: "Software Engineering" },
+        { code: "CYB", name: "Cybersecurity" },
+        { code: "DS", name: "Data Science" },
+    ];
+
+    for (const prog of programs) {
+        await prisma.program.upsert({
+            where: { departmentId_code: { departmentId: csmDept.id, code: prog.code } },
+            update: { name: prog.name },
+            create: {
+                departmentId: csmDept.id,
+                code: prog.code,
+                name: prog.name,
+            },
+        });
+    }
+
+    // Seed an HOD user
+    const hodEmail = "hod@mtu.edu.ng";
+    await prisma.user.upsert({
+        where: { email: hodEmail },
+        update: {
+            name: "HOD CSM",
+            role: "hod",
+            departmentId: csmDept.id,
+            passwordHash,
+        },
+        create: {
+            email: hodEmail,
+            name: "HOD CSM",
+            role: "hod",
+            departmentId: csmDept.id,
+            passwordHash,
+            institutionId,
+        },
+    });
+
     console.log(`Seeded super admin: ${email}`);
+    console.log(`Seeded HOD admin: ${hodEmail}`);
 }
 
 main()

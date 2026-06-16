@@ -1,35 +1,36 @@
 import type { SummaryMetric } from "@/lib/dashboard-data";
 
+import { Badge } from "@/components/ui/badge";
+import { Card } from "@/components/ui/card";
+
 const trendTone: Record<SummaryMetric["trend"], string> = {
-    up: "text-emerald-700 bg-emerald-100",
-    down: "text-rose-700 bg-rose-100",
-    steady: "text-slate-700 bg-slate-200",
+    up: "border-emerald-200 bg-emerald-50 text-emerald-700",
+    down: "border-rose-200 bg-rose-50 text-rose-700",
+    steady: "border-border bg-secondary text-secondary-foreground",
 };
 
 export function SummaryMetrics({ metrics }: { metrics: SummaryMetric[] }) {
     return (
-        <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
             {metrics.map((metric, index) => (
-                <article
+                <Card
                     key={metric.label}
-                    className="dashboard-card group rounded-2xl border border-(--border-subtle) bg-(--surface-strong) px-5 py-5 shadow-[0_20px_40px_-35px_rgba(2,23,23,0.75)]"
+                    className="dashboard-card group px-5 py-5"
                     style={{ animationDelay: `${index * 90}ms` }}
                 >
-                    <p className="text-xs font-semibold uppercase tracking-[0.16em] text-(--text-muted)">
+                    <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground/80">
                         {metric.label}
                     </p>
-                    <div className="mt-4 flex items-start justify-between gap-3">
-                        <p className="text-3xl font-semibold leading-none tracking-tight text-foreground">
+                    <div className="mt-3 flex items-baseline justify-between gap-3">
+                        <p className="font-serif text-3xl font-semibold tracking-tight text-foreground">
                             {metric.value}
                         </p>
-                        <span
-                            className={`rounded-full px-2.5 py-1 text-xs font-semibold ${trendTone[metric.trend]}`}
-                        >
+                        <Badge variant="outline" className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${trendTone[metric.trend]}`}>
                             {metric.change}
-                        </span>
+                        </Badge>
                     </div>
-                    <p className="mt-4 text-sm text-(--text-muted)">{metric.helper}</p>
-                </article>
+                    <p className="mt-3 text-xs text-muted-foreground/70">{metric.helper}</p>
+                </Card>
             ))}
         </section>
     );

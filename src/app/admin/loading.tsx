@@ -1,4 +1,4 @@
-import { LoadingState } from "@/components/ui/loading-state";
+import { LoadingState } from "@/components/shared/loading-state";
 
 export default function AdminLoading() {
     return <LoadingState title="Loading admin workspace..." rows={6} />;

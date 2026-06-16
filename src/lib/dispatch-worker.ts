@@ -3,13 +3,21 @@ import { randomBytes } from "node:crypto";
 import nodemailer from "nodemailer";
 import { Resend } from "resend";
 
-import { prisma } from "@/lib/db";
 import type { NotifyJobPayload } from "@/lib/queue";
+import {
+    createNotificationLog,
+    createPortalToken,
+    findNotificationDispatchById,
+    findStudentResultForDispatch,
+    findValidPortalToken,
+    incrementDispatchProgress,
+    updateDispatchStatus,
+} from "@/lib/repositories/notification-repository";
 
 type SendResult = {
     ok: boolean;
     providerMessageId: string;
-    status: "SENT" | "DELIVERED" | "FAILED";
+    status: "SENT" | "FAILED";
     failureReason?: string;
 };
 
@@ -24,61 +32,14 @@ type ChannelSelection = {
     destination: string;
 };
 
-function buildChannelPriority(preferredChannel: string) {
-    if (preferredChannel === "EMAIL") {
-        return ["EMAIL", "WHATSAPP", "SMS"] as const;
+function selectChannels(guardian: any): ChannelSelection[] {
+    const channels: ChannelSelection[] = [];
+    if (guardian.email) channels.push({ channel: "EMAIL", destination: guardian.email });
+    if (guardian.phone) {
+        channels.push({ channel: "WHATSAPP", destination: guardian.phone });
+        channels.push({ channel: "SMS", destination: guardian.phone });
     }
-    if (preferredChannel === "SMS") {
-        return ["SMS", "WHATSAPP", "EMAIL"] as const;
-    }
-    return ["WHATSAPP", "EMAIL", "SMS"] as const;
-}
-
-function selectChannel(guardian: any): ChannelSelection | null {
-    const channels = buildChannelPriority(guardian.preferredChannel ?? "WHATSAPP");
-
-    for (const channel of channels) {
-        if ((channel === "WHATSAPP" || channel === "SMS") && guardian.phone) {
-            return { channel, destination: guardian.phone };
-        }
-        if (channel === "EMAIL" && guardian.email) {
-            return { channel, destination: guardian.email };
-        }
-    }
-
-    return null;
-}
-
-async function getOrCreatePortalToken(studentResultId: string) {
-    const db = prisma as any;
-    const now = new Date();
-
-    const existingToken = await db.portalToken.findFirst({
-        where: {
-            studentResultId,
-            invalidated: false,
-            expiresAt: { gt: now },
-        },
-        orderBy: { createdAt: "desc" },
-    });
-
-    if (existingToken) {
-        return existingToken.token as string;
-    }
-
-    const token = randomBytes(32).toString("hex");
-    const expiryDays = Number(process.env.TOKEN_EXPIRY_DAYS ?? "30");
-    const expiresAt = new Date(now.getTime() + expiryDays * 24 * 60 * 60 * 1000);
-
-    await db.portalToken.create({
-        data: {
-            studentResultId,
-            token,
-            expiresAt,
-        },
-    });
-
-    return token;
+    return channels;
 }
 
 // Normalize Nigerian phone numbers to international format (no leading +)
@@ -89,12 +50,19 @@ function normalizePhone(phone: string): string {
     return clean;
 }
 
-async function sendEmailNotification(
-    to: string,
-    subject: string,
-    text: string,
-): Promise<SendResult> {
-    // SMTP (Gmail App Password) — primary
+async function getOrCreatePortalToken(studentResultId: string): Promise<string> {
+    const now = new Date();
+    const existing = await findValidPortalToken(studentResultId, now);
+    if (existing) return existing.token as string;
+
+    const token = randomBytes(32).toString("hex");
+    const expiryDays = Number(process.env.TOKEN_EXPIRY_DAYS ?? "30");
+    const expiresAt = new Date(now.getTime() + expiryDays * 24 * 60 * 60 * 1000);
+    await createPortalToken({ studentResultId, token, expiresAt });
+    return token;
+}
+
+async function sendEmailNotification(to: string, subject: string, text: string): Promise<SendResult> {
     if (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS) {
         const transporter = nodemailer.createTransport({
             host: process.env.SMTP_HOST,
@@ -110,8 +78,6 @@ async function sendEmailNotification(
         });
         return { ok: true, providerMessageId: info.messageId, status: "SENT" };
     }
-
-    // Resend — fallback if SMTP not configured
     if (process.env.RESEND_API_KEY) {
         const resend = new Resend(process.env.RESEND_API_KEY);
         await resend.emails.send({
@@ -122,19 +88,12 @@ async function sendEmailNotification(
         });
         return { ok: true, providerMessageId: `resend-${Date.now()}`, status: "SENT" };
     }
-
     throw new Error("No email provider configured (set SMTP_HOST or RESEND_API_KEY)");
 }
 
 async function sendWhatsAppNotification(
     to: string,
-    payload: {
-        parentName: string;
-        studentName: string;
-        matricNumber: string;
-        semester: string;
-        portalLink: string;
-    },
+    payload: { parentName: string; studentName: string; matricNumber: string; semester: string; portalLink: string },
 ): Promise<SendResult> {
     const phoneId = process.env.WHATSAPP_PHONE_NUMBER_ID;
     const token = process.env.WHATSAPP_ACCESS_TOKEN;
@@ -145,10 +104,7 @@ async function sendWhatsAppNotification(
 
     const res = await fetch(`https://graph.facebook.com/v18.0/${phoneId}/messages`, {
         method: "POST",
-        headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-        },
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
         body: JSON.stringify({
             messaging_product: "whatsapp",
             to: normalizePhone(to),
@@ -156,88 +112,47 @@ async function sendWhatsAppNotification(
             template: {
                 name: templateName,
                 language: { code: templateLang },
-                components: [
-                    {
-                        type: "body",
-                        parameters: [
-                            { type: "text", text: payload.parentName },
-                            { type: "text", text: payload.semester },
-                            { type: "text", text: payload.studentName },
-                            { type: "text", text: payload.matricNumber },
-                            { type: "text", text: payload.portalLink },
-                        ],
-                    },
-                ],
+                components: [{
+                    type: "body",
+                    parameters: [
+                        { type: "text", text: payload.parentName },
+                        { type: "text", text: payload.semester },
+                        { type: "text", text: payload.studentName },
+                        { type: "text", text: payload.matricNumber },
+                        { type: "text", text: payload.portalLink },
+                    ],
+                }],
             },
         }),
     });
-
     const data = await res.json() as any;
-
-    if (!res.ok) {
-        throw new Error(data.error?.message ?? `WhatsApp API error ${res.status}`);
-    }
-
-    return {
-        ok: true,
-        providerMessageId: data.messages?.[0]?.id ?? `wa-${Date.now()}`,
-        status: "SENT",
-    };
+    if (!res.ok) throw new Error(data.error?.message ?? `WhatsApp API error ${res.status}`);
+    return { ok: true, providerMessageId: data.messages?.[0]?.id ?? `wa-${Date.now()}`, status: "SENT" };
 }
 
 async function sendSmsNotification(to: string, message: string): Promise<SendResult> {
     const baseUrl = process.env.SENDCHAMP_BASE_URL ?? "https://api.sendchamp.com/api/v1";
     const accessKey = process.env.SENDCHAMP_ACCESS_KEY;
     const senderId = process.env.SENDCHAMP_SENDER_ID ?? "MTU";
-
     if (!accessKey) throw new Error("SENDCHAMP_ACCESS_KEY not set");
 
     const res = await fetch(`${baseUrl}/sms/send`, {
         method: "POST",
-        headers: {
-            Authorization: `Bearer ${accessKey}`,
-            "Content-Type": "application/json",
-            Accept: "application/json",
-        },
-        body: JSON.stringify({
-            to: [normalizePhone(to)],
-            message,
-            sender_name: senderId,
-            route: "dnd",
-        }),
+        headers: { Authorization: `Bearer ${accessKey}`, "Content-Type": "application/json", Accept: "application/json" },
+        body: JSON.stringify({ to: [normalizePhone(to)], message, sender_name: senderId, route: "dnd" }),
     });
-
     const data = await res.json() as any;
-
-    if (!res.ok) {
-        throw new Error(data.message ?? `Sendchamp API error ${res.status}`);
-    }
-
-    return {
-        ok: true,
-        providerMessageId: data.data?.uid ?? `sms-${Date.now()}`,
-        status: "SENT",
-    };
+    if (!res.ok) throw new Error(data.message ?? `Sendchamp API error ${res.status}`);
+    return { ok: true, providerMessageId: data.data?.uid ?? `sms-${Date.now()}`, status: "SENT" };
 }
 
 async function sendNotification(
     channelSelection: ChannelSelection,
-    payload: {
-        parentName: string;
-        studentName: string;
-        matricNumber: string;
-        semester: string;
-        portalLink: string;
-    },
+    payload: { parentName: string; studentName: string; matricNumber: string; semester: string; portalLink: string },
 ): Promise<SendResult> {
     const notificationMode = process.env.NOTIFICATION_ENV ?? "mock";
-
     if (notificationMode === "mock") {
-        return {
-            ok: true,
-            providerMessageId: `mock-${Date.now()}`,
-            status: "DELIVERED",
-        };
+        return { ok: true, providerMessageId: `mock-${Date.now()}`, status: "SENT" };
     }
 
     const text = `Hello ${payload.parentName}, the ${payload.semester} results for ${payload.studentName} (${payload.matricNumber}) are ready.\n\nView full details: ${payload.portalLink}`;
@@ -250,153 +165,112 @@ async function sendNotification(
                 text,
             );
         }
-
         if (channelSelection.channel === "WHATSAPP") {
             return await sendWhatsAppNotification(channelSelection.destination, payload);
         }
-
         if (channelSelection.channel === "SMS") {
             return await sendSmsNotification(channelSelection.destination, text);
         }
-
         throw new Error(`Unknown channel: ${channelSelection.channel}`);
     } catch (err) {
-        const reason = err instanceof Error ? err.message : "Unknown provider error";
         return {
             ok: false,
             providerMessageId: `failed-${Date.now()}`,
             status: "FAILED",
-            failureReason: reason,
+            failureReason: err instanceof Error ? err.message : "Unknown provider error",
         };
     }
 }
 
 async function markDispatchProgress(dispatchId: string, ok: boolean) {
-    const db = prisma as any;
-
-    await db.notificationDispatch.update({
-        where: { id: dispatchId },
-        data: {
-            status: "PROCESSING",
-            sentCount: { increment: ok ? 1 : 0 },
-            failedCount: { increment: ok ? 0 : 1 },
-        },
-    });
-
-    const dispatch = await db.notificationDispatch.findUnique({ where: { id: dispatchId } });
-
-    if (!dispatch) {
-        return;
-    }
+    await incrementDispatchProgress(dispatchId, ok);
+    const dispatch = await findNotificationDispatchById(dispatchId);
+    if (!dispatch) return;
 
     const processed = (dispatch.sentCount as number) + (dispatch.failedCount as number);
-    if (processed < (dispatch.totalCount as number)) {
-        return;
-    }
+    if (processed < (dispatch.totalCount as number)) return;
 
-    await db.notificationDispatch.update({
-        where: { id: dispatchId },
-        data: {
-            status: dispatch.failedCount > 0 ? "PARTIAL_FAILURE" : "COMPLETE",
-        },
-    });
+    await updateDispatchStatus(dispatchId, dispatch.failedCount > 0 ? "PARTIAL_FAILURE" : "COMPLETE");
 }
 
 export async function processNotifyJob(payload: NotifyJobPayload): Promise<DispatchWorkerResult> {
-    const db = prisma as any;
+    try {
+        const studentResult = await findStudentResultForDispatch(payload.studentResultId);
 
-    const studentResult = await db.studentResult.findUnique({
-        where: { id: payload.studentResultId },
-        include: {
-            student: {
-                include: {
-                    guardians: true,
-                },
-            },
-            batch: true,
-        },
-    });
+        if (!studentResult) {
+            await markDispatchProgress(payload.dispatchId, false);
+            return { ok: false, message: "Student result not found." };
+        }
 
-    if (!studentResult) {
-        await markDispatchProgress(payload.dispatchId, false);
-        return { ok: false, message: "Student result not found." };
-    }
+        if (studentResult.status !== "APPROVED") {
+            await markDispatchProgress(payload.dispatchId, false);
+            return { ok: false, message: "Result is not approved for dispatch." };
+        }
 
-    if (studentResult.status !== "APPROVED") {
-        await markDispatchProgress(payload.dispatchId, false);
-        return { ok: false, message: "Result is not approved for dispatch." };
-    }
+        const guardians = studentResult.student.guardians as any[];
 
-    const guardians = (studentResult.student.guardians as any[]).filter(
-        (guardian) => guardian.ndprConsent === true,
-    );
-
-    const guardian = guardians[0];
-    if (!guardian) {
-        await db.notificationLog.create({
-            data: {
+        if (guardians.length === 0) {
+            await createNotificationLog({
                 dispatchId: payload.dispatchId,
                 studentResultId: studentResult.id,
                 studentId: studentResult.studentId,
                 channel: "EMAIL",
                 status: "FAILED",
-                failureReason: "No guardian with valid NDPR consent.",
-            },
-        });
+                failureReason: "No guardian contact records available.",
+            });
+            await markDispatchProgress(payload.dispatchId, false);
+            return { ok: false, message: "No guardian contact records available." };
+        }
 
-        await markDispatchProgress(payload.dispatchId, false);
-        return { ok: false, message: "No guardian with valid NDPR consent." };
-    }
+        const token = await getOrCreatePortalToken(studentResult.id);
+        const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+        const portalLink = `${appUrl}/results/view?token=${token}`;
 
-    const channelSelection = selectChannel(guardian);
-    if (!channelSelection) {
-        await db.notificationLog.create({
-            data: {
+        const semester = `${studentResult.batch.session} ${studentResult.batch.semester}`;
+        let sentCount = 0;
+        let lastChannel: ChannelSelection["channel"] | undefined;
+
+        // Send to every guardian with available contact info
+        for (const guardian of guardians) {
+            const channels = selectChannels(guardian);
+            if (channels.length === 0) continue;
+
+            // Use the first available channel per guardian
+            const channelSelection = channels[0];
+            const sendResult = await sendNotification(channelSelection, {
+                parentName: guardian.name,
+                studentName: studentResult.student.fullName,
+                matricNumber: studentResult.student.matricNumber,
+                semester,
+                portalLink,
+            });
+
+            await createNotificationLog({
                 dispatchId: payload.dispatchId,
                 studentResultId: studentResult.id,
                 studentId: studentResult.studentId,
                 guardianId: guardian.id,
-                channel: "EMAIL",
-                status: "FAILED",
-                failureReason: "Guardian has no sendable channel details.",
-            },
-        });
+                channel: channelSelection.channel,
+                status: sendResult.ok ? sendResult.status : "FAILED",
+                providerMessageId: sendResult.providerMessageId,
+                failureReason: sendResult.ok ? null : (sendResult.failureReason ?? "Provider error"),
+            });
 
+            if (sendResult.ok) {
+                sentCount++;
+                lastChannel = channelSelection.channel;
+            }
+        }
+
+        await markDispatchProgress(payload.dispatchId, sentCount > 0);
+        return {
+            ok: sentCount > 0,
+            message: sentCount > 0 ? "Notification processed." : "All channels failed.",
+            channel: lastChannel,
+        };
+    } catch (error) {
+        const message = error instanceof Error ? error.message : "Unknown dispatch error.";
         await markDispatchProgress(payload.dispatchId, false);
-        return { ok: false, message: "Guardian has no sendable channel details." };
+        return { ok: false, message: `Dispatch worker failed: ${message}` };
     }
-
-    const token = await getOrCreatePortalToken(studentResult.id);
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
-    const portalLink = `${appUrl}/results/view?token=${token}`;
-
-    const sendResult = await sendNotification(channelSelection, {
-        parentName: guardian.name,
-        studentName: studentResult.student.fullName,
-        matricNumber: studentResult.student.matricNumber,
-        semester: `${studentResult.batch.session} ${studentResult.batch.semester}`,
-        portalLink,
-    });
-
-    await db.notificationLog.create({
-        data: {
-            dispatchId: payload.dispatchId,
-            studentResultId: studentResult.id,
-            studentId: studentResult.studentId,
-            guardianId: guardian.id,
-            channel: channelSelection.channel,
-            status: sendResult.ok ? sendResult.status : "FAILED",
-            providerMessageId: sendResult.providerMessageId,
-            failureReason: sendResult.ok ? null : (sendResult.failureReason ?? "Provider rejected message."),
-            deliveredAt: sendResult.status === "DELIVERED" ? new Date() : null,
-        },
-    });
-
-    await markDispatchProgress(payload.dispatchId, sendResult.ok);
-
-    return {
-        ok: sendResult.ok,
-        message: sendResult.ok ? "Notification processed." : "Notification failed.",
-        channel: channelSelection.channel,
-    };
 }

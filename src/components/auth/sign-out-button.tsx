@@ -3,6 +3,8 @@
 import { signOut } from "next-auth/react";
 import { ReactNode } from "react";
 
+import { Button } from "@/components/ui/button";
+
 type SignOutButtonProps = {
     compact?: boolean;
     children?: ReactNode;
@@ -12,13 +14,15 @@ type SignOutButtonProps = {
 
 export function SignOutButton({ compact, children, className, title }: SignOutButtonProps) {
     return (
-        <button
+        <Button
             type="button"
             title={title}
             onClick={() => signOut({ callbackUrl: "/sign-in" })}
-            className={className || (compact ? "text-xs font-medium text-white/70 transition hover:text-white" : "rounded-lg border border-(--border-subtle) px-3 py-1.5 text-xs font-medium text-(--text-secondary) transition hover:border-(--border-strong) hover:text-foreground")}
+            variant={compact ? "ghost" : "outline"}
+            size={compact ? "icon-sm" : "sm"}
+            className={className || (compact ? "text-white/70 hover:bg-white/10 hover:text-white" : "rounded-full")}
         >
             {children || "Sign Out"}
-        </button>
+        </Button>
     );
 }

@@ -25,7 +25,7 @@ const actions: ActionItem[] = [
     {
         title: "Update Guardian Contacts",
         detail: "Correct phone and email data before the next dispatch window.",
-        href: "/admin/students",
+        href: "/admin/contacts",
         cta: "Open contacts",
     },
 ];
@@ -33,7 +33,7 @@ const actions: ActionItem[] = [
 const complianceChecks = [
     "No unapproved result batch can be dispatched",
     "Withheld result records remain excluded from delivery",
-    "Only contacts with NDPR consent are eligible for sending",
+    "All available contact methods are used for delivery",
     "Portal access links expire after 30 days",
 ];
 

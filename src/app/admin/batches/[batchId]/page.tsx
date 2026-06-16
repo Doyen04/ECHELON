@@ -1,254 +1,273 @@
 "use client";
 
-import React, { useState } from "react";
+import { notFound } from "next/navigation";
 import Link from "next/link";
-import { UploadCloud, FileType, CheckCircle, AlertTriangle, ArrowRight, Download, X } from "lucide-react";
-import { PageHeader } from "@/components/ui/page-header";
+import { ArrowRight, Download, CheckCircle2 } from "lucide-react";
+import { use, useState } from "react";
+import { useApi } from "@/hooks/use-api";
 
-export default function BatchUploadPage() {
-    const [file, setFile] = useState<File | null>(null);
-    const [isDragOver, setIsDragOver] = useState(false);
-    const [showPreview, setShowPreview] = useState(false);
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { PageHeader } from "@/components/shared/page-header";
+import { StatusBadge } from "@/components/shared/badges";
+import { SummaryCard } from "@/components/shared/summary-card";
+import { DataTable } from "@/components/shared/data-table";
+import { ApproveDispatchButton } from "@/components/features/admin/approve-dispatch-button";
+import { RejectBatchButton } from "@/components/features/admin/reject-batch-button";
+import { ExportButton } from "@/components/features/admin/export-button";
+import { ApiGate } from "@/components/shared/api-gate";
+import { getColumns } from "./columns";
+import { Breadcrumbs } from "@/components/shared/breadcrumbs";
+import { toast } from "sonner";
+import { StudentReviewDrawer } from "@/components/features/admin/student-review-drawer";
 
-    const handleDragOver = (e: React.DragEvent) => {
-        e.preventDefault();
-        setIsDragOver(true);
+import {
+    formatDateTime,
+    relativeTimeFromNow,
+    semesterLabel,
+    toBadgeStatus,
+} from "@/lib/admin-format";
+
+type BatchPageProps = {
+    params: Promise<{
+        batchId: string;
+    }>;
+};
+
+export default function BatchDetailPage({ params }: BatchPageProps) {
+    const { batchId } = use(params);
+    const [successMessage, setSuccessMessage] = useState<string | null>(null);
+    const [selectedStudent, setSelectedStudent] = useState<any>(null);
+    const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+    const [currentPage, setCurrentPage] = useState(1);
+    const pageSize = 10;
+
+    const {
+        data: batch,
+        isLoading,
+        error,
+        execute,
+    } = useApi<any>(`/api/batches/${batchId}?page=${currentPage}&limit=${pageSize}`, { immediate: true });
+
+    const handleApproveSuccess = () => {
+        setSuccessMessage("Batch approved and queued for parent delivery.");
+        toast.success("Dispatch Started", {
+            description: "Batch approved and queued for parent delivery."
+        });
+        execute();
     };
 
-    const handleDragLeave = (e: React.DragEvent) => {
-        e.preventDefault();
-        setIsDragOver(false);
+    const handleReviewStudent = (student: any) => {
+        setSelectedStudent(student);
+        setIsDrawerOpen(true);
     };
 
-    const handleDrop = (e: React.DragEvent) => {
-        e.preventDefault();
-        setIsDragOver(false);
-        if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-            setFile(e.dataTransfer.files[0]);
-            // Simulate parsing delay
-            setTimeout(() => setShowPreview(true), 1200);
-        }
-    };
-
-    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (e.target.files && e.target.files.length > 0) {
-            setFile(e.target.files[0]);
-            setTimeout(() => setShowPreview(true), 1200);
-        }
-    }
+    const columns = getColumns(handleReviewStudent);
 
     return (
-        <div className="flex flex-col h-full overflow-y-auto w-full bg-background">
-            <PageHeader
-                title="Upload Result Batch"
-                breadcrumbs={
-                    <div className="flex items-center gap-1">
-                        <Link href="/admin/batches" className="hover:text-foreground transition-colors">Batches</Link>
-                        <span>/</span>
-                        <span className="text-foreground">Upload</span>
-                    </div>
-                }
-            />
+        <ApiGate
+            data={batch}
+            isLoading={isLoading}
+            error={error}
+            loadingTitle="Loading batch details..."
+            errorMessage="Failed to load batch"
+        >
+            {(batch) => {
+                const approvedCount = batch.statusCounts?.APPROVED ?? 0;
+                const pendingCount = batch.statusCounts?.PENDING ?? 0;
+                const withheldCount = batch.statusCounts?.WITHHELD ?? 0;
 
-            <div className="p-6 md:p-8 max-w-400 w-full mx-auto">
-                <div className="flex flex-col lg:flex-row gap-8">
+                return (
+                    <div className='dashboard-root flex h-full w-full flex-col overflow-y-auto bg-background'>
+                        <PageHeader
+                            title={batch.department}
+                            breadcrumbs={
+                                <Breadcrumbs
+                                    items={[
+                                        { label: "Result Batches", href: "/admin/batches" },
+                                        { label: `${batch.department} - ${batch.level} Level` },
+                                    ]}
+                                />
+                            }
+                            action={
+                                <div className='flex items-center gap-2'>
+                                    <ApproveDispatchButton
+                                        batchId={batch.id}
+                                        disabled={!(batch.status === "PENDING" || batch.status === "IN_REVIEW")}
+                                        onSuccess={handleApproveSuccess}
+                                    />
+                                    <RejectBatchButton
+                                        batchId={batch.id}
+                                        disabled={!(batch.status === "PENDING" || batch.status === "IN_REVIEW")}
+                                        onSuccess={() => execute()}
+                                    />
+                                    <ExportButton
+                                        endpoint={`/api/batches/${batch.id}/export`}
+                                        filename={`batch-detail-${batch.id}.csv`}
+                                    />
+                                </div>
+                            }
+                        />
 
-                    {/* Upload Form 65% */}
-                    <div className="flex-1 lg:max-w-[65%] space-y-8 dashboard-section">
-
-                        {/* Step 1: Metadata */}
-                        <div className="rounded-xl border border-border-subtle bg-surface-main p-6 shadow-sm">
-                            <h2 className="text-sm font-semibold uppercase tracking-widest text-text-muted mb-6">Step 1: Batch Metadata</h2>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                        <main className='mx-auto w-full max-w-7xl space-y-8 px-6 py-8 pb-24'>
+                            <div className='flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between'>
                                 <div className="space-y-2">
-                                    <label className="block text-sm font-medium text-foreground">Session</label>
-                                    <select className="w-full h-10 rounded-md border border-border-subtle bg-transparent px-3 text-sm focus:border-brand focus:ring-1 focus:ring-brand outline-none">
-                                        <option>2024/2025</option>
-                                        <option>2023/2024</option>
-                                    </select>
-                                </div>
-                                <div className="space-y-2">
-                                    <label className="block text-sm font-medium text-foreground">Semester</label>
-                                    <select className="w-full h-10 rounded-md border border-border-subtle bg-transparent px-3 text-sm focus:border-brand focus:ring-1 focus:ring-brand outline-none">
-                                        <option>First Semester</option>
-                                        <option>Second Semester</option>
-                                    </select>
-                                </div>
-                                <div className="space-y-2 md:col-span-2">
-                                    <label className="block text-sm font-medium text-foreground">Department</label>
-                                    <select className="w-full h-10 rounded-md border border-border-subtle bg-transparent px-3 text-sm focus:border-brand focus:ring-1 focus:ring-brand outline-none">
-                                        <option>Computer Science</option>
-                                        <option>Physics</option>
-                                        <option>Mathematics</option>
-                                    </select>
-                                </div>
-                                <div className="space-y-3 md:col-span-2 pt-2">
-                                    <label className="block text-sm font-medium text-foreground">Source Type</label>
-                                    <div className="flex gap-6">
-                                        <label className="flex items-center gap-2 cursor-pointer">
-                                            <input type="radio" name="source" className="text-brand focus:ring-brand" defaultChecked />
-                                            <span className="text-sm text-foreground">CSV Upload</span>
-                                        </label>
-                                        <label className="flex items-center gap-2 cursor-pointer opacity-50">
-                                            <input type="radio" name="source" disabled className="text-brand focus:ring-brand" />
-                                            <span className="text-sm text-foreground flex items-center gap-2">SIS API Sync <span className="text-[10px] bg-surface-subtle px-1.5 py-0.5 rounded">Coming Soon</span></span>
-                                        </label>
+                                    <div className="flex items-center gap-3">
+                                        <h1 className='text-3xl font-bold tracking-tight text-foreground'>
+                                            {batch.department}
+                                        </h1>
+                                        <StatusBadge status={toBadgeStatus(batch.status)} />
                                     </div>
+                                    <p className='text-sm text-muted-foreground'>
+                                        <Badge variant="outline" className="mr-2 border-brand/20 bg-brand/5 text-brand">{batch.level} Level</Badge>
+                                        {batch.session} • {semesterLabel(batch.semester)} Semester •
+                                        Uploaded {relativeTimeFromNow(batch.uploadedAt)}
+                                    </p>
+                                </div>
+                                <div className='flex items-center gap-2 rounded-lg bg-muted/50 px-3 py-1.5 border border-border'>
+                                    <span className="text-xs font-bold text-muted-foreground uppercase tracking-tight">Batch ID:</span>
+                                    <code className="text-xs font-mono font-bold text-foreground">{batch.id}</code>
                                 </div>
                             </div>
-                        </div>
 
-                        {/* Step 2: File Upload */}
-                        <div className="rounded-xl border border-border-subtle bg-surface-main p-6 shadow-sm">
-                            <h2 className="text-sm font-semibold uppercase tracking-widest text-text-muted mb-6">Step 2: File Upload</h2>
-
-                            {!file ? (
-                                <div
-                                    className={`relative flex flex-col items-center justify-center rounded-xl p-12 text-center transition-all duration-200
-                    ${isDragOver ? "border-solid border-2 border-brand bg-brand/5" : "border-dashed border-2 border-border-subtle bg-surface-subtle/30 hover:bg-surface-subtle/60"}
-                  `}
-                                    onDragOver={handleDragOver}
-                                    onDragLeave={handleDragLeave}
-                                    onDrop={handleDrop}
-                                >
-                                    <input type="file" accept=".csv" onChange={handleFileChange} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
-                                    <div className="rounded-full bg-surface-main p-4 shadow-sm mb-4">
-                                        <UploadCloud className="h-8 w-8 text-brand" />
-                                    </div>
-                                    <h3 className="text-lg font-serif text-foreground mb-1">Drag & drop your CSV here</h3>
-                                    <p className="text-sm text-text-muted mb-2">or click anywhere to browse from your computer</p>
-                                    <div className="text-xs text-text-muted flex items-center gap-2 mt-4 opacity-70">
-                                        <span>Accepted: .csv</span>
-                                        <span>â€¢</span>
-                                        <span>Max: 5MB</span>
-                                    </div>
-                                </div>
-                            ) : (
-                                <div className="flex items-center justify-between rounded-lg border border-brand/30 bg-brand/5 p-4">
-                                    <div className="flex items-center gap-4">
-                                        <div className="rounded bg-brand/10 p-2 text-brand">
-                                            <FileType className="h-6 w-6" />
-                                        </div>
-                                        <div>
-                                            <p className="text-sm font-medium text-foreground font-mono">{file.name}</p>
-                                            <p className="text-xs text-text-muted mt-0.5">{(file.size / 1024).toFixed(1)} KB â€¢ Uploading & parsing...</p>
-                                        </div>
-                                    </div>
-                                    <button
-                                        onClick={() => { setFile(null); setShowPreview(false); }}
-                                        className="p-2 text-text-muted hover:text-red-500 transition-colors"
-                                    >
-                                        <X className="h-5 w-5" />
-                                    </button>
-                                </div>
-                            )}
-                        </div>
-
-                        {/* Step 3: Preview */}
-                        {showPreview && (
-                            <div className="rounded-xl border border-border-subtle bg-surface-main shadow-sm overflow-hidden page-transition-enter">
-                                <div className="p-6 border-b border-border-subtle">
-                                    <h2 className="text-sm font-semibold uppercase tracking-widest text-text-muted mb-4">Step 3: Preview & Validation</h2>
-                                    <div className="space-y-2 mb-6">
-                                        <div className="flex items-center gap-2 text-sm text-status-success font-medium">
-                                            <CheckCircle className="h-4 w-4" /> 247 students parsed
-                                        </div>
-                                        <div className="flex items-center gap-2 text-sm text-status-success font-medium">
-                                            <CheckCircle className="h-4 w-4" /> 1,482 course records
-                                        </div>
-                                        <div className="flex items-center gap-2 text-sm text-status-danger font-medium">
-                                            <AlertTriangle className="h-4 w-4" /> 3 rows with format errors <button className="underline ml-1">View errors</button>
-                                        </div>
-                                    </div>
-
-                                    {/* Duplicate warning */}
-                                    <div className="rounded-lg border border-status-warning/40 bg-status-warning/10 p-4 flex gap-3 text-status-warning mb-6">
-                                        <AlertTriangle className="h-5 w-5 shrink-0 mt-0.5" />
-                                        <p className="text-sm">
-                                            <span className="font-semibold block mb-1">A batch for this session already exists.</span>
-                                            Uploading will create a new version. The existing batch will not be deleted, but this new one will become the active pending batch.
-                                        </p>
-                                    </div>
-                                </div>
-
-                                <div className="bg-surface-subtle/20 p-6">
-                                    <h4 className="text-xs font-semibold uppercase tracking-widest text-text-muted mb-4">Data Preview (first 5 rows)</h4>
-                                    <div className="rounded-lg border border-border-subtle bg-surface-main overflow-x-auto">
-                                        <table className="min-w-full divide-y divide-border-subtle">
-                                            <thead className="bg-surface-subtle/30">
-                                                <tr>
-                                                    <th className="px-3 py-2 text-left text-xs font-medium text-text-muted">Matric Number</th>
-                                                    <th className="px-3 py-2 text-left text-xs font-medium text-text-muted">Student Name</th>
-                                                    <th className="px-3 py-2 text-left text-xs font-medium text-text-muted">GPA</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody className="divide-y divide-border-subtle">
-                                                {[1, 2, 3, 4, 5].map(i => (
-                                                    <tr key={i}>
-                                                        <td className="px-3 py-2 text-sm font-mono text-text-muted">CSC/2021/00{i}</td>
-                                                        <td className="px-3 py-2 text-sm text-foreground">Student Name {i}</td>
-                                                        <td className="px-3 py-2 text-sm text-foreground">{(4.0 - Math.random()).toFixed(2)}</td>
-                                                    </tr>
-                                                ))}
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                </div>
+                            <div className='grid gap-4 sm:grid-cols-2 xl:grid-cols-4 min-w-0'>
+                                <SummaryCard
+                                    title='Total Students'
+                                    value={batch.studentResultsTotal ?? batch.studentResults.length}
+                                    className="bg-card border-border "
+                                />
+                                <SummaryCard
+                                    title='Approved'
+                                    value={approvedCount}
+                                    className="bg-emerald-50/50 border-emerald-100 "
+                                    color='text-emerald-600'
+                                />
+                                <SummaryCard
+                                    title='Pending'
+                                    value={pendingCount}
+                                    className="bg-amber-50/50 border-amber-100 "
+                                    color='text-amber-600'
+                                />
+                                <SummaryCard
+                                    title='Withheld'
+                                    value={withheldCount}
+                                    className="bg-rose-50/50 border-rose-100 "
+                                    color='text-rose-600'
+                                />
                             </div>
-                        )}
 
-                        {/* Actions */}
-                        <div className="flex items-center justify-end gap-4 pt-4 pb-12">
-                            <Link href="/admin/batches" className="px-5 py-2.5 text-sm font-medium text-text-muted hover:text-foreground transition-colors">
-                                Cancel
-                            </Link>
-                            <button
-                                disabled={!showPreview}
-                                className="inline-flex items-center gap-2 rounded-md bg-brand px-5 py-2.5 text-sm font-medium text-white shadow-sm hover:bg-brand-hover transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
-                                Confirm Upload <ArrowRight className="h-4 w-4" />
-                            </button>
-                        </div>
+                            <div className='grid gap-8 lg:grid-cols-[1fr_350px] min-w-0'>
+                                <section className='space-y-4 min-w-0'>
+                                    <div className="flex items-center justify-between px-1">
+                                        <h2 className='text-sm font-bold uppercase tracking-widest text-muted-foreground'>
+                                            Student Records
+                                        </h2>
+                                    </div>
+                                    <Card className='overflow-hidden border-border '>
+                                        {batch.studentResults.length > 0 ? (
+                                            <DataTable
+                                                data={batch.studentResults}
+                                                className='border-0  -mx-px'
+                                                columns={columns}
+                                                manualPagination
+                                                currentPage={batch.pagination?.currentPage ?? currentPage}
+                                                totalPages={batch.pagination?.pages ?? 1}
+                                                totalCount={batch.pagination?.total ?? batch.studentResults.length}
+                                                onPageChange={setCurrentPage}
+                                            />
+                                        ) : (
+                                            <div className='px-6 py-12 text-center text-sm text-muted-foreground'>
+                                                No student results are stored for this batch yet.
+                                            </div>
+                                        )}
+                                    </Card>
+                                </section>
+
+                                <aside className="space-y-8">
+                                    <section className="space-y-4">
+                                        <h2 className='text-xs font-bold uppercase tracking-widest text-muted-foreground px-1'>
+                                            Batch Metadata
+                                        </h2>
+                                        <div className='rounded-xl border border-border bg-card p-5 space-y-4 '>
+                                            <div className='grid gap-4 text-sm'>
+                                                <div className="flex justify-between items-center">
+                                                    <span className='text-muted-foreground'>Uploaded by:</span>
+                                                    <span className="font-semibold text-foreground">{batch.uploadedBy?.name ?? "System"}</span>
+                                                </div>
+                                                <div className="flex justify-between items-center">
+                                                    <span className='text-muted-foreground'>Source:</span>
+                                                    <Badge variant="outline" className="font-bold">{String(batch.source).toUpperCase()}</Badge>
+                                                </div>
+                                                <div className="flex justify-between items-center border-t border-border/50 pt-4">
+                                                    <span className='text-muted-foreground'>Time:</span>
+                                                    <span className="text-xs font-medium">{formatDateTime(batch.uploadedAt)}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </section>
+
+                                    <section className="space-y-4">
+                                        <h2 className='text-xs font-bold uppercase tracking-widest text-muted-foreground px-1'>
+                                            Activity History
+                                        </h2>
+                                        <div className='space-y-3'>
+                                            {successMessage && (
+                                                <div className="rounded-xl border border-emerald-100 bg-emerald-50/50 p-4  flex items-start gap-3">
+                                                    <CheckCircle2 className="h-5 w-5 text-emerald-600 mt-0.5 shrink-0" />
+                                                    <p className="text-sm text-emerald-800 font-medium">
+                                                        {successMessage}
+                                                    </p>
+                                                </div>
+                                            )}
+                                            {batch.dispatches.length > 0 ? (
+                                                batch.dispatches.map((dispatch: any) => (
+                                                    <div
+                                                        key={dispatch.id}
+                                                        className='rounded-xl border border-border bg-card p-4  transition-all hover:'
+                                                    >
+                                                        <div className='flex items-center justify-between gap-3'>
+                                                            <div className="space-y-0.5">
+                                                                <p className='text-xs font-bold font-mono text-foreground'>
+                                                                    {dispatch.id}
+                                                                </p>
+                                                                <p className='text-[10px] text-muted-foreground'>
+                                                                    via {dispatch.triggeredBy?.name ?? "System"}
+                                                                </p>
+                                                            </div>
+                                                            <StatusBadge status={toBadgeStatus(dispatch.status)} />
+                                                        </div>
+                                                        <Link
+                                                            href={`/admin/delivery/${dispatch.id}`}
+                                                            className='mt-3 flex items-center justify-center gap-1.5 rounded-lg border border-border bg-muted/30 py-1.5 text-[10px] font-bold uppercase tracking-tight text-foreground transition-all hover:bg-muted'
+                                                        >
+                                                            Review Logs <ArrowRight className='h-3 w-3' />
+                                                        </Link>
+                                                    </div>
+                                                ))
+                                            ) : (
+                                                <div className="rounded-xl border border-dashed border-border p-6 text-center">
+                                                    <p className='text-xs text-muted-foreground'>
+                                                        No dispatches recorded yet.
+                                                    </p>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </section>
+                                </aside>
+                            </div>
+                        </main>
+
+                        <StudentReviewDrawer
+                            studentResult={selectedStudent}
+                            isOpen={isDrawerOpen}
+                            onOpenChange={setIsDrawerOpen}
+                        />
                     </div>
-
-                    {/* Right format guide 35% */}
-                    <div className="lg:w-fit lg:min-w-85">
-                        <div className="sticky top-24 rounded-xl border border-border-subtle bg-surface-main p-6 shadow-sm">
-                            <h3 className="font-serif text-lg text-foreground mb-4">Format Guide</h3>
-                            <p className="text-sm text-text-muted mb-6">
-                                Ensure your CSV matches the required structure to avoid parsing errors. The system uses column headers to map data.
-                            </p>
-
-                            <div className="space-y-4 mb-8">
-                                <div>
-                                    <div className="text-xs font-semibold uppercase tracking-widest text-foreground mb-2">Required Columns</div>
-                                    <ul className="text-sm text-text-muted space-y-2 font-mono bg-white p-4 rounded border border-border-subtle">
-                                        <li>matric_number</li>
-                                        <li>student_name</li>
-                                        <li>department</li>
-                                        <li>course_code</li>
-                                        <li>grade</li>
-                                    </ul>
-                                </div>
-                                <div>
-                                    <div className="text-xs font-semibold uppercase tracking-widest text-foreground mb-2 mt-6">Optional Columns</div>
-                                    <ul className="text-sm text-text-muted space-y-2 font-mono bg-white p-4 rounded border border-border-subtle">
-                                        <li>parent_phone</li>
-                                        <li>parent_email</li>
-                                        <li>score</li>
-                                    </ul>
-                                </div>
-                            </div>
-
-                            <button className="flex w-full items-center justify-center gap-2 rounded border border-border-subtle bg-white px-4 py-2.5 text-sm font-medium text-foreground hover:bg-surface-subtle transition-colors">
-                                <Download className="h-4 w-4" />
-                                Download Template
-                            </button>
-                        </div>
-                    </div>
-
-                </div>
-            </div>
-        </div>
+                );
+            }}
+        </ApiGate>
     );
 }
+
+

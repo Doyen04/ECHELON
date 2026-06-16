@@ -10,17 +10,7 @@ export type SummaryMetric = {
 
 export type Semester = "first" | "second" | "third";
 
-export type ApprovalBatch = {
-    id: string;
-    department: string;
-    session: string;
-    semester: Semester;
-    pending: number;
-    approved: number;
-    withheld: number;
-    contactCoverage: number;
-    lastActionAt: string;
-};
+
 
 export type DispatchStatus = "queued" | "processing" | "complete" | "partial_failure";
 
@@ -38,7 +28,6 @@ export type ChannelDelivery = {
     channel: "whatsapp" | "email" | "sms";
     queued: number;
     sent: number;
-    delivered: number;
     failed: number;
 };
 
@@ -49,6 +38,14 @@ export type ActivityLog = {
     action: string;
     target: string;
     time: string;
+};
+
+export type DashboardNotification = {
+    id: string;
+    title: string;
+    detail: string;
+    time: string;
+    level: "warning" | "error" | "info";
 };
 
 export const summaryMetrics: SummaryMetric[] = [
@@ -71,63 +68,11 @@ export const summaryMetrics: SummaryMetric[] = [
         value: "96.4%",
         change: "+1.7%",
         trend: "up",
-        helper: "Last 7 days",
-    },
-    {
-        label: "NDPR Consent Coverage",
-        value: "92.1%",
-        change: "-0.6%",
-        trend: "down",
-        helper: "Guardian records with consent",
+        helper: "Last 24 hours",
     },
 ];
 
-export const approvalBatches: ApprovalBatch[] = [
-    {
-        id: "BCH-2404-CS",
-        department: "Computer Science",
-        session: "2024/2025",
-        semester: "first",
-        pending: 132,
-        approved: 489,
-        withheld: 6,
-        contactCoverage: 97,
-        lastActionAt: "11 mins ago",
-    },
-    {
-        id: "BCH-2404-EE",
-        department: "Electrical Engineering",
-        session: "2024/2025",
-        semester: "first",
-        pending: 84,
-        approved: 406,
-        withheld: 3,
-        contactCoverage: 93,
-        lastActionAt: "27 mins ago",
-    },
-    {
-        id: "BCH-2404-ACC",
-        department: "Accounting",
-        session: "2024/2025",
-        semester: "first",
-        pending: 61,
-        approved: 342,
-        withheld: 9,
-        contactCoverage: 89,
-        lastActionAt: "43 mins ago",
-    },
-    {
-        id: "BCH-2404-BIO",
-        department: "Biochemistry",
-        session: "2024/2025",
-        semester: "first",
-        pending: 151,
-        approved: 218,
-        withheld: 4,
-        contactCoverage: 95,
-        lastActionAt: "1 hr ago",
-    },
-];
+
 
 export const dispatchQueue: DispatchQueueEntry[] = [
     {
@@ -164,21 +109,18 @@ export const channelDelivery: ChannelDelivery[] = [
         channel: "whatsapp",
         queued: 362,
         sent: 356,
-        delivered: 344,
         failed: 12,
     },
     {
         channel: "email",
         queued: 281,
         sent: 281,
-        delivered: 273,
         failed: 8,
     },
     {
         channel: "sms",
         queued: 94,
         sent: 93,
-        delivered: 88,
         failed: 5,
     },
 ];

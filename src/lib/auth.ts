@@ -4,7 +4,7 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
 
-import { prisma } from "@/lib/db";
+import { findAuthUserByEmail } from "@/lib/repositories/admin-repository";
 
 const credentialsSchema = z.object({
     email: z.email().transform((value) => value.toLowerCase().trim()),
@@ -28,18 +28,9 @@ export const authOptions: NextAuthOptions = {
                     return null;
                 }
 
-                const user = await prisma.user.findUnique({
-                    where: { email: parsed.data.email },
-                    select: {
-                        id: true,
-                        name: true,
-                        email: true,
-                        role: true,
-                        passwordHash: true,
-                    },
-                });
+                const user = await findAuthUserByEmail(parsed.data.email);
 
-                if (!user || user.role !== "super_admin") {
+                if (!user) {
                     return null;
                 }
 
@@ -51,12 +42,13 @@ export const authOptions: NextAuthOptions = {
                 if (!isValidPassword) {
                     return null;
                 }
-
+                
                 return {
                     id: user.id,
                     name: user.name,
                     email: user.email,
-                    role: "super_admin" as const,
+                    role: user.role as "super_admin" | "hod",
+                    departmentId: user.departmentId ?? undefined,
                 };
             },
         }),
@@ -65,14 +57,16 @@ export const authOptions: NextAuthOptions = {
         jwt({ token, user }) {
             if (user) {
                 token.id = user.id;
-                token.role = "super_admin";
+                token.role = user.role;
+                token.departmentId = user.departmentId;
             }
             return token;
         },
         session({ session, token }) {
             if (session.user) {
                 session.user.id = token.id as string;
-                session.user.role = "super_admin";
+                session.user.role = token.role as "super_admin" | "hod";
+                session.user.departmentId = token.departmentId as string | undefined;
             }
             return session;
         },

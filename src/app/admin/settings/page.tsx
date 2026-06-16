@@ -15,7 +15,7 @@ import {
     X,
 } from "lucide-react";
 
-import { PageHeader } from "@/components/ui/page-header";
+import { PageHeader } from "@/components/shared/page-header";
 
 type Tab = "institution" | "templates" | "users" | "danger";
 
@@ -267,12 +267,16 @@ function TemplatesTab({
 }) {
     const [subTab, setSubTab] = useState<keyof MessageTemplates>("whatsapp");
 
-    return (
-        <div className="rounded-xl border border-border-subtle bg-surface-main shadow-sm overflow-hidden page-transition-enter">
-            <div className="p-6 border-b border-border-subtle">
-                <h2 className="text-lg font-serif text-foreground">Notification Templates</h2>
-                <p className="text-sm text-text-muted mt-1">Customize the messages sent to parents. Use brackets for dynamic data.</p>
-            </div>
+  return (
+    <div className='rounded-xl border border-border-subtle bg-surface-main shadow-sm overflow-hidden page-transition-enter'>
+      <div className='p-6 border-b border-border-subtle'>
+        <h2 className='text-lg font-serif text-foreground'>
+          Notification Templates
+        </h2>
+        <p className='text-sm text-text-muted mt-1'>
+          Configure the automated messages sent to parents and guardians.
+        </p>
+      </div>
 
             <div className="flex border-b border-border-subtle bg-surface-subtle/30">
                 {(["whatsapp", "email", "sms"] as const).map((ch) => (

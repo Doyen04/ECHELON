@@ -1,200 +1,309 @@
 "use client";
 
-import React, { useState } from "react";
+import { notFound } from "next/navigation";
 import Link from "next/link";
-import { Download, RefreshCw } from "lucide-react";
-import { PageHeader } from "@/components/ui/page-header";
-import { StatusBadge, ChannelBadge } from "@/components/ui/badges";
+import { use, useState } from "react";
+import { useApi } from "@/hooks/use-api";
+import { LoadingState } from "@/components/shared/loading-state";
 
-export default function DeliveryLogPage() {
-    const [activeTab, setActiveTab] = useState<"all" | "delivered" | "failed" | "pending">("all");
-    const [selectedFailed, setSelectedFailed] = useState<Set<string>>(new Set());
+import { ExportButton } from "@/components/features/admin/export-button";
+import { RetryFailedSendsButton } from "@/components/features/admin/retry-failed-sends-button";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { DataTable } from "@/components/shared/data-table";
+import { PageHeader } from "@/components/shared/page-header";
+import { StatusBadge, ChannelBadge } from "@/components/shared/badges";
+import { SummaryCard } from "@/components/shared/summary-card";
+import { Breadcrumbs } from "@/components/shared/breadcrumbs";
+import { toast } from "sonner";
+import {
+    formatDateTime,
+} from "@/lib/admin-format";
 
-    const toggleFailedSelection = (id: string) => {
-        const newSelect = new Set(selectedFailed);
-        if (newSelect.has(id)) newSelect.delete(id);
-        else newSelect.add(id);
-        setSelectedFailed(newSelect);
-    };
+type DeliveryPageProps = {
+    params: Promise<{
+        dispatchId: string;
+    }>;
+};
 
-    const handleToggleAllFailed = (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (e.target.checked) {
-            const failedIds = mockDeliveries.filter(d => d.status === "failed").map(d => d.matric);
-            setSelectedFailed(new Set(failedIds));
-        } else {
-            setSelectedFailed(new Set());
-        }
-    };
 
-    const filtered = mockDeliveries.filter(d => activeTab === "all" || d.status === activeTab);
 
-    const totalFailed = mockDeliveries.filter(d => d.status === "failed").length;
+export default function DeliveryLogPage({ params }: DeliveryPageProps) {
+    const { dispatchId } = use(params);
+    const [currentPage, setCurrentPage] = useState(1);
+    const pageSize = 20;
+
+    const { data, isLoading, error } = useApi<any>(
+        `/api/delivery/${dispatchId}?page=${currentPage}&limit=${pageSize}`,
+        { immediate: true },
+    );
+
+    if (isLoading && !data) {
+        return <LoadingState title='Loading delivery log...' />;
+    }
+
+    if (error || !data) {
+        if (error === "Dispatch not found") return notFound();
+        return (
+            <div className='p-8 text-center text-status-danger'>
+                {error || "Failed to load delivery details"}
+            </div>
+        );
+    }
+
+    const { dispatch, notificationLogs, students, guardians, pagination } = data;
+
+    const studentById = new Map<
+        string,
+        { id: string; fullName: string; matricNumber: string }
+    >(students.map((student: any) => [student.id, student]));
+    const guardianById = new Map<string, { id: string; name: string }>(
+        guardians.map((guardian: any) => [guardian.id, guardian]),
+    );
+
+    const total = dispatch.totalCount ?? notificationLogs.length;
+    const sent = dispatch.sentCount ?? 0;
+    const failed = dispatch.failedCount ?? 0;
+    const processed = sent + failed;
+    const queued = Math.max(total - processed, 0);
+    const successRate = total === 0 ? 0 : Math.round((sent / total) * 100);
 
     return (
-        <div className="flex flex-col h-full overflow-y-auto w-full bg-background dashboard-root">
+        <div className='flex h-full w-full flex-col overflow-x-hidden overflow-y-auto bg-background'>
             <PageHeader
-                title="Delivery Log"
-                breadcrumbs="Computer Science · First Semester · Sent 14 Jan 2025"
+                title='Delivery Log'
+                breadcrumbs={
+                    <Breadcrumbs
+                        items={[
+                            { label: "Delivery", href: "/admin/delivery" },
+                            { label: dispatch.id },
+                        ]}
+                    />
+                }
                 action={
-                    <button className="inline-flex items-center gap-2 rounded-md border border-border-subtle bg-surface-main px-4 py-2 text-sm font-medium text-foreground shadow-sm hover:bg-surface-subtle transition-colors">
-                        <Download className="h-4 w-4" />
-                        Export CSV
-                    </button>
+                    <div className="flex items-center gap-3">
+                        <RetryFailedSendsButton
+                            dispatchId={dispatch.id}
+                            failedCount={dispatch.failedCount ?? failed}
+                        />
+                        <ExportButton
+                            endpoint={`/api/delivery/${dispatch.id}/export`}
+                            filename={`delivery-${dispatch.id}.csv`}
+                        />
+                    </div>
                 }
             />
 
-            <div className="p-6 md:p-8 space-y-6 max-w-400 w-full mx-auto relative pb-24">
-                {/* DISPATCH SUMMARY STRIP */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 dashboard-section">
-                    <SummaryCard title="Total Sent" value="218" />
-                    <SummaryCard title="Delivered" value="204" subvalue="94%" color="text-[var(--color-success)]" />
-                    <SummaryCard title="Failed" value="9" color="text-[var(--color-danger)]" />
-                    <SummaryCard title="Pending" value="5" />
-                </div>
+            <main className='mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8 lg:py-8'>
+                <div className="grid gap-6">
+                    <div className='rounded-xl border-border'>
+                        <div className='flex flex-col gap-6 md:flex-row md:items-start md:justify-between'>
+                            <div className="space-y-1">
+                                <div className="flex items-center gap-3">
+                                    <h1 className='text-2xl font-bold tracking-tight text-foreground'>
+                                        {dispatch.batch.department}
+                                    </h1>
+                                    <StatusBadge
+                                        status={String(dispatch.status).toLowerCase() as any}
+                                    />
+                                </div>
+                                <p className='text-sm text-muted-foreground'>
+                                    {dispatch.batch.session} • {dispatch.batch.semester} Semester •
+                                    Triggered by <span className="font-medium text-foreground">{dispatch.triggeredBy?.name ?? "System"}</span>
+                                </p>
+                            </div>
 
-                {/* DELIVERY PROGRESS BAR */}
-                <div className="dashboard-section" style={{ animationDelay: '100ms' }}>
-                    <div className="rounded-xl border border-border-subtle bg-surface-main p-6 shadow-sm">
-                        <div className="flex justify-between text-sm font-medium mb-3">
-                            <span className="text-foreground">Live Progress</span>
-                            <span className="text-status-success">204 / 218 delivered</span>
+                            <Badge variant='secondary' className='rounded-md px-2 py-0.5 font-mono text-[10px] text-muted-foreground'>
+                                ID: {dispatch.id}
+                            </Badge>
                         </div>
-                        <div className="h-4 w-full bg-surface-subtle rounded-full overflow-hidden flex">
-                            <div className="h-full bg-status-success" style={{ width: '94%' }} />
-                            <div className="h-full bg-status-warning" style={{ width: '2%' }} />
-                            <div className="h-full bg-status-danger" style={{ width: '4%' }} />
+
+                        <div className='mt-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-4'>
+                            <SummaryCard title='Total Logs' value={total} />
+                            <SummaryCard
+                                title='Sent'
+                                value={sent}
+                                subvalue={`${successRate}% Success`}
+                                color='text-emerald-600'
+                            />
+                            <SummaryCard
+                                title='Failed'
+                                value={failed}
+                                color='text-destructive'
+                            />
+                            <SummaryCard title='Queued' value={queued} />
                         </div>
-                        <div className="flex items-center gap-4 mt-4 text-xs font-medium">
-                            <div className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-full bg-status-success"></div><span className="text-text-muted">Delivered</span></div>
-                            <div className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-full bg-status-warning"></div><span className="text-text-muted">Pending</span></div>
-                            <div className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-full bg-status-danger"></div><span className="text-text-muted">Failed</span></div>
+
+                        <div className='mt-8 rounded-xl border border-border bg-muted/30 p-6'>
+                            <div className='flex items-center justify-between gap-3 text-xs font-bold uppercase tracking-widest text-muted-foreground'>
+                                <span>Dispatch Progress</span>
+                                <span className="text-foreground">
+                                    {processed} / {total} Processed
+                                </span>
+                            </div>
+                            <div className='mt-4 h-2 w-full overflow-hidden rounded-full bg-muted'>
+                                <div
+                                    className='h-full bg-sidebar-primary transition-all duration-500'
+                                    style={{ width: `${total === 0 ? 0 : (processed / total) * 100}%` }}
+                                />
+                            </div>
+                            <div className='mt-4 flex flex-wrap gap-6 text-[11px] font-bold uppercase tracking-tight text-muted-foreground'>
+                                <span className="flex items-center gap-1.5">
+                                    <div className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                                    Sent: {sent}
+                                </span>
+                                <span className="flex items-center gap-1.5">
+                                    <div className="h-1.5 w-1.5 rounded-full bg-destructive" />
+                                    Failed: {failed}
+                                </span>
+                                <span className="flex items-center gap-1.5">
+                                    <div className="h-1.5 w-1.5 rounded-full bg-muted-foreground/30" />
+                                    Queued: {queued}
+                                </span>
+                            </div>
                         </div>
                     </div>
-                </div>
 
-                {/* FILTER TABS */}
-                <div className="flex border-b border-border-subtle dashboard-section pt-4" style={{ animationDelay: '150ms' }}>
-                    <TabButton active={activeTab === "all"} onClick={() => setActiveTab("all")} label="All" count={218} />
-                    <TabButton active={activeTab === "delivered"} onClick={() => setActiveTab("delivered")} label="Delivered" count={204} color="text-[var(--color-success)]" />
-                    <TabButton active={activeTab === "failed"} onClick={() => setActiveTab("failed")} label="Failed" count={9} color="text-[var(--color-danger)]" />
-                    <TabButton active={activeTab === "pending"} onClick={() => setActiveTab("pending")} label="Pending" count={5} color="text-[var(--color-warning)]" />
-                </div>
+                    <Card className='overflow-hidden rounded-xl border-border'>
+                        <div className='border-b border-border bg-muted/20 px-6 py-4'>
+                            <h2 className='text-sm font-bold text-foreground uppercase tracking-widest'>
+                                Notification Logs
+                            </h2>
+                            <p className='mt-1 text-xs text-muted-foreground'>
+                                Detailed history of every guardian notification attempt for this dispatch job.
+                            </p>
+                        </div>
 
-                {/* DELIVERY TABLE */}
-                <div className="rounded-xl border border-border-subtle bg-surface-main shadow-sm overflow-x-auto dashboard-section" style={{ animationDelay: '200ms' }}>
-                    <table className="min-w-full divide-y divide-border-subtle">
-                        <thead className="bg-surface-subtle/40">
-                            <tr>
-                                {activeTab === "failed" && (
-                                    <th className="w-12 px-4 py-3 text-left">
-                                        <input
-                                            type="checkbox"
-                                            onChange={handleToggleAllFailed}
-                                            checked={selectedFailed.size === totalFailed && totalFailed > 0}
-                                            className="rounded border-border-subtle accent-brand"
-                                        />
-                                    </th>
-                                )}
-                                <th className="px-4 py-3 text-left text-xs font-semibold text-text-muted uppercase tracking-wider">Matric No.</th>
-                                <th className="px-4 py-3 text-left text-xs font-semibold text-text-muted uppercase tracking-wider">Student Name</th>
-                                <th className="px-4 py-3 text-left text-xs font-semibold text-text-muted uppercase tracking-wider">Guardian Name</th>
-                                <th className="px-4 py-3 text-left text-xs font-semibold text-text-muted uppercase tracking-wider">Channel</th>
-                                <th className="px-4 py-3 text-left text-xs font-semibold text-text-muted uppercase tracking-wider">Status</th>
-                                <th className="px-4 py-3 text-left text-xs font-semibold text-text-muted uppercase tracking-wider">Sent At</th>
-                                <th className="px-4 py-3 text-right"></th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-border-subtle bg-surface-main">
-                            {filtered.map((row, idx) => {
-                                const isFailed = row.status === "failed";
-                                return (
-                                    <tr key={idx} className={`hover:bg-surface-subtle/40 transition-colors table-row-enter ${isFailed ? "border-l-4 border-l-status-danger" : "border-l-4 border-l-transparent"}`} style={{ animationDelay: `${idx * 20}ms` }}>
-                                        {activeTab === "failed" && (
-                                            <td className="px-4 py-4 whitespace-nowrap">
-                                                <input
-                                                    type="checkbox"
-                                                    checked={selectedFailed.has(row.matric)}
-                                                    onChange={() => toggleFailedSelection(row.matric)}
-                                                    className="rounded border-border-subtle accent-brand"
-                                                />
-                                            </td>
-                                        )}
-                                        <td className="px-4 py-4 whitespace-nowrap text-sm font-mono text-text-muted">{row.matric}</td>
-                                        <td className="px-4 py-4 whitespace-nowrap text-sm font-medium text-foreground">{row.student}</td>
-                                        <td className="px-4 py-4 whitespace-nowrap text-sm text-foreground">{row.guardian}</td>
-                                        <td className="px-4 py-4 whitespace-nowrap"><ChannelBadge channel={row.channel as any} /></td>
-                                        <td className="px-4 py-4 whitespace-nowrap"><StatusBadge status={row.status as any} /></td>
-                                        <td className="px-4 py-4 whitespace-nowrap text-sm text-text-muted">{row.sentAt}</td>
-                                        <td className="px-4 py-4 whitespace-nowrap text-right min-w-50">
-                                            {isFailed ? (
-                                                <div className="flex flex-col items-end gap-2">
-                                                    <div className="inline-flex rounded bg-status-danger/10 px-2 py-1 text-xs text-status-danger max-w-xs truncate">
-                                                        {row.error}
+                        <div>
+                            <DataTable
+                                data={notificationLogs}
+                                className='border-0 '
+                                manualPagination
+                                currentPage={pagination?.currentPage ?? currentPage}
+                                totalPages={pagination?.pages ?? 1}
+                                totalCount={pagination?.total ?? notificationLogs.length}
+                                onPageChange={setCurrentPage}
+                                isLoading={isLoading}
+                                columns={[
+                                    {
+                                        header: "Student",
+                                        accessorKey: "student",
+                                        className: "px-6 py-4",
+                                        cell: (row: any) => {
+                                            const student = studentById.get(row.studentId) as
+                                                | { fullName?: string; matricNumber?: string }
+                                                | undefined;
+                                            return (
+                                                <div className="space-y-0.5">
+                                                    <div className='text-sm font-bold text-foreground'>
+                                                        {student?.fullName ?? "Unknown student"}
                                                     </div>
-                                                    <button className="text-xs font-medium text-brand hover:underline inline-flex items-center gap-1">
-                                                        <RefreshCw className="h-3 w-3" /> Retry Send
-                                                    </button>
+                                                    <div className='text-[10px] font-mono text-muted-foreground'>
+                                                        {student?.matricNumber ?? row.studentId}
+                                                    </div>
                                                 </div>
-                                            ) : row.status === 'delivered' ? (
-                                                <div className="text-xs text-text-muted">
-                                                    Delivered: {row.deliveredAt}
-                                                </div>
-                                            ) : null}
-                                        </td>
-                                    </tr>
-                                );
-                            })}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
+                                            );
+                                        },
+                                    },
+                                    {
+                                        header: "Guardian",
+                                        accessorKey: "guardian",
+                                        className: "px-6 py-4 text-sm font-medium",
+                                        cell: (row: any) => {
+                                            const guardian = (
+                                                row.guardianId ? guardianById.get(row.guardianId) : null
+                                            ) as { name?: string } | null;
+                                            return <>{guardian?.name ?? "Unknown guardian"}</>;
+                                        },
+                                    },
+                                    {
+                                        header: "Channel",
+                                        accessorKey: "channel",
+                                        className: "px-6 py-4",
+                                        cell: (row: any) => (
+                                            <ChannelBadge
+                                                channel={String(row.channel).toLowerCase() as any}
+                                            />
+                                        ),
+                                    },
+                                    {
+                                        header: "Status",
+                                        accessorKey: "status",
+                                        className: "px-6 py-4",
+                                        cell: (row: any) => (
+                                            <StatusBadge
+                                                status={String(row.status).toLowerCase() as any}
+                                            />
+                                        ),
+                                    },
+                                    {
+                                        header: "Attempted At",
+                                        accessorKey: "attemptedAt",
+                                        className: "px-6 py-4 text-xs font-medium text-muted-foreground",
+                                        cell: (row: any) => <>{formatDateTime(row.attemptedAt)}</>,
+                                    },
+                                    {
+                                        header: "Logs & Details",
+                                        accessorKey: "details",
+                                        className: "px-6 py-4 text-[11px] font-medium text-muted-foreground",
+                                        cell: (row: any) => (
+                                            <div className="max-w-50 truncate" title={row.failureReason ?? row.providerMessageId ?? "Delivered"}>
+                                                {row.failureReason ??
+                                                    row.providerMessageId ??
+                                                    "Delivered successfully"}
+                                            </div>
+                                        ),
+                                    },
+                                    {
+                                        header: "Actions",
+                                        accessorKey: "actions",
+                                        className: "px-6 py-4 text-right",
+                                        cell: (row: any) => {
+                                            if (row.status !== "FAILED") return null;
+                                            return (
+                                                <Button
+                                                    size="sm"
+                                                    variant="outline"
+                                                    className="h-8 rounded-md text-[10px] font-bold uppercase tracking-tight hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-200"
+                                                    onClick={async () => {
+                                                        try {
+                                                            const response = await fetch(`/api/delivery/${dispatchId}/retry`, {
+                                                                method: "POST",
+                                                                body: JSON.stringify({ logId: row.id }),
+                                                            });
+                                                            const body = await response.json().catch(() => null);
 
-            {/* BULK RETRY STRIP */}
-            {activeTab === "failed" && selectedFailed.size > 0 && (
-                <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 rounded-xl shadow-2xl bg-surface-main border border-border-subtle px-6 py-4 flex items-center justify-between gap-8 modal-enter min-w-100">
-                    <div className="font-medium text-status-danger text-sm">
-                        {selectedFailed.size} failed sends selected
-                    </div>
-                    <button className="flex items-center gap-2 rounded-md bg-brand px-4 py-2 text-sm font-medium text-white shadow-sm hover:opacity-90 transition-opacity">
-                        <RefreshCw className="h-4 w-4" /> Retry All Selected
-                    </button>
+                                                            if (response.ok) {
+                                                                if (body?.retriedCount === 0) {
+                                                                    toast.error("Retry Failed", { description: "Message could not be delivered. Check provider settings." });
+                                                                    setTimeout(() => window.location.reload(), 1500);
+                                                                } else {
+                                                                    toast.success("Retry Successful", { description: "The message was successfully resent." });
+                                                                    setTimeout(() => window.location.reload(), 1000);
+                                                                }
+                                                            } else {
+                                                                toast.error("Retry Failed", { description: body?.error ?? "Unable to retry message." });
+                                                            }
+                                                        } catch (err) {
+                                                            toast.error("Network Error", { description: "Failed to connect to the server." });
+                                                            console.error("Retry failed", err);
+                                                        }
+                                                    }}
+                                                >
+                                                    Retry
+                                                </Button>
+                                            );
+                                        },
+                                    },
+                                ]}
+                            />
+                        </div>
+                    </Card>
                 </div>
-            )}
+            </main>
         </div>
     );
 }
 
-function SummaryCard({ title, value, subvalue, color }: any) {
-    return (
-        <div className="rounded-xl border border-border-subtle bg-surface-main p-5 dashboard-card shadow-sm flex flex-col justify-between">
-            <div className="text-xs font-semibold uppercase tracking-widest text-text-muted mb-2">{title}</div>
-            <div className="flex items-baseline gap-2">
-                <span className={`text-3xl font-serif ${color ? color : "text-foreground"}`}>{value}</span>
-                {subvalue && <span className="text-sm font-medium text-text-muted">{subvalue}</span>}
-            </div>
-        </div>
-    );
-}
 
-function TabButton({ active, onClick, label, count, color = "text-[var(--color-text-primary)]" }: any) {
-    return (
-        <button
-            onClick={onClick}
-            className={`px-6 py-3 text-sm font-medium border-b-2 transition-colors ${active
-                    ? `border-brand ${color}`
-                    : `border-transparent text-text-muted hover:text-foreground hover:border-border-subtle`
-                }`}
-        >
-            {label} <span className="inline-flex ml-2 rounded-full bg-surface-subtle px-2 py-0.5 text-xs font-medium text-text-muted">{count}</span>
-        </button>
-    );
-}
-
-const mockDeliveries = [
-    { matric: "CSC/2021/001", student: "Adeyemi, John Ola", guardian: "Mrs. Folake Adeyemi", channel: "whatsapp", status: "delivered", sentAt: "10:45 AM", deliveredAt: "10:46 AM, read 10:50 AM" },
-    { matric: "CSC/2021/002", student: "Okafor, Blessing", guardian: "Mr. Chukwu Okafor", channel: "email", status: "delivered", sentAt: "10:45 AM", deliveredAt: "10:45 AM" },
-    { matric: "CSC/2021/004", student: "Eze, Emmanuel", guardian: "Chief Eze", channel: "whatsapp", status: "failed", sentAt: "10:45 AM", error: "Number not registered on WhatsApp" },
-    { matric: "CSC/2021/005", student: "Musa, Ibrahim", guardian: "Alhaji Musa", channel: "sms", status: "pending", sentAt: "10:45 AM" },
-    { matric: "CSC/2021/008", student: "Adegoke, Sarah", guardian: "Dr. Adegoke", channel: "whatsapp", status: "delivered", sentAt: "10:45 AM", deliveredAt: "10:47 AM" },
-    { matric: "CSC/2021/010", student: "Bello, Kazeem", guardian: "Mr. Bello", channel: "email", status: "failed", sentAt: "10:45 AM", error: "Hard bounce: mailbox full" },
-];
