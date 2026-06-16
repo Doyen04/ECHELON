@@ -102,7 +102,7 @@ async function sendWhatsAppNotification(
 
     if (!phoneId || !token) throw new Error("WHATSAPP_PHONE_NUMBER_ID or WHATSAPP_ACCESS_TOKEN not set");
 
-    const res = await fetch(`https://graph.facebook.com/v18.0/${phoneId}/messages`, {
+    const res = await fetch(`https://graph.facebook.com/v25.0/${phoneId}/messages`, {
         method: "POST",
         headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
         body: JSON.stringify({

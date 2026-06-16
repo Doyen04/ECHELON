@@ -75,6 +75,7 @@ export async function GET(
                 take: limit,
                 select: {
                     id: true,
+                    courses: true,
                     gpa: true,
                     cgpa: true,
                     status: true,

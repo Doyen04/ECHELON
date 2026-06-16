@@ -280,8 +280,15 @@ export async function findBatchDetails(
             orderBy: { id: "desc" },
             skip,
             take,
-            include: {
-                student: { select: { fullName: true, matricNumber: true } },
+            select: {
+                id: true,
+                courses: true,
+                gpa: true,
+                cgpa: true,
+                status: true,
+                withheldReason: true,
+                reviewedAt: true,
+                student: { select: { fullName: true, matricNumber: true, level: true } },
                 portalTokens: {
                     orderBy: { createdAt: "desc" },
                     take: 1,

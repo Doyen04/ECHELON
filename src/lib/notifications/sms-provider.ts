@@ -32,7 +32,7 @@ async function sendViaSendChamp(input: SmsSendInput): Promise<SmsSendResult> {
         to: [formattedTo],
         message: input.text,
         sender_name: senderId,
-        route: "non_dnd",
+        route: "dnd",
     });
 
     return new Promise((resolve) => {
