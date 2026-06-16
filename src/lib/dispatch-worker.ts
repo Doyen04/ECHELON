@@ -3,6 +3,7 @@ import { randomBytes } from "node:crypto";
 import nodemailer from "nodemailer";
 import { Resend } from "resend";
 
+import { sendSms } from "@/lib/notifications/sms-provider";
 import type { NotifyJobPayload } from "@/lib/queue";
 import {
     createNotificationLog,
@@ -131,19 +132,9 @@ async function sendWhatsAppNotification(
 }
 
 async function sendSmsNotification(to: string, message: string): Promise<SendResult> {
-    const baseUrl = process.env.SENDCHAMP_BASE_URL ?? "https://api.sendchamp.com/api/v1";
-    const accessKey = process.env.SENDCHAMP_ACCESS_KEY;
-    const senderId = process.env.SENDCHAMP_SENDER_ID ?? "MTU";
-    if (!accessKey) throw new Error("SENDCHAMP_ACCESS_KEY not set");
-
-    const res = await fetch(`${baseUrl}/sms/send`, {
-        method: "POST",
-        headers: { Authorization: `Bearer ${accessKey}`, "Content-Type": "application/json", Accept: "application/json" },
-        body: JSON.stringify({ to: [normalizePhone(to)], message, sender_name: senderId, route: "dnd" }),
-    });
-    const data = await res.json() as any;
-    if (!res.ok) throw new Error(data.message ?? `Sendchamp API error ${res.status}`);
-    return { ok: true, providerMessageId: data.data?.id ?? `sms-${Date.now()}`, status: "SENT" };
+    const result = await sendSms({ to, text: message });
+    if (!result.ok) throw new Error(result.failureReason ?? "SMS send failed");
+    return { ok: true, providerMessageId: result.providerMessageId ?? `sms-${Date.now()}`, status: "SENT" };
 }
 
 async function sendNotification(
