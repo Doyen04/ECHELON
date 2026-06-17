@@ -27,7 +27,7 @@ export async function proxy(request: NextRequest) {
         }
     }
 
-    // /hod/* requires hod role AND departmentId
+    // /hod/* requires hod role AND departmentId for login
     if (path.startsWith("/hod")) {
         if (!token || token.role !== "hod" || !token.departmentId) {
             const signInUrl = new URL("/sign-in", request.url);
