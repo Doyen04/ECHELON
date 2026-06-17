@@ -25,7 +25,6 @@ type SendResult = {
 type DispatchWorkerResult = {
     ok: boolean;
     message: string;
-    channel?: "WHATSAPP" | "EMAIL" | "SMS";
 };
 
 type ChannelSelection = {
@@ -219,14 +218,13 @@ export async function processNotifyJob(payload: NotifyJobPayload): Promise<Dispa
 
         const semester = `${studentResult.batch.session} ${studentResult.batch.semester}`;
         let sentCount = 0;
-        let lastChannel: ChannelSelection["channel"] | undefined;
 
-        // Send to every guardian, trying channels in order (email → whatsapp → sms) until one succeeds
+        // Send to every guardian on ALL available channels (email + whatsapp + sms)
         for (const guardian of guardians) {
             const channels = selectChannels(guardian);
             if (channels.length === 0) continue;
 
-            let guardianSent = false;
+            let anySent = false;
             for (const channelSelection of channels) {
                 const sendResult = await sendNotification(channelSelection, {
                     parentName: guardian.name,
@@ -247,22 +245,16 @@ export async function processNotifyJob(payload: NotifyJobPayload): Promise<Dispa
                     failureReason: sendResult.ok ? null : (sendResult.failureReason ?? "Provider error"),
                 });
 
-                if (sendResult.ok) {
-                    sentCount++;
-                    lastChannel = channelSelection.channel;
-                    guardianSent = true;
-                    break;
-                }
+                if (sendResult.ok) anySent = true;
             }
 
-            void guardianSent;
+            if (anySent) sentCount++;
         }
 
         await markDispatchProgress(payload.dispatchId, sentCount > 0);
         return {
             ok: sentCount > 0,
-            message: sentCount > 0 ? "Notification processed." : "All channels failed.",
-            channel: lastChannel,
+            message: sentCount > 0 ? "Notifications sent across all available channels." : "All channels failed.",
         };
     } catch (error) {
         const message = error instanceof Error ? error.message : "Unknown dispatch error.";
