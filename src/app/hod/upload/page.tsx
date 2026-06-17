@@ -366,7 +366,7 @@ export default function HodBatchUploadPage() {
       payload.append("programId", programId);
       payload.append("level", levelValue);
 
-      const response = await fetch("/api/hod/upload", {
+      const response = await fetch("/api/hod/batches/upload", {
         method: "POST",
         body: payload,
       });

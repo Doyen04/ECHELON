@@ -45,6 +45,7 @@ async function parseStudentRowsFromFile(file: File, fallbackDepartment: string):
 }
 
 export async function POST(request: Request) {
+    try {
     const session = await getSuperAdminSession();
     if (!session) {
         return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -236,7 +237,7 @@ export async function POST(request: Request) {
         });
 
         return createdBatch;
-    }, { timeout: 60000, maxWait: 10000 });
+    }, { timeout: 60000 });
 
     return NextResponse.json({
         batchId: batch.id,
@@ -244,6 +245,15 @@ export async function POST(request: Request) {
         students: groupedStudents.length,
         dispatch: null,
     });
+    } catch (error) {
+        const message = error instanceof Error ? error.message : "Unexpected server error.";
+        const code = (error as any)?.code ?? null;
+        console.error("[POST /api/batches/upload]", error);
+        return NextResponse.json(
+            { error: message, code, stack: process.env.NODE_ENV === "development" ? (error instanceof Error ? error.stack : null) : undefined },
+            { status: 500 },
+        );
+    }
 }
 
 

@@ -54,10 +54,11 @@ function getTransporter(): nodemailer.Transporter {
         port,
         secure,
         auth,
+        family: 4,
         tls: {
             rejectUnauthorized: false,
         },
-    });
+    } as any);
 
     return cachedTransporter;
 }

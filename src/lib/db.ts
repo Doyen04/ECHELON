@@ -11,7 +11,15 @@ if (!connectionString) {
     );
 }
 
-const adapter = new PrismaPg({ connectionString });
-const prisma = new PrismaClient({ adapter });
+const globalForPrisma = global as unknown as { prisma: PrismaClient | undefined };
 
-export { prisma };
+function makePrismaClient() {
+    const adapter = new PrismaPg({ connectionString });
+    return new PrismaClient({ adapter });
+}
+
+export const prisma: PrismaClient = globalForPrisma.prisma ?? makePrismaClient();
+
+if (process.env.NODE_ENV !== "production") {
+    globalForPrisma.prisma = prisma;
+}

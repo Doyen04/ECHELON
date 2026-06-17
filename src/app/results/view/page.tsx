@@ -12,6 +12,9 @@ import { formatDateTime } from "@/lib/admin-format";
 type ResultViewPageProps = {
   searchParams: Promise<{
     token?: string;
+    preview?: string;
+    batchId?: string;
+    matric?: string;
   }>;
 };
 
@@ -20,14 +23,23 @@ export default function PublicResultViewPage({
 }: ResultViewPageProps) {
   const params = use(searchParams);
   const token = params.token;
+  const isPreview = params.preview === "true";
+  const batchId = params.batchId;
+  const matric = params.matric;
+
+  const apiUrl = isPreview && batchId && matric
+    ? `/api/results/preview?batchId=${batchId}&matric=${encodeURIComponent(matric)}`
+    : token
+    ? `/api/results/${token}`
+    : "";
 
   const {
     data: portalToken,
     isLoading,
     error,
-  } = useApi<any>(token ? `/api/results/${token}` : "", { immediate: !!token });
+  } = useApi<any>(apiUrl, { immediate: !!apiUrl });
 
-  if (!token) {
+  if (!token && !isPreview) {
     return <TokenErrorState type='not_found' />;
   }
 
@@ -71,6 +83,12 @@ export default function PublicResultViewPage({
           </span>
         </div>
       </header>
+
+      {isPreview && (
+        <div className='border-b border-yellow-300 bg-yellow-50 px-4 py-2 text-center text-xs font-medium text-yellow-800'>
+          Admin Preview — this is how the result page looks to guardians. No token was used.
+        </div>
+      )}
 
       <main className='mx-auto max-w-170 space-y-6 p-4 pb-20 sm:p-6 md:p-8'>
         <div

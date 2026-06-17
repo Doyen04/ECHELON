@@ -1,8 +1,10 @@
 import { randomBytes } from "node:crypto";
 
-import { sendEmail } from "@/lib/notifications/email-provider";
-import { sendWhatsApp } from "@/lib/notifications/whatsapp-provider";
+import nodemailer from "nodemailer";
+import { Resend } from "resend";
+
 import { sendSms } from "@/lib/notifications/sms-provider";
+import type { NotifyJobPayload } from "@/lib/queue";
 import {
     createNotificationLog,
     createPortalToken,
@@ -12,21 +14,17 @@ import {
     incrementDispatchProgress,
     updateDispatchStatus,
 } from "@/lib/repositories/notification-repository";
-import { buildResultNotificationEmailTemplate } from "@/lib/result-email-template";
-import { buildStudentResultPdfAttachment } from "@/lib/result-email-pdf";
-import type { NotifyJobPayload } from "@/lib/queue";
+
+type SendResult = {
+    ok: boolean;
+    providerMessageId: string;
+    status: "SENT" | "FAILED";
+    failureReason?: string;
+};
 
 type DispatchWorkerResult = {
     ok: boolean;
     message: string;
-    channel?: "WHATSAPP" | "EMAIL" | "SMS";
-};
-
-type ProviderSendResult = {
-    ok: boolean;
-    providerMessageId: string | null;
-    status: "SENT" | "FAILED";
-    failureReason?: string;
 };
 
 type ChannelSelection = {
@@ -36,277 +34,154 @@ type ChannelSelection = {
 
 function selectChannels(guardian: any): ChannelSelection[] {
     const channels: ChannelSelection[] = [];
-
-    if (guardian.email) {
-        channels.push({ channel: "EMAIL", destination: guardian.email });
-    }
-
+    if (guardian.email) channels.push({ channel: "EMAIL", destination: guardian.email });
     if (guardian.phone) {
         channels.push({ channel: "WHATSAPP", destination: guardian.phone });
         channels.push({ channel: "SMS", destination: guardian.phone });
     }
-
     return channels;
 }
 
-async function getOrCreatePortalToken(studentResultId: string) {
+
+async function getOrCreatePortalToken(studentResultId: string): Promise<string> {
     const now = new Date();
-
-    const existingToken = await findValidPortalToken(studentResultId, now);
-
-    if (existingToken) {
-        return existingToken.token as string;
-    }
+    const existing = await findValidPortalToken(studentResultId, now);
+    if (existing) return existing.token as string;
 
     const token = randomBytes(32).toString("hex");
     const expiryDays = Number(process.env.TOKEN_EXPIRY_DAYS ?? "30");
     const expiresAt = new Date(now.getTime() + expiryDays * 24 * 60 * 60 * 1000);
-
-    await createPortalToken({
-        studentResultId,
-        token,
-        expiresAt,
-    });
-
+    await createPortalToken({ studentResultId, token, expiresAt });
     return token;
+}
+
+async function sendEmailNotification(to: string, subject: string, text: string): Promise<SendResult> {
+    if (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS) {
+        const transporter = nodemailer.createTransport({
+            host: process.env.SMTP_HOST,
+            port: Number(process.env.SMTP_PORT ?? 465),
+            secure: process.env.SMTP_SECURE !== "false",
+            auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
+            family: 4,
+        } as any);
+        const info = await transporter.sendMail({
+            from: process.env.SMTP_FROM_EMAIL ?? process.env.SMTP_USER,
+            to,
+            subject,
+            text,
+        });
+        return { ok: true, providerMessageId: info.messageId, status: "SENT" };
+    }
+    if (process.env.RESEND_API_KEY) {
+        const resend = new Resend(process.env.RESEND_API_KEY);
+        await resend.emails.send({
+            from: process.env.RESEND_FROM_EMAIL ?? "noreply@example.edu",
+            to,
+            subject,
+            text,
+        });
+        return { ok: true, providerMessageId: `resend-${Date.now()}`, status: "SENT" };
+    }
+    throw new Error("No email provider configured (set SMTP_HOST or RESEND_API_KEY)");
+}
+
+function normalizePhone(phone: string): string {
+    const clean = phone.replace(/[\s\-().]/g, "");
+    if (clean.startsWith("+")) return clean.slice(1);
+    if (clean.startsWith("0")) return "234" + clean.slice(1);
+    return clean;
+}
+
+async function sendWhatsAppNotification(
+    to: string,
+    payload: { parentName: string; studentName: string; matricNumber: string; semester: string; portalLink: string },
+): Promise<SendResult> {
+    const accountSid = process.env.TWILIO_ACCOUNT_SID;
+    const authToken = process.env.TWILIO_AUTH_TOKEN;
+    const from = process.env.TWILIO_WHATSAPP_FROM ?? "whatsapp:+14155238886";
+
+    if (!accountSid || !authToken) throw new Error("TWILIO_ACCOUNT_SID or TWILIO_AUTH_TOKEN not set");
+
+    const text =
+        `Hello ${payload.parentName}, the ${payload.semester} semester result for ` +
+        `${payload.studentName} (${payload.matricNumber}) is now available.\n\n` +
+        `View result: ${payload.portalLink}`;
+
+    const toWhatsApp = `whatsapp:+${normalizePhone(to)}`;
+    const fromWhatsApp = from.startsWith("whatsapp:") ? from : `whatsapp:${from}`;
+
+    const body = new URLSearchParams();
+    body.append("To", toWhatsApp);
+    body.append("From", fromWhatsApp);
+    body.append("Body", text);
+
+    const res = await fetch(
+        `https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Messages.json`,
+        {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/x-www-form-urlencoded",
+                Authorization: `Basic ${Buffer.from(`${accountSid}:${authToken}`).toString("base64")}`,
+            },
+            body: body.toString(),
+        },
+    );
+
+    const data = await res.json() as any;
+    if (!res.ok) throw new Error(data.message ?? `Twilio WhatsApp error ${res.status}`);
+    return { ok: true, providerMessageId: data.sid ?? `wa-${Date.now()}`, status: "SENT" };
+}
+
+async function sendSmsNotification(to: string, message: string): Promise<SendResult> {
+    const result = await sendSms({ to, text: message });
+    if (!result.ok) throw new Error(result.failureReason ?? "SMS send failed");
+    return { ok: true, providerMessageId: result.providerMessageId ?? `sms-${Date.now()}`, status: "SENT" };
 }
 
 async function sendNotification(
     channelSelection: ChannelSelection,
-    payload: {
-        parentName: string;
-        studentName: string;
-        matricNumber: string;
-        semesterLabel: string;
-        portalLink: string;
-        studentResult: any;
-    },
-) {
-    if (channelSelection.channel === "EMAIL") {
-        try {
-            const emailTemplate = buildResultNotificationEmailTemplate({
-                parentName: payload.parentName,
-                studentName: payload.studentName,
-                matricNumber: payload.matricNumber,
-                semesterLabel: payload.semesterLabel,
-                portalLink: payload.portalLink,
-            });
-
-            const attachments = [] as any[];
-            try {
-                const courseRows = Array.isArray(payload.studentResult?.courses)
-                    ? payload.studentResult.courses
-                    : [];
-                const attachment = await buildStudentResultPdfAttachment({
-                    studentName: payload.studentName,
-                    matricNumber: payload.matricNumber,
-                    department: payload.studentResult?.student?.department ?? "General",
-                    faculty: payload.studentResult?.student?.faculty ?? "General",
-                    level: Number(payload.studentResult?.student?.level ?? 100),
-                    session: String(payload.studentResult?.batch?.session ?? "Unknown"),
-                    semester: String(payload.studentResult?.batch?.semester ?? "Unknown"),
-                    gpa: Number(payload.studentResult?.gpa ?? 0),
-                    cgpa: payload.studentResult?.cgpa ?? null,
-                    courses: courseRows,
-                    institutionName: payload.studentResult?.batch?.institution?.name ?? payload.studentResult?.student?.institution?.name ?? "Mountain Top University",
-                    logoUrl: payload.studentResult?.batch?.institution?.logoUrl ?? payload.studentResult?.student?.institution?.logoUrl ?? null,
-                    submissionId: payload.studentResult?.batch?.id ?? null,
-                });
-                attachments.push(attachment);
-            } catch {
-                // Best-effort attachment generation should not block notifications.
-            }
-
-            const response = await sendEmail({
-                to: channelSelection.destination,
-                subject: emailTemplate.subject,
-                text: emailTemplate.text,
-                attachments: attachments.length > 0 ? attachments : undefined,
-            });
-
-            if (!response.ok) {
-                return {
-                    ok: false,
-                    providerMessageId: null,
-                    status: "FAILED",
-                    failureReason: response.failureReason ?? "Email provider rejected message.",
-                } satisfies ProviderSendResult;
-            }
-
-            return {
-                ok: true,
-                providerMessageId: response.providerMessageId,
-                status: "SENT",
-            } satisfies ProviderSendResult;
-        } catch (error) {
-            const message = error instanceof Error ? error.message : "Unknown SMTP provider error.";
-            return {
-                ok: false,
-                providerMessageId: null,
-                status: "FAILED",
-                failureReason: `Email send failed: ${message}`,
-            } satisfies ProviderSendResult;
-        }
+    payload: { parentName: string; studentName: string; matricNumber: string; semester: string; portalLink: string },
+): Promise<SendResult> {
+    const notificationMode = process.env.NOTIFICATION_ENV ?? "mock";
+    if (notificationMode === "mock") {
+        return { ok: true, providerMessageId: `mock-${Date.now()}`, status: "SENT" };
     }
 
-    if (channelSelection.channel === "WHATSAPP") {
-        try {
-            const response = await sendWhatsApp({
-                to: channelSelection.destination,
-                templateParams: [payload.parentName, payload.semesterLabel, payload.studentName, payload.matricNumber, payload.portalLink],
-            });
+    const text = `Hello ${payload.parentName}, the ${payload.semester} results for ${payload.studentName} (${payload.matricNumber}) are ready.\n\nView full details: ${payload.portalLink}`;
 
-            if (!response.ok) {
-                return {
-                    ok: false,
-                    providerMessageId: null,
-                    status: "FAILED",
-                    failureReason: response.failureReason ?? "WhatsApp provider rejected message.",
-                } satisfies ProviderSendResult;
-            }
-
-            return {
-                ok: true,
-                providerMessageId: response.providerMessageId,
-                status: "SENT",
-            } satisfies ProviderSendResult;
-        } catch (error) {
-            const message = error instanceof Error ? error.message : "Unknown WhatsApp provider error.";
-            return {
-                ok: false,
-                providerMessageId: null,
-                status: "FAILED",
-                failureReason: `WhatsApp send failed: ${message}`,
-            } satisfies ProviderSendResult;
-        }
-    }
-
-    if (channelSelection.channel === "SMS") {
-        try {
-            const text = `Hello ${payload.parentName}, the ${payload.semesterLabel} results for ${payload.studentName} (${payload.matricNumber}) are ready. View here: ${payload.portalLink}`;
-            const response = await sendSms({
-                to: channelSelection.destination,
+    try {
+        if (channelSelection.channel === "EMAIL") {
+            return await sendEmailNotification(
+                channelSelection.destination,
+                `Result Notification: ${payload.studentName} — ${payload.semester}`,
                 text,
-            });
-
-            if (!response.ok) {
-                return {
-                    ok: false,
-                    providerMessageId: null,
-                    status: "FAILED",
-                    failureReason: response.failureReason ?? "SMS provider rejected message.",
-                } satisfies ProviderSendResult;
-            }
-
-            return {
-                ok: true,
-                providerMessageId: response.providerMessageId,
-                status: "SENT",
-            } satisfies ProviderSendResult;
-        } catch (error) {
-            const message = error instanceof Error ? error.message : "Unknown SMS provider error.";
-            return {
-                ok: false,
-                providerMessageId: null,
-                status: "FAILED",
-                failureReason: `SMS send failed: ${message}`,
-            } satisfies ProviderSendResult;
+            );
         }
-    }
-
-    return {
-        ok: false,
-        providerMessageId: null,
-        status: "FAILED" as const,
-        failureReason: `${channelSelection.channel} delivery is not implemented yet.`,
-    } satisfies ProviderSendResult;
-}
-
-async function sendGuardianNotifications(
-    guardian: any,
-    studentResult: any,
-    portalLink: string,
-) {
-    const channelSelections = selectChannels(guardian);
-
-    if (channelSelections.length === 0) {
-        await createNotificationLog({
-            data: {
-                dispatchId: studentResult.dispatchId,
-                studentResultId: studentResult.id,
-                studentId: studentResult.studentId,
-                guardianId: guardian.id,
-                channel: "EMAIL",
-                status: "FAILED",
-                failureReason: "Guardian has no contact details.",
-            },
-        });
-
+        if (channelSelection.channel === "WHATSAPP") {
+            return await sendWhatsAppNotification(channelSelection.destination, payload);
+        }
+        if (channelSelection.channel === "SMS") {
+            return await sendSmsNotification(channelSelection.destination, text);
+        }
+        throw new Error(`Unknown channel: ${channelSelection.channel}`);
+    } catch (err) {
+        console.error(`[${channelSelection.channel}] send failed:`, err);
         return {
             ok: false,
-            channel: null as ChannelSelection | null,
-            sentCount: 0,
-            failedCount: 1,
-            failureReason: "Guardian has no contact details.",
+            providerMessageId: `failed-${Date.now()}`,
+            status: "FAILED",
+            failureReason: err instanceof Error ? err.message : "Unknown provider error",
         };
     }
-
-    let finalSendResult: ProviderSendResult | null = null;
-    let successChannel: "EMAIL" | "WHATSAPP" | "SMS" | null = null;
-
-    for (const channelSelection of channelSelections) {
-        const sendResult = await sendNotification(channelSelection, {
-            parentName: guardian.name,
-            studentName: studentResult.student.fullName,
-            matricNumber: studentResult.student.matricNumber,
-            semesterLabel: `${studentResult.batch.session} ${studentResult.batch.semester}`,
-            portalLink,
-            studentResult,
-        });
-
-        await createNotificationLog({
-            data: {
-                dispatchId: studentResult.dispatchId,
-                studentResultId: studentResult.id,
-                studentId: studentResult.studentId,
-                guardianId: guardian.id,
-                channel: channelSelection.channel,
-                status: sendResult.ok ? sendResult.status : "FAILED",
-                providerMessageId: sendResult.providerMessageId,
-                failureReason: sendResult.ok ? null : (sendResult.failureReason ?? "Provider rejected message."),
-                deliveredAt: sendResult.status === "SENT" ? new Date() : null,
-            },
-        });
-
-        if (sendResult.ok) {
-            finalSendResult = sendResult;
-            successChannel = channelSelection.channel;
-            break; // Stop at the first successful channel
-        }
-    }
-
-    return {
-        ok: !!finalSendResult,
-        channel: successChannel,
-        sentCount: finalSendResult ? 1 : 0,
-        failedCount: finalSendResult ? 0 : 1,
-        failureReason: finalSendResult ? null : "All attempted channels failed.",
-    };
 }
 
 async function markDispatchProgress(dispatchId: string, ok: boolean) {
     await incrementDispatchProgress(dispatchId, ok);
-
     const dispatch = await findNotificationDispatchById(dispatchId);
-
-    if (!dispatch) {
-        return;
-    }
+    if (!dispatch) return;
 
     const processed = (dispatch.sentCount as number) + (dispatch.failedCount as number);
-    if (processed < (dispatch.totalCount as number)) {
-        return;
-    }
+    if (processed < (dispatch.totalCount as number)) return;
 
     await updateDispatchStatus(dispatchId, dispatch.failedCount > 0 ? "PARTIAL_FAILURE" : "COMPLETE");
 }
@@ -329,16 +204,13 @@ export async function processNotifyJob(payload: NotifyJobPayload): Promise<Dispa
 
         if (guardians.length === 0) {
             await createNotificationLog({
-                data: {
-                    dispatchId: payload.dispatchId,
-                    studentResultId: studentResult.id,
-                    studentId: studentResult.studentId,
-                    channel: "EMAIL",
-                    status: "FAILED",
-                    failureReason: "No guardian contact records available.",
-                },
+                dispatchId: payload.dispatchId,
+                studentResultId: studentResult.id,
+                studentId: studentResult.studentId,
+                channel: "EMAIL",
+                status: "FAILED",
+                failureReason: "No guardian contact records available.",
             });
-
             await markDispatchProgress(payload.dispatchId, false);
             return { ok: false, message: "No guardian contact records available." };
         }
@@ -347,32 +219,49 @@ export async function processNotifyJob(payload: NotifyJobPayload): Promise<Dispa
         const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
         const portalLink = `${appUrl}/results/view?token=${token}`;
 
+        const semester = `${studentResult.batch.session} ${studentResult.batch.semester}`;
         let sentCount = 0;
-        let failedCount = 0;
 
+        // Send to every guardian on ALL available channels (email + whatsapp + sms)
         for (const guardian of guardians) {
-            const result = await sendGuardianNotifications(guardian, {
-                ...studentResult,
-                dispatchId: payload.dispatchId,
-            }, portalLink);
+            const channels = selectChannels(guardian);
+            if (channels.length === 0) continue;
 
-            sentCount += result.sentCount;
-            failedCount += result.failedCount;
+            let anySent = false;
+            for (const channelSelection of channels) {
+                const sendResult = await sendNotification(channelSelection, {
+                    parentName: guardian.name,
+                    studentName: studentResult.student.fullName,
+                    matricNumber: studentResult.student.matricNumber,
+                    semester,
+                    portalLink,
+                });
+
+                await createNotificationLog({
+                    dispatchId: payload.dispatchId,
+                    studentResultId: studentResult.id,
+                    studentId: studentResult.studentId,
+                    guardianId: guardian.id,
+                    channel: channelSelection.channel,
+                    status: sendResult.ok ? sendResult.status : "FAILED",
+                    providerMessageId: sendResult.providerMessageId,
+                    failureReason: sendResult.ok ? null : (sendResult.failureReason ?? "Provider error"),
+                });
+
+                if (sendResult.ok) anySent = true;
+            }
+
+            if (anySent) sentCount++;
         }
 
         await markDispatchProgress(payload.dispatchId, sentCount > 0);
-
         return {
             ok: sentCount > 0,
-            message: sentCount > 0 ? "Notification processed." : "Notification failed.",
-            channel: sentCount > 0 ? "EMAIL" : undefined,
+            message: sentCount > 0 ? "Notifications sent across all available channels." : "All channels failed.",
         };
     } catch (error) {
-        const message = error instanceof Error ? error.message : "Unknown dispatch worker error.";
+        const message = error instanceof Error ? error.message : "Unknown dispatch error.";
         await markDispatchProgress(payload.dispatchId, false);
-        return {
-            ok: false,
-            message: `Dispatch worker failed: ${message}`,
-        };
+        return { ok: false, message: `Dispatch worker failed: ${message}` };
     }
 }

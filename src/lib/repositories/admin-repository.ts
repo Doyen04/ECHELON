@@ -280,8 +280,15 @@ export async function findBatchDetails(
             orderBy: { id: "desc" },
             skip,
             take,
-            include: {
-                student: { select: { fullName: true, matricNumber: true } },
+            select: {
+                id: true,
+                courses: true,
+                gpa: true,
+                cgpa: true,
+                status: true,
+                withheldReason: true,
+                reviewedAt: true,
+                student: { select: { fullName: true, matricNumber: true, level: true } },
                 portalTokens: {
                     orderBy: { createdAt: "desc" },
                     take: 1,
@@ -411,6 +418,19 @@ export async function findAuthUserByEmail(email: string) {
             role: true,
             departmentId: true,
             passwordHash: true,
+        },
+    });
+}
+
+export async function findStudentResultByBatchAndMatric(batchId: string, matric: string) {
+    return db.studentResult.findFirst({
+        where: {
+            batchId,
+            student: { matricNumber: matric },
+        },
+        include: {
+            student: { include: { guardians: true } },
+            batch: true,
         },
     });
 }

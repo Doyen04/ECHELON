@@ -47,15 +47,18 @@ enum NotificationStatus {
 }
 
 model Institution {
-    id            String        @id @default(cuid())
-    name          String
-    logoUrl       String?
-    createdAt     DateTime      @default(now())
-    users         User[]
-    students      Student[]
-    departments   Department[]  // Added for HOD Portal
-    resultBatches ResultBatch[]
-    auditLogs     AuditLog[]
+    id               String        @id @default(cuid())
+    name             String
+    logoUrl          String?
+    contactEmail     String?
+    gpaScale         String        @default("5.0")
+    messageTemplates Json?
+    createdAt        DateTime      @default(now())
+    users            User[]
+    students         Student[]
+    resultBatches    ResultBatch[]
+    auditLogs        AuditLog[]
+    departments      Department[]
 }
 
 model Department {
@@ -145,11 +148,6 @@ model ResultBatch {
     id             String                 @id @default(cuid())
     institutionId  String
     institution    Institution            @relation(fields: [institutionId], references: [id], onDelete: Cascade)
-    
-    // CHANGED: programId instead of department string
-    programId      String?                 // Temporary nullable for migration
-    program        Program?                @relation(fields: [programId], references: [id], onDelete: Restrict)
-    
     session        String
     semester       Semester
     department     String                 // Keep for now, will drop after migration
@@ -161,6 +159,8 @@ model ResultBatch {
     approvedById   String?
     approvedBy     User?                  @relation("ApprovedBy", fields: [approvedById], references: [id], onDelete: SetNull)
     approvedAt     DateTime?
+    programId      String?
+    program        Program?               @relation(fields: [programId], references: [id], onDelete: SetNull)
     source         String                 @default("csv")
     rawFileUrl     String?
     studentResults StudentResult[]
