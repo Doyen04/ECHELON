@@ -95,39 +95,32 @@ async function sendWhatsAppNotification(
     to: string,
     payload: { parentName: string; studentName: string; matricNumber: string; semester: string; portalLink: string },
 ): Promise<SendResult> {
-    const phoneId = process.env.WHATSAPP_PHONE_NUMBER_ID;
-    const token = process.env.WHATSAPP_ACCESS_TOKEN;
-    const templateName = process.env.WHATSAPP_TEMPLATE_NAME ?? "mtu_result_notification";
-    const templateLang = process.env.WHATSAPP_TEMPLATE_LANG ?? "en_US";
+    const apiKey = process.env.TERMII_API_KEY;
+    const senderId = process.env.TERMII_SENDER_ID ?? "N-Alert";
 
-    if (!phoneId || !token) throw new Error("WHATSAPP_PHONE_NUMBER_ID or WHATSAPP_ACCESS_TOKEN not set");
+    if (!apiKey) throw new Error("TERMII_API_KEY not set");
 
-    const res = await fetch(`https://graph.facebook.com/v25.0/${phoneId}/messages`, {
+    const text =
+        `Hello ${payload.parentName}, the ${payload.semester} semester result for ` +
+        `${payload.studentName} (${payload.matricNumber}) is now available.\n\n` +
+        `View result: ${payload.portalLink}`;
+
+    const res = await fetch("https://api.ng.termii.com/api/sms/send", {
         method: "POST",
-        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-            messaging_product: "whatsapp",
+            api_key: apiKey,
             to: normalizePhone(to),
-            type: "template",
-            template: {
-                name: templateName,
-                language: { code: templateLang },
-                components: [{
-                    type: "body",
-                    parameters: [
-                        { type: "text", text: payload.parentName },
-                        { type: "text", text: payload.semester },
-                        { type: "text", text: payload.studentName },
-                        { type: "text", text: payload.matricNumber },
-                        { type: "text", text: payload.portalLink },
-                    ],
-                }],
-            },
+            from: senderId,
+            sms: text,
+            type: "plain",
+            channel: "whatsapp",
         }),
     });
+
     const data = await res.json() as any;
-    if (!res.ok) throw new Error(data.error?.message ?? `WhatsApp API error ${res.status}`);
-    return { ok: true, providerMessageId: data.messages?.[0]?.id ?? `wa-${Date.now()}`, status: "SENT" };
+    if (data.code !== "ok") throw new Error(data.message ?? `Termii WhatsApp error ${res.status}`);
+    return { ok: true, providerMessageId: String(data.message_id ?? `wa-${Date.now()}`), status: "SENT" };
 }
 
 async function sendSmsNotification(to: string, message: string): Promise<SendResult> {

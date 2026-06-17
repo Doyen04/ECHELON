@@ -9,7 +9,7 @@ export type SmsSendResult = {
     ok: boolean;
     providerMessageId: string | null;
     failureReason?: string;
-    usedProvider?: "SendChamp" | "Twilio" | "None";
+    usedProvider?: "Termii" | "SendChamp" | "Twilio" | "None";
 };
 
 function normalizeNigerianPhone(phone: string): string {
@@ -160,23 +160,71 @@ async function sendViaTwilio(input: SmsSendInput): Promise<SmsSendResult> {
     }
 }
 
-export async function sendSms(input: SmsSendInput): Promise<SmsSendResult> {
-    const sendChampResult = await sendViaSendChamp(input);
+async function sendViaTermii(input: SmsSendInput): Promise<SmsSendResult> {
+    const apiKey = process.env.TERMII_API_KEY;
+    const senderId = process.env.TERMII_SENDER_ID ?? "N-Alert";
 
-    if (sendChampResult.ok) {
-        return sendChampResult;
+    if (!apiKey) {
+        return { ok: false, providerMessageId: null, failureReason: "TERMII_API_KEY not configured.", usedProvider: "Termii" };
     }
+
+    try {
+        const res = await fetch("https://api.ng.termii.com/api/sms/send", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                api_key: apiKey,
+                to: normalizeNigerianPhone(input.to),
+                from: senderId,
+                sms: input.text,
+                type: "plain",
+                channel: "generic",
+            }),
+        });
+
+        const parsed = await res.json() as any;
+
+        if (parsed.code === "ok") {
+            return {
+                ok: true,
+                providerMessageId: String(parsed.message_id ?? `termii-${Date.now()}`),
+                usedProvider: "Termii",
+            };
+        }
+
+        console.error("[Termii] API Error:", parsed);
+        return {
+            ok: false,
+            providerMessageId: null,
+            failureReason: parsed.message || `Termii error`,
+            usedProvider: "Termii",
+        };
+    } catch (error) {
+        console.error("[Termii] Request Error:", error);
+        return {
+            ok: false,
+            providerMessageId: null,
+            failureReason: error instanceof Error ? error.message : "Termii network error",
+            usedProvider: "Termii",
+        };
+    }
+}
+
+export async function sendSms(input: SmsSendInput): Promise<SmsSendResult> {
+    // Termii → SendChamp → Twilio
+    const termiiResult = await sendViaTermii(input);
+    if (termiiResult.ok) return termiiResult;
+
+    const sendChampResult = await sendViaSendChamp(input);
+    if (sendChampResult.ok) return sendChampResult;
 
     const twilioResult = await sendViaTwilio(input);
-
-    if (twilioResult.ok) {
-        return twilioResult;
-    }
+    if (twilioResult.ok) return twilioResult;
 
     return {
         ok: false,
         providerMessageId: null,
-        failureReason: `Primary (SendChamp) failed: ${sendChampResult.failureReason} | Fallback (Twilio) failed: ${twilioResult.failureReason}`,
+        failureReason: `Termii: ${termiiResult.failureReason} | SendChamp: ${sendChampResult.failureReason} | Twilio: ${twilioResult.failureReason}`,
         usedProvider: "None",
     };
 }
