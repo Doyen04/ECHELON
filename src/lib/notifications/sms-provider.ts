@@ -18,7 +18,9 @@ function normalizeNigerianPhone(phone: string): string {
     return clean;
 }
 
-// Scoped agent — disables SSL verification only for this agent's connections, not the whole process
+// Scoped agent — disables SSL verification only for Sendchamp connections.
+// Must use https.request (not native fetch) because Node.js native fetch
+// (undici) silently ignores the agent option.
 const sendchampAgent = new https.Agent({ rejectUnauthorized: false });
 
 async function sendViaSendChamp(input: SmsSendInput): Promise<SmsSendResult> {
@@ -29,39 +31,58 @@ async function sendViaSendChamp(input: SmsSendInput): Promise<SmsSendResult> {
         return { ok: false, providerMessageId: null, failureReason: "SendChamp API key is not configured.", usedProvider: "SendChamp" };
     }
 
+    const body = JSON.stringify({
+        to: [normalizeNigerianPhone(input.to)],
+        message: input.text,
+        sender_name: senderId,
+        route: "dnd",
+    });
+
     try {
-        const res = await fetch("https://api.sendchamp.com/api/v1/sms/send", {
-            method: "POST",
-            headers: {
-                "Accept": "application/json",
-                "Content-Type": "application/json",
-                "Authorization": `Bearer ${accessKey}`,
-            },
-            body: JSON.stringify({
-                to: [normalizeNigerianPhone(input.to)],
-                message: input.text,
-                sender_name: senderId,
-                route: "dnd",
-            }),
-            // @ts-expect-error — node-fetch / undici agent option
-            agent: sendchampAgent,
+        const result = await new Promise<{ statusCode: number; parsed: any }>((resolve, reject) => {
+            const req = https.request(
+                {
+                    hostname: "api.sendchamp.com",
+                    path: "/api/v1/sms/send",
+                    method: "POST",
+                    headers: {
+                        "Accept": "application/json",
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${accessKey}`,
+                        "Content-Length": Buffer.byteLength(body),
+                    },
+                    agent: sendchampAgent,
+                },
+                (res) => {
+                    let raw = "";
+                    res.on("data", (chunk: Buffer) => { raw += chunk.toString(); });
+                    res.on("end", () => {
+                        try {
+                            resolve({ statusCode: res.statusCode ?? 0, parsed: JSON.parse(raw) });
+                        } catch {
+                            reject(new Error(`Non-JSON response from SendChamp (${res.statusCode}): ${raw.slice(0, 200)}`));
+                        }
+                    });
+                },
+            );
+            req.on("error", reject);
+            req.write(body);
+            req.end();
         });
 
-        const parsed = await res.json() as any;
-
-        if (res.ok && parsed.status === "success") {
+        if (result.statusCode >= 200 && result.statusCode < 300 && result.parsed?.status === "success") {
             return {
                 ok: true,
-                providerMessageId: parsed.data?.id ?? `sc-${Date.now()}`,
+                providerMessageId: result.parsed.data?.id ?? `sc-${Date.now()}`,
                 usedProvider: "SendChamp",
             };
         }
 
-        console.error("[SendChamp] API Error:", parsed);
+        console.error("[SendChamp] API Error:", result.parsed);
         return {
             ok: false,
             providerMessageId: null,
-            failureReason: parsed.message || `SendChamp error ${res.status}`,
+            failureReason: result.parsed?.message || `SendChamp error ${result.statusCode}`,
             usedProvider: "SendChamp",
         };
     } catch (error) {

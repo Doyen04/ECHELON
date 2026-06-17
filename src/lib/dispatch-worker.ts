@@ -163,6 +163,7 @@ async function sendNotification(
         }
         throw new Error(`Unknown channel: ${channelSelection.channel}`);
     } catch (err) {
+        console.error(`[${channelSelection.channel}] send failed:`, err);
         return {
             ok: false,
             providerMessageId: `failed-${Date.now()}`,
