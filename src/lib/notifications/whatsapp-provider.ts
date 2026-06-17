@@ -11,84 +11,73 @@ export type WhatsAppSendResult = {
     failureReason?: string;
 };
 
-export async function sendWhatsApp(input: WhatsAppSendInput): Promise<WhatsAppSendResult> {
-    const phoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID;
-    const accessToken = process.env.WHATSAPP_ACCESS_TOKEN;
+function normalizePhone(phone: string): string {
+    const clean = phone.replace(/[\s\-().]/g, "");
+    if (clean.startsWith("+")) return clean.slice(1);
+    if (clean.startsWith("0")) return "234" + clean.slice(1);
+    return clean;
+}
 
-    if (!phoneNumberId || !accessToken) {
+export async function sendWhatsApp(input: WhatsAppSendInput): Promise<WhatsAppSendResult> {
+    const accountSid = process.env.TWILIO_ACCOUNT_SID;
+    const authToken = process.env.TWILIO_AUTH_TOKEN;
+    const from = process.env.TWILIO_WHATSAPP_FROM ?? "whatsapp:+14155238886";
+
+    if (!accountSid || !authToken) {
         return {
             ok: false,
             providerMessageId: null,
-            failureReason: "WhatsApp Cloud API is not configured (missing phone number ID or token).",
+            failureReason: "Twilio credentials not configured (TWILIO_ACCOUNT_SID / TWILIO_AUTH_TOKEN).",
         };
     }
 
-    const templateName = input.templateName || process.env.WHATSAPP_TEMPLATE_NAME || "result_notification";
-    const languageCode = input.languageCode || process.env.WHATSAPP_TEMPLATE_LANG || "en_US";
+    const [guardianName, semester, studentName, matric, portalLink] = input.templateParams ?? [];
+    const text = guardianName
+        ? `Hello ${guardianName}, the ${semester ?? ""} semester result for ${studentName ?? ""} (${matric ?? ""}) is now available.\n\nView result: ${portalLink ?? ""}`
+        : "Your ward's result is now available. Please contact the registry for your portal link.";
 
-    // Format phone number: remove non-digits, ensure it starts with country code (assuming +234 or similar, but for API it should just be digits like 234...)
-    let formattedTo = input.to.replace(/\D/g, "");
-    // Very basic normalization (e.g., if it starts with 0 and we are in Nigeria, replace with 234)
-    if (formattedTo.startsWith("0") && formattedTo.length === 11) {
-        formattedTo = "234" + formattedTo.substring(1);
-    }
+    const toWhatsApp = `whatsapp:+${normalizePhone(input.to)}`;
+    const fromWhatsApp = from.startsWith("whatsapp:") ? from : `whatsapp:${from}`;
 
-    const payload: any = {
-        messaging_product: "whatsapp",
-        recipient_type: "individual",
-        to: formattedTo,
-        type: "template",
-        template: {
-            name: templateName,
-            language: { code: languageCode },
-        },
-    };
-
-    if (input.templateParams && input.templateParams.length > 0) {
-        payload.template.components = [
-            {
-                type: "body",
-                parameters: input.templateParams.map((param) => ({
-                    type: "text",
-                    text: param,
-                })),
-            },
-        ];
-    }
+    const body = new URLSearchParams();
+    body.append("To", toWhatsApp);
+    body.append("From", fromWhatsApp);
+    body.append("Body", text);
 
     try {
-        const url = `https://graph.facebook.com/v25.0/${phoneNumberId}/messages`;
-        const response = await fetch(url, {
-            method: "POST",
-            headers: {
-                "Authorization": `Bearer ${accessToken}`,
-                "Content-Type": "application/json",
+        const res = await fetch(
+            `https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Messages.json`,
+            {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/x-www-form-urlencoded",
+                    Authorization: `Basic ${Buffer.from(`${accountSid}:${authToken}`).toString("base64")}`,
+                },
+                body: body.toString(),
             },
-            body: JSON.stringify(payload),
-        });
+        );
 
-        const data = await response.json();
+        const data = await res.json() as any;
 
-        if (!response.ok) {
+        if (!res.ok) {
             console.error("[WhatsAppProvider] API Error:", JSON.stringify(data, null, 2));
             return {
                 ok: false,
                 providerMessageId: null,
-                failureReason: data.error?.message || "Meta Cloud API rejected the message.",
+                failureReason: data.message ?? `Twilio WhatsApp error ${res.status}`,
             };
         }
 
         return {
             ok: true,
-            providerMessageId: data.messages?.[0]?.id || `wa-${Date.now()}`,
+            providerMessageId: data.sid ?? `wa-${Date.now()}`,
         };
     } catch (error) {
         console.error("[WhatsAppProvider] Network/Unknown Error:", error);
-        const message = error instanceof Error ? error.message : "Unknown network error.";
         return {
             ok: false,
             providerMessageId: null,
-            failureReason: `WhatsApp send failed: ${message}`,
+            failureReason: error instanceof Error ? error.message : "Unknown network error.",
         };
     }
 }

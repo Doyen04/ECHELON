@@ -421,3 +421,16 @@ export async function findAuthUserByEmail(email: string) {
         },
     });
 }
+
+export async function findStudentResultByBatchAndMatric(batchId: string, matric: string) {
+    return db.studentResult.findFirst({
+        where: {
+            batchId,
+            student: { matricNumber: matric },
+        },
+        include: {
+            student: { include: { guardians: true } },
+            batch: true,
+        },
+    });
+}

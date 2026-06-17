@@ -42,13 +42,6 @@ function selectChannels(guardian: any): ChannelSelection[] {
     return channels;
 }
 
-// Normalize Nigerian phone numbers to international format (no leading +)
-function normalizePhone(phone: string): string {
-    const clean = phone.replace(/[\s\-().]/g, "");
-    if (clean.startsWith("+")) return clean.slice(1);
-    if (clean.startsWith("0")) return "234" + clean.slice(1);
-    return clean;
-}
 
 async function getOrCreatePortalToken(studentResultId: string): Promise<string> {
     const now = new Date();
@@ -69,7 +62,8 @@ async function sendEmailNotification(to: string, subject: string, text: string):
             port: Number(process.env.SMTP_PORT ?? 465),
             secure: process.env.SMTP_SECURE !== "false",
             auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
-        });
+            family: 4,
+        } as any);
         const info = await transporter.sendMail({
             from: process.env.SMTP_FROM_EMAIL ?? process.env.SMTP_USER,
             to,
@@ -89,6 +83,13 @@ async function sendEmailNotification(to: string, subject: string, text: string):
         return { ok: true, providerMessageId: `resend-${Date.now()}`, status: "SENT" };
     }
     throw new Error("No email provider configured (set SMTP_HOST or RESEND_API_KEY)");
+}
+
+function normalizePhone(phone: string): string {
+    const clean = phone.replace(/[\s\-().]/g, "");
+    if (clean.startsWith("+")) return clean.slice(1);
+    if (clean.startsWith("0")) return "234" + clean.slice(1);
+    return clean;
 }
 
 async function sendWhatsAppNotification(
