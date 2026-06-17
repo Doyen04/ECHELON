@@ -95,32 +95,40 @@ async function sendWhatsAppNotification(
     to: string,
     payload: { parentName: string; studentName: string; matricNumber: string; semester: string; portalLink: string },
 ): Promise<SendResult> {
-    const apiKey = process.env.TERMII_API_KEY;
-    const senderId = process.env.TERMII_SENDER_ID ?? "N-Alert";
+    const accountSid = process.env.TWILIO_ACCOUNT_SID;
+    const authToken = process.env.TWILIO_AUTH_TOKEN;
+    const from = process.env.TWILIO_WHATSAPP_FROM ?? "whatsapp:+14155238886";
 
-    if (!apiKey) throw new Error("TERMII_API_KEY not set");
+    if (!accountSid || !authToken) throw new Error("TWILIO_ACCOUNT_SID or TWILIO_AUTH_TOKEN not set");
 
     const text =
         `Hello ${payload.parentName}, the ${payload.semester} semester result for ` +
         `${payload.studentName} (${payload.matricNumber}) is now available.\n\n` +
         `View result: ${payload.portalLink}`;
 
-    const res = await fetch("https://api.ng.termii.com/api/sms/send", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-            api_key: apiKey,
-            to: normalizePhone(to),
-            from: senderId,
-            sms: text,
-            type: "plain",
-            channel: "whatsapp",
-        }),
-    });
+    const toWhatsApp = `whatsapp:+${normalizePhone(to)}`;
+    const fromWhatsApp = from.startsWith("whatsapp:") ? from : `whatsapp:${from}`;
+
+    const body = new URLSearchParams();
+    body.append("To", toWhatsApp);
+    body.append("From", fromWhatsApp);
+    body.append("Body", text);
+
+    const res = await fetch(
+        `https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Messages.json`,
+        {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/x-www-form-urlencoded",
+                Authorization: `Basic ${Buffer.from(`${accountSid}:${authToken}`).toString("base64")}`,
+            },
+            body: body.toString(),
+        },
+    );
 
     const data = await res.json() as any;
-    if (data.code !== "ok") throw new Error(data.message ?? `Termii WhatsApp error ${res.status}`);
-    return { ok: true, providerMessageId: String(data.message_id ?? `wa-${Date.now()}`), status: "SENT" };
+    if (!res.ok) throw new Error(data.message ?? `Twilio WhatsApp error ${res.status}`);
+    return { ok: true, providerMessageId: data.sid ?? `wa-${Date.now()}`, status: "SENT" };
 }
 
 async function sendSmsNotification(to: string, message: string): Promise<SendResult> {
