@@ -1,5 +1,6 @@
 import { Buffer } from "node:buffer";
 import { createRequire } from "node:module";
+import "@thednp/dommatrix";
 
 // ---------------------------------------------------------------------------
 // DOMMatrix polyfill – must run synchronously at module-evaluation time.
@@ -16,7 +17,9 @@ try {
         // polyfill from an ESM/webpack context without a dynamic import().
         const _require = createRequire(import.meta.url);
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const { DOMMatrix } = _require("@thednp/dommatrix") as { DOMMatrix: any };
+        const imported = _require("@thednp/dommatrix") as any;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const DOMMatrix = imported?.DOMMatrix ?? imported?.default ?? imported;
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (globalThis as any).DOMMatrix = DOMMatrix;
         if (typeof global !== "undefined") (global as any).DOMMatrix = DOMMatrix; // eslint-disable-line @typescript-eslint/no-explicit-any
