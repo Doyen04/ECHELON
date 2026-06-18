@@ -858,6 +858,14 @@ function parseStudentRowsFromMatrixBroadsheet(lines: string[], fallbackDepartmen
 
 export async function parseStudentRowsFromPdf(pdfBuffer: Buffer, fallbackDepartment: string): Promise<StudentImportRow[]> {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    if (typeof globalThis !== "undefined" && !globalThis.DOMMatrix) {
+        const { DOMMatrix } = await import("@thednp/dommatrix");
+        globalThis.DOMMatrix = DOMMatrix as any;
+    }
+    if (typeof global !== "undefined" && !global.DOMMatrix) {
+        global.DOMMatrix = (globalThis as any).DOMMatrix;
+    }
+
     const pdfParseModule: any = await import("pdf-parse");
     // Handle both direct named export and webpack default-wrapping
     const ParserClass = pdfParseModule.PDFParse ?? pdfParseModule.default?.PDFParse;
