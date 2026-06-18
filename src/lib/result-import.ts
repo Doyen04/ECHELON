@@ -1,4 +1,28 @@
 import { Buffer } from "node:buffer";
+import { createRequire } from "node:module";
+
+// ---------------------------------------------------------------------------
+// DOMMatrix polyfill – must run synchronously at module-evaluation time.
+// pdfjs-dist v5 (used by pdf-parse v2) references DOMMatrix when the module
+// is first required. Since pdf-parse is a serverExternalPackage it is NOT
+// bundled by webpack; it is evaluated lazily the first time
+// `await import("pdf-parse")` runs in parseStudentRowsFromPdf.
+// Setting the global HERE (module level) guarantees it is defined before
+// that lazy require fires – regardless of which request triggers the upload.
+// ---------------------------------------------------------------------------
+try {
+    if (typeof globalThis !== "undefined" && !(globalThis as any).DOMMatrix) {
+        const _require = createRequire(import.meta.url);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { DOMMatrix } = _require("@thednp/dommatrix") as { DOMMatrix: any };
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (globalThis as any).DOMMatrix = DOMMatrix;
+        if (typeof global !== "undefined") (global as any).DOMMatrix = DOMMatrix; // eslint-disable-line @typescript-eslint/no-explicit-any
+    }
+} catch {
+    // If the polyfill package is missing the error will surface as
+    // "DOMMatrix is not defined" when pdf-parse actually loads.
+}
 
 export type StudentImportRow = {
     matricNumber: string;
@@ -857,15 +881,8 @@ function parseStudentRowsFromMatrixBroadsheet(lines: string[], fallbackDepartmen
 }
 
 export async function parseStudentRowsFromPdf(pdfBuffer: Buffer, fallbackDepartment: string): Promise<StudentImportRow[]> {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    if (typeof globalThis !== "undefined" && !globalThis.DOMMatrix) {
-        const { DOMMatrix } = await import("@thednp/dommatrix");
-        globalThis.DOMMatrix = DOMMatrix as any;
-    }
-    if (typeof global !== "undefined" && !global.DOMMatrix) {
-        global.DOMMatrix = (globalThis as any).DOMMatrix;
-    }
-
+    // DOMMatrix is polyfilled at module-level (top of this file) before any
+    // pdf-parse import, so no additional setup is needed here.
     const pdfParseModule: any = await import("pdf-parse");
     // Handle both direct named export and webpack default-wrapping
     const ParserClass = pdfParseModule.PDFParse ?? pdfParseModule.default?.PDFParse;
