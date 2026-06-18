@@ -13,21 +13,20 @@ export type WhatsAppSendResult = {
 
 function normalizePhone(phone: string): string {
     const clean = phone.replace(/[\s\-().]/g, "");
-    if (clean.startsWith("+")) return clean.slice(1);
-    if (clean.startsWith("0")) return "234" + clean.slice(1);
-    return clean;
+    if (clean.startsWith("+")) return clean;
+    if (clean.startsWith("0")) return "+234" + clean.slice(1);
+    return "+" + clean;
 }
 
 export async function sendWhatsApp(input: WhatsAppSendInput): Promise<WhatsAppSendResult> {
-    const accountSid = process.env.TWILIO_ACCOUNT_SID;
-    const authToken = process.env.TWILIO_AUTH_TOKEN;
-    const from = process.env.TWILIO_WHATSAPP_FROM ?? "whatsapp:+14155238886";
+    const instanceId = process.env.ULTRAMSG_INSTANCE_ID;
+    const token = process.env.ULTRAMSG_TOKEN;
 
-    if (!accountSid || !authToken) {
+    if (!instanceId || !token) {
         return {
             ok: false,
             providerMessageId: null,
-            failureReason: "Twilio credentials not configured (TWILIO_ACCOUNT_SID / TWILIO_AUTH_TOKEN).",
+            failureReason: "UltraMsg not configured (missing ULTRAMSG_INSTANCE_ID or ULTRAMSG_TOKEN).",
         };
     }
 
@@ -36,41 +35,32 @@ export async function sendWhatsApp(input: WhatsAppSendInput): Promise<WhatsAppSe
         ? `Hello ${guardianName}, the ${semester ?? ""} semester result for ${studentName ?? ""} (${matric ?? ""}) is now available.\n\nView result: ${portalLink ?? ""}`
         : "Your ward's result is now available. Please contact the registry for your portal link.";
 
-    const toWhatsApp = `whatsapp:+${normalizePhone(input.to)}`;
-    const fromWhatsApp = from.startsWith("whatsapp:") ? from : `whatsapp:${from}`;
-
     const body = new URLSearchParams();
-    body.append("To", toWhatsApp);
-    body.append("From", fromWhatsApp);
-    body.append("Body", text);
+    body.append("token", token);
+    body.append("to", normalizePhone(input.to));
+    body.append("body", text);
 
     try {
-        const res = await fetch(
-            `https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Messages.json`,
-            {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/x-www-form-urlencoded",
-                    Authorization: `Basic ${Buffer.from(`${accountSid}:${authToken}`).toString("base64")}`,
-                },
-                body: body.toString(),
-            },
-        );
+        const res = await fetch(`https://api.ultramsg.com/${instanceId}/messages/chat`, {
+            method: "POST",
+            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+            body: body.toString(),
+        });
 
         const data = await res.json() as any;
 
-        if (!res.ok) {
-            console.error("[WhatsAppProvider] API Error:", JSON.stringify(data, null, 2));
+        if (!res.ok || data.sent === false || data.error) {
+            console.error("[WhatsAppProvider] UltraMsg Error:", JSON.stringify(data, null, 2));
             return {
                 ok: false,
                 providerMessageId: null,
-                failureReason: data.message ?? `Twilio WhatsApp error ${res.status}`,
+                failureReason: data.error ?? `UltraMsg error ${res.status}`,
             };
         }
 
         return {
             ok: true,
-            providerMessageId: data.sid ?? `wa-${Date.now()}`,
+            providerMessageId: String(data.id ?? `wa-${Date.now()}`),
         };
     } catch (error) {
         console.error("[WhatsAppProvider] Network/Unknown Error:", error);

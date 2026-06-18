@@ -237,7 +237,6 @@ export async function getDashboardSnapshot(dashboardWindowStart: Date) {
         dispatchRows,
         notificationRows,
         activityRows,
-        dispatchFailureRows,
     ] = await Promise.all([
         db.studentResult.count({ where: { status: "PENDING" } }),
         db.studentResult.count({ where: { status: "APPROVED" } }),
@@ -268,6 +267,7 @@ export async function getDashboardSnapshot(dashboardWindowStart: Date) {
         db.notificationLog.findMany({
             where: { attemptedAt: { gte: dashboardWindowStart } },
             select: { studentResultId: true, channel: true, status: true },
+            take: 500,
         }),
         db.auditLog.findMany({
             take: 4,
@@ -275,18 +275,6 @@ export async function getDashboardSnapshot(dashboardWindowStart: Date) {
             include: {
                 actor: {
                     select: { name: true },
-                },
-            },
-        }),
-        db.notificationDispatch.findMany({
-            take: 8,
-            orderBy: { triggeredAt: "desc" },
-            include: {
-                batch: {
-                    select: { department: true, session: true, semester: true },
-                },
-                notificationLogs: {
-                    select: { status: true },
                 },
             },
         }),
@@ -300,6 +288,5 @@ export async function getDashboardSnapshot(dashboardWindowStart: Date) {
         dispatchRows,
         notificationRows,
         activityRows,
-        dispatchFailureRows,
     };
 }
