@@ -1,5 +1,6 @@
 import { Buffer } from "node:buffer";
 import { createRequire } from "node:module";
+import "@thednp/dommatrix";
 
 // ---------------------------------------------------------------------------
 // DOMMatrix polyfill – must run synchronously at module-evaluation time.
@@ -16,7 +17,9 @@ try {
         // polyfill from an ESM/webpack context without a dynamic import().
         const _require = createRequire(import.meta.url);
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const { DOMMatrix } = _require("@thednp/dommatrix") as { DOMMatrix: any };
+        const imported = _require("@thednp/dommatrix") as any;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const DOMMatrix = imported?.DOMMatrix ?? imported?.default ?? imported;
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (globalThis as any).DOMMatrix = DOMMatrix;
         if (typeof global !== "undefined") (global as any).DOMMatrix = DOMMatrix; // eslint-disable-line @typescript-eslint/no-explicit-any
@@ -62,6 +65,10 @@ const GRADE_POINTS: Record<string, number> = {
     "P": 0,
     "N/A": 0,
 };
+
+function cleanStudentName(name: string): string {
+    return name.replace(/(?:\s+\d+(?:\.\d+)?)+$/, "").trim();
+}
 
 export type ParentContactImportRow = {
     matricNumber: string;
@@ -327,7 +334,7 @@ function parseStudentHeaderLine(line: string, fallbackDepartment: string) {
 
     return {
         matricNumber: matricMatch[1].trim().toUpperCase(),
-        studentName: nameMatch[1].trim(),
+        studentName: cleanStudentName(nameMatch[1].trim()),
         department: (departmentMatch?.[1] ?? fallbackDepartment).trim() || fallbackDepartment,
         faculty: (facultyMatch?.[1] ?? "General").trim() || "General",
         level: Number(levelMatch?.[1] ?? "100"),
@@ -532,7 +539,7 @@ function parseStudentRowsFromTabularPdf(lines: string[], fallbackDepartment: str
         const merged = segmentLines.join(" ");
 
         const continuationName = segmentLines[1]?.match(/^([A-Za-z][A-Za-z .'-]{1,})\s+\d/)?.[1]?.trim();
-        const studentName = continuationName ? `${initialName} ${continuationName}` : initialName;
+        const studentName = cleanStudentName(continuationName ? `${initialName} ${continuationName}` : initialName);
 
         const gpaValues = (merged.match(/\b\d\.\d{1,2}\b/g) ?? []).map(Number);
         const gpa = gpaValues.length >= 2 ? gpaValues[gpaValues.length - 2] : (gpaValues[0] ?? 0);
@@ -631,7 +638,7 @@ function parseStudentRowsFromKeyValuePdf(lines: string[], fallbackDepartment: st
         const computedGpa = calculateGpaFromCourses(courses);
         students.push({
             matricNumber: matric,
-            studentName: name,
+            studentName: cleanStudentName(name),
             department: dept,
             faculty: fac,
             level: lvl,

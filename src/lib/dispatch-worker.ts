@@ -132,10 +132,6 @@ async function sendNotification(
     channelSelection: ChannelSelection,
     payload: { parentName: string; studentName: string; matricNumber: string; semester: string; portalLink: string },
 ): Promise<SendResult> {
-    const notificationMode = process.env.NOTIFICATION_ENV ?? "mock";
-    if (notificationMode === "mock") {
-        return { ok: true, providerMessageId: `mock-${Date.now()}`, status: "SENT" };
-    }
 
     const text = `Hello ${payload.parentName}, the ${payload.semester} results for ${payload.studentName} (${payload.matricNumber}) are ready.\n\nView full details: ${payload.portalLink}`;
 
