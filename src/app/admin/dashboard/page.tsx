@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 
+export const revalidate = 30;
+
 import DashboardClient from "@/components/dashboard/dashboard-client";
 
 import { getDashboardViewData } from "@/lib/dashboard-queries";

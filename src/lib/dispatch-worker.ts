@@ -87,49 +87,39 @@ async function sendEmailNotification(to: string, subject: string, text: string):
 
 function normalizePhone(phone: string): string {
     const clean = phone.replace(/[\s\-().]/g, "");
-    if (clean.startsWith("+")) return clean.slice(1);
-    if (clean.startsWith("0")) return "234" + clean.slice(1);
-    return clean;
+    if (clean.startsWith("+")) return clean;
+    if (clean.startsWith("0")) return "+234" + clean.slice(1);
+    return "+" + clean;
 }
 
 async function sendWhatsAppNotification(
     to: string,
     payload: { parentName: string; studentName: string; matricNumber: string; semester: string; portalLink: string },
 ): Promise<SendResult> {
-    const accountSid = process.env.TWILIO_ACCOUNT_SID;
-    const authToken = process.env.TWILIO_AUTH_TOKEN;
-    const from = process.env.TWILIO_WHATSAPP_FROM ?? "whatsapp:+14155238886";
+    const instanceId = process.env.ULTRAMSG_INSTANCE_ID;
+    const token = process.env.ULTRAMSG_TOKEN;
 
-    if (!accountSid || !authToken) throw new Error("TWILIO_ACCOUNT_SID or TWILIO_AUTH_TOKEN not set");
+    if (!instanceId || !token) throw new Error("UltraMsg not configured (missing ULTRAMSG_INSTANCE_ID or ULTRAMSG_TOKEN).");
 
     const text =
         `Hello ${payload.parentName}, the ${payload.semester} semester result for ` +
         `${payload.studentName} (${payload.matricNumber}) is now available.\n\n` +
         `View result: ${payload.portalLink}`;
 
-    const toWhatsApp = `whatsapp:+${normalizePhone(to)}`;
-    const fromWhatsApp = from.startsWith("whatsapp:") ? from : `whatsapp:${from}`;
-
     const body = new URLSearchParams();
-    body.append("To", toWhatsApp);
-    body.append("From", fromWhatsApp);
-    body.append("Body", text);
+    body.append("token", token);
+    body.append("to", normalizePhone(to));
+    body.append("body", text);
 
-    const res = await fetch(
-        `https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Messages.json`,
-        {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/x-www-form-urlencoded",
-                Authorization: `Basic ${Buffer.from(`${accountSid}:${authToken}`).toString("base64")}`,
-            },
-            body: body.toString(),
-        },
-    );
+    const res = await fetch(`https://api.ultramsg.com/${instanceId}/messages/chat`, {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: body.toString(),
+    });
 
     const data = await res.json() as any;
-    if (!res.ok) throw new Error(data.message ?? `Twilio WhatsApp error ${res.status}`);
-    return { ok: true, providerMessageId: data.sid ?? `wa-${Date.now()}`, status: "SENT" };
+    if (!res.ok || data.sent === false || data.error) throw new Error(data.error ?? `UltraMsg error ${res.status}`);
+    return { ok: true, providerMessageId: String(data.id ?? `wa-${Date.now()}`), status: "SENT" };
 }
 
 async function sendSmsNotification(to: string, message: string): Promise<SendResult> {
