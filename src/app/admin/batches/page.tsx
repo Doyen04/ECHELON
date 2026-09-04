@@ -106,7 +106,7 @@ export default function BatchesPage() {
                                     asChild
                                     className='rounded-full page-transition-enter bg-brand hover:bg-brand-hover'
                                 >
-                                    <Link href='/admin/batches/upload'>
+                                    <Link href='/admin/upload'>
                                         <Upload className='h-4 w-4 mr-2' />
                                         Upload Batch
                                     </Link>
