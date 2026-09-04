@@ -102,23 +102,23 @@ export function AdminSidebar({ email, name, role }: AdminSidebarProps) {
         </button>
 
         <div
-          className={`flex gap-3 px-2 transition-all duration-300 group ${isCollapsed ? "flex-col items-center py-2" : "h-16 items-center justify-start"}`}
+          className={`flex gap-3 px-2 transition-all duration-300 group h-16 items-center justify-start ${isCollapsed ? "md:flex-col md:items-center md:py-2 md:h-auto" : ""}`}
         >
           {/* Stylized Logo for Echelon */}
           <div
-            className={`flex shrink-0 items-center justify-center rounded-2xl border border-white/25 bg-white/15 text-white  transition-all duration-300 ${isCollapsed ? "h-10 w-10" : "h-11 w-11"}`}
+            className={`flex shrink-0 items-center justify-center rounded-2xl border border-white/25 bg-white/15 text-white  transition-all duration-300 h-11 w-11 ${isCollapsed ? "md:h-10 md:w-10" : ""}`}
           >
             <Layers
-              className={`${isCollapsed ? "h-5 w-5" : "h-6 w-6"} text-white`}
+              className={`h-6 w-6 ${isCollapsed ? "md:h-5 md:w-5" : ""} text-white`}
               strokeWidth={2.5}
             />
           </div>
 
           <div
-            className={`min-w-0 transition-all duration-200 ${
+            className={`min-w-0 transition-all duration-200 w-auto opacity-100 ${
               isCollapsed
-                ? "h-0 w-0 opacity-0 pointer-events-none overflow-hidden"
-                : "w-auto opacity-100"
+                ? "md:h-0 md:w-0 md:opacity-0 md:pointer-events-none md:overflow-hidden"
+                : ""
             }`}
           >
             <h1 className='truncate font-sans text-lg font-bold tracking-tight text-white'>
@@ -143,10 +143,10 @@ export function AdminSidebar({ email, name, role }: AdminSidebarProps) {
             return navItems.map((group) => (
               <div key={group.section} className='mb-4'>
                 <p
-                  className={`px-2 mb-2 text-[10px] font-semibold uppercase tracking-[0.22em] text-white/35 transition-all duration-200 ${
+                  className={`px-2 mb-2 text-[10px] font-semibold uppercase tracking-[0.22em] text-white/35 transition-all duration-200 opacity-100 h-auto ${
                     isCollapsed
-                      ? "opacity-0 h-0 pointer-events-none overflow-hidden"
-                      : "opacity-100 h-auto"
+                      ? "md:opacity-0 md:h-0 md:pointer-events-none md:overflow-hidden"
+                      : ""
                   }`}
                 >
                   {group.section}
@@ -170,8 +170,8 @@ export function AdminSidebar({ email, name, role }: AdminSidebarProps) {
                           key={item.href}
                           href={item.href}
                           onClick={closeMobileMenu}
-                          className={`flex h-10 items-center rounded-lg px-3 text-sm transition-all duration-200 relative group/link ${
-                            isCollapsed ? "justify-center" : "gap-3"
+                          className={`flex h-10 items-center rounded-lg px-3 text-sm transition-all duration-200 relative group/link gap-3 ${
+                            isCollapsed ? "md:justify-center md:gap-0" : ""
                           } ${
                             active
                               ? "bg-sidebar-accent text-sidebar-primary "
@@ -182,16 +182,16 @@ export function AdminSidebar({ email, name, role }: AdminSidebarProps) {
                             className={`h-5 w-5 shrink-0 transition-transform group-hover/link:scale-105 ${active ? "text-sidebar-primary" : "text-sidebar-foreground/40"}`}
                           />
                           <span
-                            className={`min-w-0 truncate font-medium transition-all duration-300 ${
+                            className={`min-w-0 truncate font-medium transition-all duration-300 w-auto opacity-100 ${
                               isCollapsed
-                                ? "w-0 opacity-0 pointer-events-none"
-                                : "w-auto opacity-100"
+                                ? "md:w-0 md:opacity-0 md:pointer-events-none md:hidden"
+                                : ""
                             }`}
                           >
                             {item.label}
                           </span>
-                          {!isCollapsed && active && (
-                            <div className='ml-auto h-1 w-1 rounded-full bg-sidebar-primary (59,130,246,0.5)]' />
+                          {active && (
+                            <div className={`ml-auto h-1 w-1 rounded-full bg-sidebar-primary ${isCollapsed ? "md:hidden" : ""}`} />
                           )}
                         </Link>
                       );
@@ -204,13 +204,13 @@ export function AdminSidebar({ email, name, role }: AdminSidebarProps) {
 
         <div className='mt-auto shrink-0 px-1 pb-1'>
           <div
-            className={`text-white/90 transition-all duration-300 ${isCollapsed ? "p-1" : "p-2"}`}
+            className={`text-white/90 transition-all duration-300 p-2 ${isCollapsed ? "md:p-1" : ""}`}
           >
             <div
-              className={`flex ${
+              className={`flex items-center gap-3.5 ${
                 isCollapsed
-                  ? "flex-col items-center gap-2"
-                  : "items-center gap-3.5"
+                  ? "md:flex-col md:items-center md:gap-2"
+                  : ""
               }`}
             >
               <div className='relative flex shrink-0 items-center justify-center'>
@@ -221,10 +221,10 @@ export function AdminSidebar({ email, name, role }: AdminSidebarProps) {
               </div>
 
               <div
-                className={`transition-all duration-300 ${
+                className={`transition-all duration-300 min-w-0 flex-1 opacity-100 ${
                   isCollapsed
-                    ? "h-0 w-0 flex-none opacity-0 pointer-events-none overflow-hidden"
-                    : "min-w-0 flex-1 opacity-100"
+                    ? "md:h-0 md:w-0 md:flex-none md:opacity-0 md:pointer-events-none md:overflow-hidden"
+                    : ""
                 }`}
               >
                 <p className='truncate text-sm font-semibold tracking-tight text-white leading-tight'>
@@ -239,8 +239,8 @@ export function AdminSidebar({ email, name, role }: AdminSidebarProps) {
 
               <SignOutButton
                 compact
-                className={`flex items-center justify-center rounded-full text-sidebar-foreground/50 transition-all duration-200 hover:bg-sidebar-accent hover:text-white active:scale-95 ${
-                  isCollapsed ? "h-9 w-9" : "ml-auto h-9 w-9"
+                className={`flex items-center justify-center rounded-full text-sidebar-foreground/50 transition-all duration-200 hover:bg-sidebar-accent hover:text-white active:scale-95 ml-auto h-9 w-9 ${
+                  isCollapsed ? "md:ml-0" : ""
                 }`}
                 title='Log out'
               >

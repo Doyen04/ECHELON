@@ -23,8 +23,8 @@ export function SidebarProvider({ children }: { children: React.ReactNode }) {
     if (saved !== null) {
       setIsCollapsed(saved === "true");
     } else {
-      // Default behavior: collapsed on smaller screens
-      if (window.innerWidth < 1280) {
+      // Default behavior: collapsed on smaller desktop screens (between 768px and 1280px)
+      if (window.innerWidth >= 768 && window.innerWidth < 1280) {
         setIsCollapsed(true);
       }
     }

@@ -72,12 +72,12 @@ export function HodSidebar({ email, name, role }: HodSidebarProps) {
                     <ChevronRight className={`h-2.5 w-2.5 transition-transform duration-300 ${isCollapsed ? "" : "rotate-180"}`} />
                 </button>
 
-                <div className={`flex gap-3 px-2 transition-all duration-300 group ${isCollapsed ? "flex-col items-center py-2" : "h-16 items-center justify-start"}`}>
-                    <div className={`flex shrink-0 items-center justify-center rounded-2xl border border-white/25 bg-white/15 text-white  transition-all duration-300 ${isCollapsed ? "h-10 w-10" : "h-11 w-11"}`}>
-                        <Layers className={`${isCollapsed ? "h-5 w-5" : "h-6 w-6"} text-white`} strokeWidth={2.5} />
+                <div className={`flex gap-3 px-2 transition-all duration-300 group h-16 items-center justify-start ${isCollapsed ? "md:flex-col md:items-center md:py-2 md:h-auto" : ""}`}>
+                    <div className={`flex shrink-0 items-center justify-center rounded-2xl border border-white/25 bg-white/15 text-white transition-all duration-300 h-11 w-11 ${isCollapsed ? "md:h-10 md:w-10" : ""}`}>
+                        <Layers className={`h-6 w-6 ${isCollapsed ? "md:h-5 md:w-5" : ""} text-white`} strokeWidth={2.5} />
                     </div>
 
-                    <div className={`min-w-0 transition-all duration-200 ${isCollapsed ? "h-0 w-0 opacity-0 pointer-events-none overflow-hidden" : "w-auto opacity-100"}`}>
+                    <div className={`min-w-0 transition-all duration-200 w-auto opacity-100 ${isCollapsed ? "md:h-0 md:w-0 md:opacity-0 md:pointer-events-none md:overflow-hidden" : ""}`}>
                         <h1 className="truncate font-sans text-lg font-bold tracking-tight text-white">HOD Portal</h1>
                     </div>
 
@@ -92,7 +92,7 @@ export function HodSidebar({ email, name, role }: HodSidebarProps) {
                 <div className="mt-3 border-t border-white/10 pt-3 flex-1 overflow-y-auto">
                     {navItems.map((group) => (
                         <div key={group.section} className="mb-4">
-                            <p className={`px-2 mb-2 text-[10px] font-semibold uppercase tracking-[0.22em] text-white/35 ${isCollapsed ? "hidden" : "block"}`}>
+                            <p className={`px-2 mb-2 text-[10px] font-semibold uppercase tracking-[0.22em] text-white/35 block ${isCollapsed ? "md:hidden" : ""}`}>
                                 {group.section}
                             </p>
                             <div className="space-y-0.5">
@@ -105,10 +105,10 @@ export function HodSidebar({ email, name, role }: HodSidebarProps) {
                                             key={item.href}
                                             href={item.href}
                                             onClick={closeMobileMenu}
-                                            className={`flex h-10 items-center rounded-lg px-3 text-sm transition-all duration-200 relative group/link ${isCollapsed ? "justify-center" : "gap-3"} ${active ? "bg-sidebar-accent text-sidebar-primary" : "text-sidebar-foreground/60 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"}`}
+                                            className={`flex h-10 items-center rounded-lg px-3 text-sm transition-all duration-200 relative group/link gap-3 ${isCollapsed ? "md:justify-center md:gap-0" : ""} ${active ? "bg-sidebar-accent text-sidebar-primary" : "text-sidebar-foreground/60 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"}`}
                                         >
                                             <Icon className={`h-5 w-5 shrink-0 ${active ? "text-sidebar-primary" : "text-sidebar-foreground/40"}`} />
-                                            {!isCollapsed && <span className="truncate font-medium">{item.label}</span>}
+                                            <span className={`truncate font-medium ${isCollapsed ? "md:hidden" : ""}`}>{item.label}</span>
                                         </Link>
                                     );
                                 })}
@@ -118,8 +118,8 @@ export function HodSidebar({ email, name, role }: HodSidebarProps) {
                 </div>
 
                 <div className="mt-auto shrink-0 px-1 pb-1">
-                    <div className={`text-white/90 transition-all duration-300 ${isCollapsed ? "p-1" : "p-2"}`}>
-                        <div className={`flex ${isCollapsed ? "flex-col items-center gap-2" : "items-center gap-3.5"}`}>
+                    <div className={`text-white/90 transition-all duration-300 p-2 ${isCollapsed ? "md:p-1" : ""}`}>
+                        <div className={`flex items-center gap-3.5 ${isCollapsed ? "md:flex-col md:items-center md:gap-2" : ""}`}>
                             <div className="relative flex shrink-0 items-center justify-center">
                                 <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-sidebar-accent text-[12px] font-bold text-sidebar-foreground ">
                                      {userInitials}
@@ -127,20 +127,18 @@ export function HodSidebar({ email, name, role }: HodSidebarProps) {
                                  <div className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-sidebar bg-emerald-500 " />
                             </div>
  
-                            {!isCollapsed && (
-                                <div className="min-w-0 flex-1 opacity-100 transition-all duration-300">
-                                    <p className="truncate text-sm font-semibold tracking-tight text-white leading-tight">{name ?? "HOD"}</p>
-                                    <div className="flex items-center gap-1.5 mt-1">
-                                        <span className="inline-flex rounded-full bg-sidebar-primary/20 border border-sidebar-primary/30 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-sidebar-primary ">
-                                            HOD
-                                        </span>
-                                    </div>
+                            <div className={`min-w-0 flex-1 opacity-100 transition-all duration-300 ${isCollapsed ? "md:hidden" : ""}`}>
+                                <p className="truncate text-sm font-semibold tracking-tight text-white leading-tight">{name ?? "HOD"}</p>
+                                <div className="flex items-center gap-1.5 mt-1">
+                                    <span className="inline-flex rounded-full bg-sidebar-primary/20 border border-sidebar-primary/30 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-sidebar-primary ">
+                                        HOD
+                                    </span>
                                 </div>
-                            )}
+                            </div>
  
                             <SignOutButton
                                 compact
-                                className={`flex items-center justify-center rounded-full text-sidebar-foreground/50 transition-all duration-200 hover:bg-sidebar-accent hover:text-white active:scale-95 ${isCollapsed ? "h-9 w-9" : "ml-auto h-9 w-9"}`}
+                                className={`flex items-center justify-center rounded-full text-sidebar-foreground/50 transition-all duration-200 hover:bg-sidebar-accent hover:text-white active:scale-95 ml-auto h-9 w-9 ${isCollapsed ? "md:ml-0" : ""}`}
                             >
                                 <LogOut className="h-4 w-4" />
                             </SignOutButton>
