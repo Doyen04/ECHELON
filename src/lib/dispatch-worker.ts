@@ -4,6 +4,7 @@ import nodemailer from "nodemailer";
 import { Resend } from "resend";
 
 import { sendSms } from "@/lib/notifications/sms-provider";
+import { buildStudentResultPdfAttachment } from "./result-email-pdf";
 import type { NotifyJobPayload } from "@/lib/queue";
 import {
     createNotificationLog,
@@ -55,7 +56,12 @@ async function getOrCreatePortalToken(studentResultId: string): Promise<string> 
     return token;
 }
 
-async function sendEmailNotification(to: string, subject: string, text: string): Promise<SendResult> {
+async function sendEmailNotification(
+    to: string,
+    subject: string,
+    text: string,
+    attachments?: any[],
+): Promise<SendResult> {
     if (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS) {
         const transporter = nodemailer.createTransport({
             host: process.env.SMTP_HOST,
@@ -69,6 +75,7 @@ async function sendEmailNotification(to: string, subject: string, text: string):
             to,
             subject,
             text,
+            attachments,
         });
         return { ok: true, providerMessageId: info.messageId, status: "SENT" };
     }
@@ -79,6 +86,7 @@ async function sendEmailNotification(to: string, subject: string, text: string):
             to,
             subject,
             text,
+            attachments,
         });
         return { ok: true, providerMessageId: `resend-${Date.now()}`, status: "SENT" };
     }
@@ -131,6 +139,7 @@ async function sendSmsNotification(to: string, message: string): Promise<SendRes
 async function sendNotification(
     channelSelection: ChannelSelection,
     payload: { parentName: string; studentName: string; matricNumber: string; semester: string; portalLink: string },
+    attachment?: any,
 ): Promise<SendResult> {
 
     const text = `Hello ${payload.parentName}, the ${payload.semester} results for ${payload.studentName} (${payload.matricNumber}) are ready.\n\nView full details: ${payload.portalLink}`;
@@ -141,6 +150,7 @@ async function sendNotification(
                 channelSelection.destination,
                 `Result Notification: ${payload.studentName} — ${payload.semester}`,
                 text,
+                attachment ? [attachment] : undefined,
             );
         }
         if (channelSelection.channel === "WHATSAPP") {
@@ -208,6 +218,28 @@ export async function processNotifyJob(payload: NotifyJobPayload): Promise<Dispa
         const semester = `${studentResult.batch.session} ${studentResult.batch.semester}`;
         let sentCount = 0;
 
+        let pdfAttachment: any = null;
+        try {
+            const courseRows = Array.isArray(studentResult.courses) ? studentResult.courses : [];
+            pdfAttachment = await buildStudentResultPdfAttachment({
+                studentName: studentResult.student.fullName,
+                matricNumber: studentResult.student.matricNumber,
+                department: studentResult.student.department ?? "General",
+                faculty: studentResult.student.faculty ?? "General",
+                level: Number(studentResult.student.level ?? 100),
+                session: String(studentResult.batch.session ?? "Unknown"),
+                semester: String(studentResult.batch.semester ?? "Unknown"),
+                gpa: Number(studentResult.gpa ?? 0),
+                cgpa: studentResult.cgpa ?? null,
+                courses: courseRows,
+                institutionName: studentResult.batch.institution?.name ?? studentResult.student.institution?.name ?? "Mountain Top University",
+                logoUrl: studentResult.batch.institution?.logoUrl ?? studentResult.student.institution?.logoUrl ?? null,
+                submissionId: studentResult.batch.id ?? null,
+            });
+        } catch (err) {
+            console.error("[DispatchWorker] Failed to generate PDF attachment:", err);
+        }
+
         // Send to every guardian on ALL available channels (email + whatsapp + sms)
         for (const guardian of guardians) {
             const channels = selectChannels(guardian);
@@ -221,7 +253,7 @@ export async function processNotifyJob(payload: NotifyJobPayload): Promise<Dispa
                     matricNumber: studentResult.student.matricNumber,
                     semester,
                     portalLink,
-                });
+                }, pdfAttachment);
 
                 await createNotificationLog({
                     dispatchId: payload.dispatchId,

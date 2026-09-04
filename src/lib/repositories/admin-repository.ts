@@ -128,14 +128,17 @@ export async function listDispatchNotificationLogs(
         skip?: number;
         take?: number;
         query?: string;
+        status?: "SENT" | "FAILED" | null;
     },
 ) {
     const skip = options?.skip ?? 0;
     const take = options?.take ?? 20;
     const query = options?.query?.trim();
+    const status = options?.status ?? null;
 
     const where = {
         dispatchId,
+        ...(status ? { status } : {}),
         ...(query
             ? {
                 OR: [

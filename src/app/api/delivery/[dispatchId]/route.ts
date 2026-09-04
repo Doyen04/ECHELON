@@ -24,6 +24,8 @@ export async function GET(
         const limit = Math.max(1, parseInt(searchParams.get("limit") || "20", 10));
         const skip = (page - 1) * limit;
         const query = searchParams.get("q") || undefined;
+        const statusParam = searchParams.get("status") || undefined;
+        const status = statusParam === "SENT" || statusParam === "FAILED" ? statusParam : null;
 
         const dispatch = await findDispatchDetails(dispatchId);
 
@@ -35,6 +37,7 @@ export async function GET(
             skip,
             take: limit,
             query,
+            status,
         });
 
         const studentIds: string[] = Array.from(
