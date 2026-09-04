@@ -46,13 +46,15 @@ export function NotificationPanelTrigger({ notifications }: NotificationPanelTri
                 type="button"
                 variant="outline"
                 size="icon"
-                className="relative rounded-full"
+                className="relative rounded-full shrink-0"
                 aria-label="Notifications"
                 title="Notifications"
                 onClick={() => setIsOpen(true)}
             >
                 <Bell className="h-4 w-4" />
-                {notifications.length > 0 ? <span className="absolute right-2 top-2 h-1.5 w-1.5 rounded-full bg-status-warning" /> : null}
+                {notifications.length > 0 ? (
+                    <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-amber-500 ring-2 ring-background" />
+                ) : null}
             </Button>
 
             {isMounted
